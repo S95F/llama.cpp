@@ -370,6 +370,66 @@ class SlruSampleFreqCache(SlruCache):
         return best if best >= 0 else super().victim(il)
 
 
+class SlruSampleDistCache(SlruSampleFreqCache):
+    """Sampled victim scored by use count AND how far away the owning layer's
+    next visit is.
+
+    Generation sweeps the layers of a group cyclically, so the next visit to a
+    layer is known exactly without any prediction: a layer visited `ago` calls
+    back comes again in `m - ago` calls, where m is the number of layers in the
+    group.  The experts of the layer the sweep just passed are therefore the
+    furthest from their next use, and the ones just ahead of the sweep are the
+    nearest - which is what plain LRU evicts first, and why it thrashes.
+
+    Belady evicts the entry whose next use is furthest away.  Approximating the
+    time to next use of expert e of layer v as dist(v) / P(e picked at v), and
+    taking the use counter as a proxy for P, gives the score below.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.call = 0
+        self.last_call = {}
+
+    def plan(self, il, ids):
+        self.call += 1
+        self.last_call[il] = self.call
+        return super().plan(il, ids)
+
+    def dist(self, v):
+        m = len(self.last_call)
+        ago = self.call - self.last_call.get(v, self.call - m)
+        return max(1, m - ago)
+
+    def victim(self, il):
+        best = -1
+        best_d = best_u = 0
+        n = 0
+        tries = 0
+        while n < self.n_sample and tries < 4 * self.n_sample:
+            tries += 1
+            s = self.rng.randrange(self.n_slots)
+            key = self.key_of[s]
+            if key >= 0 and key // self.n_expert == il and self.seen[key % self.n_expert] == self.seen_gen:
+                continue
+            if key < 0:
+                return s
+            d = self.dist(key // self.n_expert)
+            u = self.use[key] + 1
+            # maximise d/u without floats
+            if best < 0 or d * best_u > best_d * u:
+                best, best_d, best_u = s, d, u
+            n += 1
+        if self.aging:
+            self.n_fills += 1
+            if self.n_fills % self.aging == 0:
+                for k in list(self.use):
+                    self.use[k] >>= 1
+                    if not self.use[k]:
+                        del self.use[k]
+        return best if best >= 0 else SlruCache.victim(self, il)
+
+
 class BeladyCache:
     """Offline optimum: evict the entry whose next use is furthest away."""
 
@@ -490,6 +550,11 @@ POLICIES = {
     "ramp-s16-age2":  lambda n_layer, ne, ns, net, fut: SlruSampleFreqCache(n_layer, ne, ns, max_protected_ramp(ns, net), 16, aging=2*max(1, ns)),
     "ramp-s16-age8":  lambda n_layer, ne, ns, net, fut: SlruSampleFreqCache(n_layer, ne, ns, max_protected_ramp(ns, net), 16, aging=8*max(1, ns)),
     "ramp-s16-age16": lambda n_layer, ne, ns, net, fut: SlruSampleFreqCache(n_layer, ne, ns, max_protected_ramp(ns, net), 16, aging=16*max(1, ns)),
+    # same, but the victim score also uses the known cyclic distance to the
+    # owning layer's next visit
+    "ramp-s16-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 16, aging=8*max(1, ns)),
+    "ramp-s32-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 32, aging=8*max(1, ns)),
+    "ramp-s8-age8-dist":   lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 8, aging=8*max(1, ns)),
 }
 
 
@@ -533,6 +598,7 @@ def simulate(trace, layout, cache_mib, policy, n_expert_used, small_only=True):
                          expert_bytes=g.expert_bytes(),
                          n_slots_ratio=n_slots / n_expert_token if n_expert_token else 0.0)
 
+    per_layer = collections.defaultdict(lambda: [0, 0])
     for il, ids, n_ids in trace:
         gi = layer_group.get(il)
         if gi is None or caches[gi] is None:
@@ -547,6 +613,8 @@ def simulate(trace, layout, cache_mib, policy, n_expert_used, small_only=True):
         stats[gi]["hits"] += n_hit
         stats[gi]["fills"] += n_fill
         stats[gi]["bytes"] += n_fill * stats[gi]["expert_bytes"]
+        per_layer[il][0] += n_hit
+        per_layer[il][1] += n_fill
 
     hits = sum(s["hits"] for s in stats.values())
     fills = sum(s["fills"] for s in stats.values())
@@ -560,6 +628,7 @@ def simulate(trace, layout, cache_mib, policy, n_expert_used, small_only=True):
         hit_rate=100.0 * hits / (hits + fills) if hits + fills else 0.0,
         uploaded_mib=byts / 2 ** 20, vram_mib=vram / 2 ** 20,
         per_group={gi: dict(s) for gi, s in stats.items()},
+        per_layer={il: {"hits": h, "fills": f} for il, (h, f) in sorted(per_layer.items())},
     )
 
 

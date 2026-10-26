@@ -59,6 +59,29 @@ Verified working afterwards: `llama-bench --version` exits 0 and reports
 A clean rebuild against 13.2 is an option but has not been done, and it would
 invalidate comparability with every number recorded so far.
 
+### Building needs the MSVC environment, not just the paths
+
+Found in EXP-0002. Invoking the VS 2019 `cmake.exe` from a plain shell is not
+enough: without `INCLUDE` and `LIB` the compiler cannot find the standard
+headers, and **every** translation unit fails with
+
+```
+fatal error C1083: Cannot open include file: 'stdbool.h': No such file or directory
+fatal error C1083: Cannot open include file: 'algorithm': No such file or directory
+```
+
+which reads like a broken checkout rather than a missing environment. Source
+`vcvars64.bat` first. From PowerShell, in one `cmd` invocation so the variables
+survive:
+
+```powershell
+$vc = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat'
+$cm = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+cmd /c "call `"$vc`" >nul 2>&1 && set `"PATH=C:\Users\steve\cuda126\bin;%PATH%`" && `"$cm`" --build build --target llama-bench llama-completion"
+```
+
+Running a built binary needs only the CUDA 12.6 `PATH` fix above, not vcvars.
+
 ## Model
 
 | | |

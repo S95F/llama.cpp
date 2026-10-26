@@ -115,11 +115,16 @@ reads more bytes, which is the upstream arm, inflating the ratio.
 
 Greedily decodes the same prompt under each configuration and diffs against
 `--moe-cache-mib 0`. Configurations: `cache2048-lru`, `cache2048-auto`,
-`cache2048-s16`, `cache528-lru`, `cache528-auto`, `cache1024-pinned`, plus
-`upstream-off` and `upstream-2048` when a baseline build is given.
+`cache2048-s16`, `cache528-lru`, `cache528-auto`, `cache528-dist0`,
+`cache256-auto`, `cache1024-pinned`, plus `upstream-off` and `upstream-2048`
+when a baseline build is given.
 
 **Reference: all configurations byte-identical on both bases.** This is a
 pass/fail gate, not a measurement. Any difference is a bug.
+
+Last run EXP-0002 on `d854d98b`: 8 of 8 OK, including the two cases added there
+(`cache528-dist0` for the use-count-only victim, `cache256-auto` for a cache
+small enough to starve a group of slots).
 
 A baseline build of upstream master at `d854d98b` does **not** currently exist,
 so the two `upstream-*` rows were not run on the current base.

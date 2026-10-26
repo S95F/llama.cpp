@@ -47,6 +47,10 @@ run cache528-lru     "$BIN" LLAMA_MOE_CACHE_SAMPLE=0  --moe-cache-mib 528
 run cache528-auto    "$BIN" -                         --moe-cache-mib 528
 run cache2048-s16    "$BIN" LLAMA_MOE_CACHE_SAMPLE=16 --moe-cache-mib 2048
 
+# victim scored by use count only, and a cache small enough to starve a group of slots
+run cache528-dist0   "$BIN" LLAMA_MOE_CACHE_DIST=0    --moe-cache-mib 528
+run cache256-auto    "$BIN" -                         --moe-cache-mib 256
+
 # pinned host expert pages must not change anything either
 run cache1024-pinned "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 1024
 

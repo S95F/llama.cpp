@@ -3,25 +3,48 @@
 Unresolved questions, missing evidence, and what it would take to settle each.
 Ordered by value, not by age.
 
-## Q2 - How much of the Belady gap is actually reachable online?
+## Q10 - Should the distance term also run above the crossover?
 
-**Now the top question, and cheap.** Below the crossover the branch gets 15.9 to
-32.4% where Belady gets 32.0 to 54.1%. Belady is offline and therefore not a
-target, but the *shape* of the gap is informative: is the remaining loss
-concentrated in a few cold layers, or spread evenly?
+**New, from EXP-0002.** The cyclic-distance victim (Finding 7) is switched off at
+and above the crossover along with the sampling it rides on. But it *would* help
+there: it turns the pure-frequency policy's clear loss against upstream
+(-1.75 to -3.08 points) into a wash - **+0.42** at 645 MiB and **+0.35** at 1024,
+then -1.43 at 2048 and -1.17 at 3072.
 
-EXP-0001 added a reason to think it is **structured**: the share of the gap the
-branch closes is 50%, 56%, 58% at 256, 384, 528 MiB but drops to **27% at
-586 MiB**. A uniformly spread loss would not do that.
+It was not enabled because the screening rule requires the sign of the paired
+delta to agree on all four traces, and it does not at any of those sizes: 645
+goes +1.73, +0.96, -0.54, -0.48. Keeping it off also preserves the
+byte-identical control rows that every throughput claim here is read against,
+which is worth more than a wash.
 
-**To settle:** per-layer hit-rate and per-layer reuse-distance breakdown.
-`trace_stats.py` reports skew averaged over layers; a per-layer version is a
-small addition. **No GPU time, and the traces are now committed** in
-`research/results/experiments/EXP-0001/`.
+**To settle:** more traces. Four is too few to resolve a 0.4-point effect when
+the between-trace spread is 4 to 7 points. Ten to twenty traces across more topic
+types would do it, and collecting them is cheap - EXP-0001 took 4 minutes for
+four.
 
-**Why it matters:** it decides between ROADMAP R2's three candidates. If the loss
-is concentrated, per-layer budgets (candidate 1) are the lever; if it is spread,
-a better victim score (candidate 2) is. R2 should start here.
+**Why it matters:** modestly. The upside is ~0.4 points at two cache sizes. The
+real reason to ask is that it would remove a special case rather than add one: if
+the distance term were unconditionally safe, the policy would be "always sample,
+always weight by distance" with the crossover switch only selecting
+`max_protected`. That is a simpler story to take upstream than the current
+two-regime one.
+
+## Q2 - How much of the Belady gap is actually reachable online? SETTLED IN PART
+
+**EXP-0002 answered the shape question.** The gap to Belady is **near-uniform
+across layers** (14.49 to 27.50 points at 528 MiB, stdev 3.23; the worst 8 of 39
+layers hold 24.7% of it against 20.5% for a uniform spread), while the per-layer
+hit rate varies hugely (1.84% to 49.04%) and is almost perfectly explained by
+routing skew (r = +0.979 against top8 share).
+
+That ruled out per-layer slot budgets and pointed at a better victim score, which
+EXP-0002 then built: see KNOWLEDGE_BASE.md Findings 7 and 8.
+
+**Still open:** how much of what remains is reachable. After EXP-0002 the policy
+closes 58 to 62% of the gap at 256 to 528 MiB, but Belady still gets 32.01%
+against 18.68% at 256 MiB. Both structural facts this project has found - routing
+skew and the cyclic sweep - are now exploited, so the next step needs a new
+source of information. Q7 is the only candidate with one.
 
 ## Q3 - Is the pinning gain real once page residency is controlled for?
 

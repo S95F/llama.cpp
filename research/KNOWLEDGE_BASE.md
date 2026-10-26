@@ -81,7 +81,9 @@ stands.
 ## Finding 3: a frequency-aware victim recovers 8.7 to 26.5 points below the crossover
 
 **Level 1.** Reproduced on hardware on both bases. It must be switched off above
-the crossover.
+the crossover. **Superseded in part by Finding 7**, which adds a distance term to
+the same victim and gains a further 1.74 to 2.94 points; the switch and
+everything else below are unchanged.
 
 The branch change (`3db731656`, about 45 lines inside the existing
 `moe_cache_slru`): the victim becomes **the least used of 16 uniformly sampled
@@ -187,6 +189,70 @@ the separately measured 5707.74 MiB exactly.
 These are generation-run prefills of a short prompt, not the `-p 512` sweep,
 which is still untabulated (OPEN_QUESTIONS.md Q8).
 
+## Finding 7: the layer sweep is cyclic, so the next use of a layer is known, not predicted
+
+**Level 1.** EXP-0002, hardware and simulator.
+
+Generation sweeps the layers of a cache group in order, so a layer visited `ago`
+calls back comes again in `m - ago` calls, where `m` is the group's layer count.
+The layer the sweep just passed is therefore **furthest** from its next use and
+the layer just ahead of the sweep is **nearest** - and the nearest is what plain
+LRU evicts first, which is the thrash of Finding 1 stated exactly.
+
+Weighting the sampled victim's use count by that distance (maximise `dist/use`,
+approximating Belady's "furthest next use" as
+`dist(layer) / P(expert picked at that layer)`) beats use count alone:
+
+| MiB | upstream | EXP-0000 policy | **with distance** | gain | traffic vs EXP-0000 |
+|---:|---:|---:|---:|---:|---:|
+| 256 | 0.00% | 13.40% | **16.34%** | +2.94 | -3.4% |
+| 384 | 0.00% | 21.32% | **23.16%** | +1.84 | -2.3% |
+| 528 | 1.04% | 27.53% | **29.30%** | +1.77 | -2.4% |
+| 586 | 20.93% | 29.64% | **31.38%** | +1.74 | -2.5% |
+| 645, 1024, 2048 | - | - | byte-identical | 0 | 0% |
+
+Sign-consistent on all four traces at all eight simulated sizes (+1.06 to +2.73).
+Costs 320 bytes for this model and no new tuning constant: the distance comes
+from the group's layer count, which the cache already knows.
+
+It is kept **off above the crossover** even though it helps there, because the
+gain is a wash rather than a sign-consistent win and inertness above the
+crossover is what the control rows depend on. See OPEN_QUESTIONS.md Q10.
+
+Correctness is independent of the cyclic assumption: in a non-cyclic order
+(prefill) `dist` becomes an arbitrary but bounded weight, and the "cannot evict
+what this request needs" rule and the LRU fall back are untouched. Only the
+quality of the choice degrades.
+
+## Finding 8: layers differ enormously in cacheability, and the policy already tracks it
+
+**Level 1.** EXP-0002, from the per-layer breakdown at 528 MiB over four traces.
+
+Per-layer hit rate under the shipping policy ranges **1.84% to 49.04%** (stdev
+10.69) and is almost perfectly explained by that layer's routing skew:
+
+| pair | Pearson r |
+|---|---:|
+| top8 share vs hit rate | **+0.979** |
+| top64 share vs hit rate | +0.944 |
+| distinct experts vs hit rate | **-0.924** |
+| top64 share vs gap to Belady | -0.218 |
+
+The earliest layers are nearly uncacheable: layer 0 routes over 236 of 256
+experts with 13.3% from its hottest 8 and gets 1.84%, while layer 20 takes 95.0%
+from its hottest 64 and gets 49.04%.
+
+**The gap to Belady, by contrast, is near-uniform** (14.49 to 27.50, stdev 3.23;
+the worst 8 of 39 layers hold 24.7% of it against 20.5% for a uniform spread).
+Two consequences:
+
+1. **Per-layer slot budgets are not the lever.** A shared pool with a
+   frequency-scored victim already allocates slots by cacheability - that is what
+   `r = +0.979` means - so there is little left for an explicit budget to win.
+2. The residual loss is a **timing** loss shared by every layer, not an
+   allocation loss concentrated in some. That is what pointed at Finding 7 and is
+   why it worked.
+
 ## Finding 6: a large gap to offline optimal remains everywhere
 
 **Level 1** (simulated; the simulator is validated to exact hit and fill counts
@@ -194,19 +260,24 @@ against llama.cpp on both bases).
 
 Belady at the same slot count, re-measured on `d854d98b` by EXP-0001:
 
-| cache MiB | upstream | branch | Belady | gap closed | Belady on `78a8ae1` |
-|---:|---:|---:|---:|---:|---:|
-| 256 | 0.00% | 15.94% | 32.01% | 50% | 31.86% |
-| 384 | 0.00% | 24.17% | 43.51% | 56% | 43.35% |
-| 528 | 1.18% | 30.42% | 51.65% | 58% | 51.53% |
-| 586 | 24.54% | 32.42% | 54.07% | 27% | 53.93% |
-| 645 | 35.89% | 35.89% | 56.31% | 0% | not tabulated |
-| 1024 | 44.67% | 44.67% | 64.96% | 0% | 64.74% |
-| 2048 | 61.85% | 61.85% | 77.48% | 0% | 77.30% |
+Simulated, mean of four traces. "branch" is EXP-0000's policy, "+dist" adds
+Finding 7:
 
-The branch closes 50 to 58% of the gap at 256 to 528 MiB, 27% at 586, and none
-of it above the crossover. This is the headroom a profile-driven resident hot set
-(#30594) aims at, and ROADMAP R2 targets.
+| cache MiB | upstream | branch | **+dist** | Belady | gap closed by +dist | Belady on `78a8ae1` |
+|---:|---:|---:|---:|---:|---:|---:|
+| 256 | 0.00% | 15.94% | **18.68%** | 32.01% | 58% | 31.86% |
+| 384 | 0.00% | 24.17% | **26.21%** | 43.51% | 60% | 43.35% |
+| 528 | 1.18% | 30.42% | **32.33%** | 51.65% | 62% | 51.53% |
+| 586 | 24.54% | 32.42% | **34.29%** | 54.07% | 33% | 53.93% |
+| 645 | 35.89% | 35.89% | 35.89% | 56.31% | 0% | not tabulated |
+| 1024 | 44.67% | 44.67% | 44.67% | 64.96% | 0% | 64.74% |
+| 2048 | 61.85% | 61.85% | 61.85% | 77.48% | 0% | 77.30% |
+
+With the distance term the policy closes 58 to 62% of the gap at 256 to 528 MiB,
+33% at 586, and none of it above the crossover where it is inert by design.
+A large gap remains everywhere - Belady still gets 32.01% where the policy gets
+18.68% at 256 MiB. This is the headroom a profile-driven resident hot set
+(#30594) aims at.
 
 ---
 

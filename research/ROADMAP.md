@@ -4,7 +4,7 @@ Prioritized optimization opportunities. Reordered after every experiment, not
 followed blindly. Each item carries an estimate of gain, complexity, risk and
 cost, and names the evidence that motivates it.
 
-Last reprioritized: 2026-10-26, after EXP-0001.
+Last reprioritized: 2026-10-26, after EXP-0002.
 
 ## Done
 
@@ -15,39 +15,73 @@ traces; every simulated figure reproduces within +0.45 points and no ranking
 changed. Raw results committed. This unblocked R2 and R3, and it added the paired
 per-trace screening rule that both must now use (BENCHMARKS.md).
 
+### R2 - Close more of the Belady gap below the crossover
+
+**EXP-0002, Adopt.** Candidate 2 (frequency plus position in the sweep), chosen
+by the Q2 per-layer analysis rather than guessed. Weighting the sampled victim by
+the known cyclic distance to its layer's next visit gains **+1.74 to +2.94 points**
+of hit rate on hardware and a further **2.3 to 3.4%** of PCIe traffic, is
+sign-consistent on all four traces at all eight simulated sizes, stays
+byte-identical above the crossover, and passed the correctness gate 8 of 8.
+KNOWLEDGE_BASE.md Findings 7 and 8.
+
+Candidate 1 (per-layer slot budgets) was **ruled out by measurement**: the
+shared pool with a frequency-scored victim already allocates by cacheability
+(top8 share vs per-layer hit rate, r = +0.979). Candidate 3 (admission control)
+remains unexplored but EXP-0001 lowered its expected value.
+
 ## Priority 1
 
-### R2 - Close more of the Belady gap below the crossover
+### R6 - Raise the sample count below the crossover
 
 | | |
 |---|---|
-| Motivated by | Finding 6, re-measured by EXP-0001: the branch closes 50 to 58% of the Belady gap at 256 to 528 MiB but only **27% at 586 MiB**, and 0% above the crossover |
-| Hypothesis | Below one token's experts, a victim that combines frequency with the known cyclic structure of the sweep beats frequency alone, because the access pattern is not an arbitrary skewed stream - the next access to layer `il` is almost exactly one token away. |
-| Falsifiable by | No candidate whose paired per-trace delta against `ramp-s16-age8` has the same sign on all four traces at 256 to 586 MiB. |
-| Expected gain | Belady leaves 16 to 27 points on the table below the crossover. Half of that would be a large win at the measured near-linear bytes-to-tokens conversion. Realistically less: Belady is offline. |
-| Complexity | Medium. Sampling already exists; a structure-aware score is a change inside the same function. |
-| Risk | Medium. Must stay inert above the crossover and must not change output. |
-| Cost | Low - the simulator is validated and screens candidates with no GPU time. |
+| Motivated by | EXP-0002's screen: `dist s32` beats `dist s16` by +0.39 to +0.87, sign-consistent on all four traces at 256 to 645 MiB |
+| Hypothesis | Sampling 32 slots instead of 16 is a free gain below the crossover, where the policy is already active. |
+| Falsifiable by | The hardware gain not matching the simulated one within the 0.7 to 0.8 point RNG margin, or a measurable cost in the eviction path. |
+| Expected gain | +0.39 to +0.87 points of hit rate, so roughly another 0.5 to 1% of traffic. Small but already measured. |
+| Complexity | **One constant.** `n_sample = 16` becomes 32 in the sub-crossover branch. |
+| Risk | Low. The eviction loop does twice the sampling work; EXP-0002 argued that cost is negligible against the traffic but did not measure it, and at 32 samples it is worth a look. |
+| Cost | Very low - the simulator screen is already done. |
+
+The cheapest remaining item, and the only one whose gain is already measured.
+Ranked first for that reason, not because it is the largest.
+
+### R2b - Close the rest of the Belady gap
+
+| | |
+|---|---|
+| Motivated by | Finding 6 after EXP-0002: the policy now closes 58 to 62% of the gap at 256 to 528 MiB, but Belady still gets 32.01% where it gets 18.68% at 256 MiB |
+| Hypothesis | None formed yet. The two structural facts available (routing skew, cyclic sweep) are both now exploited, so the next candidate needs a new source of information. |
+| Falsifiable by | n/a until a hypothesis exists. |
+| Expected gain | 13 points of hit rate remain at 256 MiB, but the easy structure is spent. |
+| Complexity | Unknown. |
+| Risk | - |
+| Cost | Low to screen, once there is something to screen. |
 
 **Screening rule, from EXP-0001:** compare paired per trace and require the sign
 of the delta to agree on all four traces. One policy varies by 4.2 to 7.3 points
 between traces, so a positive mean is not evidence.
 
-Concrete candidates, reordered after EXP-0001:
+Candidate status after EXP-0002:
 
-1. **Per-layer slot budgets.** The budget is currently split by cache group, not
-   by layer. **Do the Q2 per-layer breakdown first** - it is pure offline
-   analysis on the committed traces and it decides between this candidate and the
-   next. Promoted to first because EXP-0001 found the gap is *not* uniform across
-   cache sizes (27% closed at 586 against 58% at 528), which hints the loss is
-   structured rather than spread.
-2. **Frequency plus position in the sweep.** Prefer evicting an expert of a layer
-   the sweep has just passed, since it will not be read again for a whole token.
-3. **Admission control.** Do not admit a one-off expert at all. EXP-0001 sharpens
-   the case: S3-FIFO is a **wash** with the branch from 528 to 1024 MiB and only
-   beats it at 2048 MiB, where the branch is inert anyway and `slru-ramp` beats
-   S3-FIFO. So admission is worth isolating from the FIFO structure, but the
-   expected gain is smaller than EXP-0000 implied.
+1. **Per-layer slot budgets - ruled out.** The per-layer breakdown showed the
+   shared pool already allocates by cacheability (top8 share vs per-layer hit
+   rate, r = +0.979) while the gap to Belady is near-uniform across layers
+   (stdev 3.23). There is little for an explicit budget to win. KNOWLEDGE_BASE.md
+   Finding 8.
+2. **Frequency plus position in the sweep - done,** EXP-0002, adopted.
+3. **Admission control - still open, expected value lowered.** EXP-0001 showed
+   S3-FIFO is a wash with the branch from 528 to 1024 MiB, so the admission idea
+   is worth isolating from the FIFO structure but is unlikely to be large.
+
+Two genuinely new sources of information, neither yet tried:
+
+4. **Layer-to-layer prediction** (OPEN_QUESTIONS.md Q7). Pure offline analysis on
+   committed traces. The only remaining candidate with an unexplored information
+   source.
+5. **Profile-driven resident hot set**, which is what upstream #30594 is building.
+   Prefer the upstream solution.
 
 Not a candidate: **full LFU**. EXP-0001 showed it wins only at 256 MiB, and not
 sign-consistently. See FAILED_APPROACHES.md.

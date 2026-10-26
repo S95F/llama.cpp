@@ -1,0 +1,5 @@
+commit  : a250f1793
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+free RAM: see run notes
+started : 2026-10-26T06:37:19Z
+finished: 2026-10-26T06:55:17Z

@@ -98,9 +98,34 @@ the LRU end and takes the first evictable slot.
 Seven commits on top of `d854d98ba`; see EXPERIMENTS.md for the index and
 `moe-bench/RESULTS.md` section 11 for upstream status.
 
+### Cyclic-distance victim score (EXP-0002)
+
+Builds on the sampled victim below. Inside the same `victim_sampled`:
+
+- `n_group_layers`, `n_calls`, and `last_call` (one `int64_t` per layer, 320
+  bytes for this model);
+- `plan()` records `last_call[il] = ++n_calls`;
+- `dist(il)` returns `max(1, n_group_layers - (n_calls - last_call[il]))`, the
+  calls until the sweep returns to that layer, and returns 1 when the group has a
+  single layer or the term is off;
+- the victim becomes the sampled slot with the largest `dist/use`, compared by
+  cross-multiplication to stay in integers, instead of the smallest `use`.
+
+The group's layer count comes from `g.layers.size()`, which the cache already
+has, so no tuning constant is added. `init()` takes it; passing 0 disables the
+term, which is how `LLAMA_MOE_CACHE_DIST=0` restores the previous policy.
+
+Why it is sound: the sweep visits a group's layers in order, so the next visit to
+a layer is known rather than predicted. Belady evicts the entry whose next use is
+furthest; approximating the time to the next use of expert `e` of layer `v` as
+`dist(v) / P(e picked at v)` and using the counter as a proxy for `P` gives the
+score above. Correctness does not depend on the sweep being cyclic - in any other
+order `dist` is just an arbitrary bounded weight, and the "cannot evict what this
+request needs" rule and the LRU fall back are untouched.
+
 ### Sampled least-used victim (`3db731656`)
 
-The research contribution. Inside `moe_cache_slru`:
+The first research contribution. Inside `moe_cache_slru`:
 
 - `n_sample` (default 16 when enabled, 0 = upstream behaviour), set at `init`
   **only when `g.n_slots < n_expert_token`** - the same condition upstream

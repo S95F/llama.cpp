@@ -12,10 +12,11 @@ with the missing test named).
 |---|---|---|---|---|---|
 | EXP-0000 | 2026-10-24 to 10-25 | Retrospective: the work that predates this research system | Adopt (eviction policy), Inconclusive (pinning) | hit rate +8.7 to +26.5 points below the crossover, PCIe traffic -11 to -27% | [EXP-0000.md](experiments/EXP-0000.md) |
 | EXP-0001 | 2026-10-26 | The simulator still matches llama.cpp on `d854d98b`, and the policy rankings are unchanged | **Adopt** (infrastructure; no perf claim) | simulator exact to hit and fill counts on 4/4 traces; every simulated figure within +0.45 points; no ranking changed | [EXP-0001.md](experiments/EXP-0001.md) |
+| EXP-0002 | 2026-10-26 | Weighting the sampled victim by the known cyclic distance to its layer's next visit beats use count alone | **Adopt** | hit rate +1.74 to +2.94 points on hardware, PCIe traffic a further -2.3 to -3.4%, sign-consistent on 4/4 traces at 8/8 sizes, byte-identical above the crossover, correctness 8/8 | [EXP-0002.md](experiments/EXP-0002.md) |
 
-Next: **EXP-0002**, ROADMAP.md item R2 - close more of the Belady gap below the
-crossover, starting with the per-layer breakdown that OPEN_QUESTIONS.md Q2 needs.
-Not started; awaiting authorization.
+Next: **EXP-0003**, ROADMAP.md item R6 - raise the sample count from 16 to 32
+below the crossover, whose +0.39 to +0.87 point gain is already screened. Not
+started; awaiting authorization.
 
 ## Dependency graph
 
@@ -27,8 +28,11 @@ EXP-0000  (frequency victim below the crossover; pinning inconclusive)
    |
    +-- EXP-0001 (R1: simulator revalidated on d854d98b; traces committed)  DONE
           |
-          +-- R2 (close the Belady gap)   <- screens with the validated simulator
-          |      +-- Q2 per-layer breakdown decides which R2 candidate
+          +-- EXP-0002 (R2: cyclic-distance victim score)  DONE
+          |      ^-- Q2 per-layer breakdown chose the candidate, ruled out budgets
+          |      |
+          |      +-- R6 (sample 32 instead of 16)   <- gain already screened
+          |      +-- Q10 (distance term above the crossover too?)  <- needs more traces
           +-- R3 (ramp the crossover switch)
           +-- Q7 (layer-to-layer prediction)  <- uses EXP-0001's traces
 ```
@@ -55,6 +59,8 @@ to a context it was never tested in.
 | Generation is bandwidth-bound | **This link** (PCIe 4.0 x8) against **this compute** (RTX 4060 Ti) and **this quantization**. A wider link or a slower GPU moves the balance. |
 | Pinning gains | **This host's RAM/working-set ratio** (31.11 GiB against 18.32 GiB). Permanently confounded here. |
 | Byte-identical inertness above the crossover | Construction, not measurement luck - the branch sets `n_sample = 0` there. Holds for any model. |
+| The cyclic-distance victim score (Finding 7) | **The layer sweep being cyclic**, which is a property of generation in any MoE model, so this is the least model-specific result here. It still rides on the same skew as Finding 3, since the score is `dist/use`. It does nothing for prefill, which bypasses the cache. |
+| Per-layer budgets being pointless (Finding 8) | **A shared slot pool per cache group** plus a frequency-scored victim. A model whose layers were in separate pools, or a policy without use counters, could still gain from explicit budgets. |
 
 ## Conventions
 

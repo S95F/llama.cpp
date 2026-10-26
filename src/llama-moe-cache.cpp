@@ -54,13 +54,20 @@ struct moe_cache_slru {
     int64_t n_fills   = 0;
     int64_t age_every = 0;     // halve the use counters after this many fills, so old popularity is forgotten
 
-    void init(int32_t n_layer, int32_t n_expert, int32_t n_slots, int32_t max_protected, int32_t n_sample) {
+    // generation sweeps the layers of a group in order, so the next use of a layer is known, not predicted
+    int32_t n_group_layers = 0;
+    int64_t n_calls = 0;
+    std::vector<int64_t> last_call; // [n_layer] call this layer was last planned at, -1 if never
+
+    void init(int32_t n_layer, int32_t n_expert, int32_t n_slots, int32_t max_protected, int32_t n_sample, int32_t n_group_layers) {
         this->n_expert = n_expert;
         this->n_slots  = n_slots;
         this->max_protected = max_protected;
         this->n_sample = n_sample;
+        this->n_group_layers = n_group_layers;
         if (n_sample > 0) {
             use.assign((size_t) n_layer*n_expert, 0);
+            last_call.assign(n_layer, -1);
             age_every = 8*(int64_t) n_slots;
         }
         slot_map.assign(n_layer, nullptr);
@@ -113,7 +120,19 @@ struct moe_cache_slru {
         }
     }
 
-    // the least used of n_sample random slots, -1 if none of them can be evicted
+    // calls until the sweep comes back to layer il
+    // the layer the sweep just passed is the furthest from its next use, the one just ahead of it the nearest
+    int64_t dist(int32_t il) const {
+        if (n_group_layers <= 1) {
+            return 1; // a single layer, or the term is off: the victim is scored by use count only
+        }
+        if (last_call[il] < 0) {
+            return n_group_layers;
+        }
+        return std::max<int64_t>(1, n_group_layers - (n_calls - last_call[il]));
+    }
+
+    // of n_sample random slots, the one whose expert is furthest from its next use, -1 if none of them can be evicted
     // a cache below one token's experts thrashes under LRU: the sweep over the layers evicts every expert before the next token reads it again
     int32_t victim_sampled(int32_t il) {
         if (++n_fills % age_every == 0) {
@@ -122,8 +141,9 @@ struct moe_cache_slru {
             }
         }
 
-        int32_t  best     = -1;
-        uint32_t best_use = 0;
+        int32_t best   = -1;
+        int64_t best_d = 0;
+        int64_t best_u = 0;
         for (int32_t i = 0, n = 0; i < 4*n_sample && n < n_sample; ++i) {
             rng = rng*1664525u + 1013904223u;
             const int32_t s   = (int32_t) (rng % (uint32_t) n_slots);
@@ -134,9 +154,14 @@ struct moe_cache_slru {
             if (key < 0) {
                 return s;
             }
-            if (best < 0 || use[key] < best_use) {
-                best     = s;
-                best_use = use[key];
+            // time to the next use of this expert is about dist(layer) / how often the layer picks it,
+            // so take the largest dist/use, compared as a ratio to keep it in integers
+            const int64_t d = dist(key / n_expert);
+            const int64_t u = (int64_t) use[key] + 1;
+            if (best < 0 || d*best_u > best_d*u) {
+                best   = s;
+                best_d = d;
+                best_u = u;
             }
             n++;
         }
@@ -187,6 +212,9 @@ struct moe_cache_slru {
                     use[(size_t) il*n_expert + ids[i]]++;
                 }
             }
+        }
+        if (!last_call.empty()) {
+            last_call[il] = ++n_calls;
         }
         if (uniq.size() > (size_t) n_slots) {
             return false;
@@ -475,6 +503,11 @@ struct llama_moe_cache::impl {
             if (const char * env = getenv("LLAMA_MOE_CACHE_SAMPLE")) {
                 n_sample = std::clamp(atoi(env), 0, g.n_slots);
             }
+            // LLAMA_MOE_CACHE_DIST=0 scores the victim by use count only, for A/B measurement
+            bool use_dist = true;
+            if (const char * env = getenv("LLAMA_MOE_CACHE_DIST")) {
+                use_dist = atoi(env) != 0;
+            }
             // grow the protected fraction from zero at 1x to one half at 1.8x the experts used by one token
             const double cache_ratio = (double) g.n_slots/n_expert_token;
             const double ramp_progress = std::clamp((cache_ratio - 1.0)/0.8, 0.0, 1.0);
@@ -485,7 +518,7 @@ struct llama_moe_cache::impl {
                     max_protected = g.n_slots/2;
                 }
             }
-            g.slru.init(model.layers.size(), n_expert, g.n_slots, max_protected, n_sample);
+            g.slru.init(model.layers.size(), n_expert, g.n_slots, max_protected, n_sample, use_dist ? g.layers.size() : 0);
             n_tensors[g.id] += g.ref.size()*(1 + g.layers.size());
             n_tensors_host  += g.layers.size();
         }
