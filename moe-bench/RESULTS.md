@@ -6,6 +6,10 @@ machine with one model; read the Limitations section before trusting a number.
 Research material, not an upstream submission. `src/` and `tools/` changes are
 split per topic in the branch history; see "Upstream status" at the end.
 
+This file stays the primary record for everything measured so far. The ongoing
+research record lives in [`research/`](../research/); start at
+[`research/STATE.md`](../research/STATE.md).
+
 Sections 1 to 11 are the original measurements, taken with the branch based on
 upstream `78a8ae1`. The branch was later rebased onto `d854d98b`; section 12
 re-runs them there and reports which numbers moved and why.
