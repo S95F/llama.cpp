@@ -17,6 +17,18 @@ goes +1.73, +0.96, -0.54, -0.48. Keeping it off also preserves the
 byte-identical control rows that every throughput claim here is read against,
 which is worth more than a wash.
 
+**EXP-0003 added the first hardware datapoint**, incidentally: because
+`LLAMA_MOE_CACHE_SAMPLE` also defeats the crossover switch, its `s16` arm at 1024
+and 2048 MiB *is* this configuration.
+
+| MiB | forced sampling + distance | inert (shipping) | delta | simulated |
+|---:|---:|---:|---:|---:|
+| 1024 | 43.46% | 41.36% | **+2.10** | +2.12 |
+| 2048 | 61.23% | 61.38% | -0.15 | -0.36 |
+
+The 1024 MiB row matches the simulator to **0.02 points**, so the effect is real
+on hardware and not a simulator artifact. That raises the value of settling this.
+
 **To settle:** more traces. Four is too few to resolve a 0.4-point effect when
 the between-trace spread is 4 to 7 points. Ten to twenty traces across more topic
 types would do it, and collecting them is cheap - EXP-0001 took 4 minutes for

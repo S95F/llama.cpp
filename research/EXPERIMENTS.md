@@ -13,10 +13,10 @@ with the missing test named).
 | EXP-0000 | 2026-10-24 to 10-25 | Retrospective: the work that predates this research system | Adopt (eviction policy), Inconclusive (pinning) | hit rate +8.7 to +26.5 points below the crossover, PCIe traffic -11 to -27% | [EXP-0000.md](experiments/EXP-0000.md) |
 | EXP-0001 | 2026-10-26 | The simulator still matches llama.cpp on `d854d98b`, and the policy rankings are unchanged | **Adopt** (infrastructure; no perf claim) | simulator exact to hit and fill counts on 4/4 traces; every simulated figure within +0.45 points; no ranking changed | [EXP-0001.md](experiments/EXP-0001.md) |
 | EXP-0002 | 2026-10-26 | Weighting the sampled victim by the known cyclic distance to its layer's next visit beats use count alone | **Adopt** | hit rate +1.74 to +2.94 points on hardware, PCIe traffic a further -2.3 to -3.4%, sign-consistent on 4/4 traces at 8/8 sizes, byte-identical above the crossover, correctness 8/8 | [EXP-0002.md](experiments/EXP-0002.md) |
+| EXP-0003 | 2026-10-26 | Sampling 32 slots instead of 16 is a free gain below the crossover | **Adopt** | hit rate +0.53 to +0.86 points, traffic -0.76 to -1.12%, within 0.18 of the simulated prediction, byte-identical above the crossover, correctness 8/8 on a new base | [EXP-0003.md](experiments/EXP-0003.md) |
 
-Next: **EXP-0003**, ROADMAP.md item R6 - raise the sample count from 16 to 32
-below the crossover, whose +0.39 to +0.87 point gain is already screened. Not
-started; awaiting authorization.
+Next: **EXP-0004**, OPEN_QUESTIONS.md **Q6** - whether the host-to-device copy is
+actually overlapped with compute. Not started; awaiting authorization.
 
 ## Dependency graph
 
@@ -31,7 +31,7 @@ EXP-0000  (frequency victim below the crossover; pinning inconclusive)
           +-- EXP-0002 (R2: cyclic-distance victim score)  DONE
           |      ^-- Q2 per-layer breakdown chose the candidate, ruled out budgets
           |      |
-          |      +-- R6 (sample 32 instead of 16)   <- gain already screened
+          |      +-- EXP-0003 (R6: 32 sampled slots)  DONE
           |      +-- Q10 (distance term above the crossover too?)  <- needs more traces
           +-- R3 (ramp the crossover switch)
           +-- Q7 (layer-to-layer prediction)  <- uses EXP-0001's traces

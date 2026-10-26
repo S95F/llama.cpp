@@ -1,0 +1,5 @@
+commit  : dabb2b026 plus the uncommitted n_sample = 32
+base    : a4699400e
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+started : 2026-10-26T15:13:10Z
+finished: 2026-10-26T15:21:35Z

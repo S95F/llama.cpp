@@ -203,17 +203,39 @@ Weighting the sampled victim's use count by that distance (maximise `dist/use`,
 approximating Belady's "furthest next use" as
 `dist(layer) / P(expert picked at that layer)`) beats use count alone:
 
-| MiB | upstream | EXP-0000 policy | **with distance** | gain | traffic vs EXP-0000 |
-|---:|---:|---:|---:|---:|---:|
-| 256 | 0.00% | 13.40% | **16.34%** | +2.94 | -3.4% |
-| 384 | 0.00% | 21.32% | **23.16%** | +1.84 | -2.3% |
-| 528 | 1.04% | 27.53% | **29.30%** | +1.77 | -2.4% |
-| 586 | 20.93% | 29.64% | **31.38%** | +1.74 | -2.5% |
-| 645, 1024, 2048 | - | - | byte-identical | 0 | 0% |
+| MiB | upstream | EXP-0000 policy | with distance | **+ 32 samples** | total gain | traffic vs EXP-0000 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 256 | 0.00% | 13.40% | 16.34% | **17.00%** | +3.60 | -4.1% |
+| 384 | 0.00% | 21.32% | 23.16% | **24.03%** | +2.71 | -3.4% |
+| 528 | 1.04% | 27.53% | 29.30% | **29.96%** | +2.43 | -3.4% |
+| 586 | 20.93% | 29.64% | 31.38% | **31.91%** | +2.27 | -3.2% |
+| 645, 1024, 2048 | - | - | byte-identical | byte-identical | 0 | 0% |
 
 Sign-consistent on all four traces at all eight simulated sizes (+1.06 to +2.73).
 Costs 320 bytes for this model and no new tuning constant: the distance comes
 from the group's layer count, which the cache already knows.
+
+**Sample count (EXP-0003).** Raising the sampled slots from 16 to 32 adds +0.53
+to +0.86 of the above. The curve saturates near 48 to 64 - marginal gain per
+doubling is +1.40 (8->16), +0.62 (16->32), +0.21 (32->64), **-0.04** (64->96) -
+and 32 was chosen as three quarters of the gain for half the work. Sampling
+nearly the whole cache still beats exact LFU by over 3 points at 256 MiB, so the
+distance term, not sampling breadth, is what avoids the full-LFU behaviour
+FAILED_APPROACHES.md rejects.
+
+The default is **not** clamped to `n_slots`. The small cache groups hold only 9
+to 22 slots below the crossover, and oversampling them with repeats raises
+coverage rather than wasting work (16 draws from 9 slots cover about 83% of them
+against 63% for 9 draws). Clamping is the obvious optimization and would make the
+policy slightly worse. Note that `LLAMA_MOE_CACHE_SAMPLE` *does* clamp, so the
+A/B toggle is not exactly the shipping policy on a small group; EXP-0003 bounded
+that asymmetry at 0.02 points.
+
+**Above the crossover the distance term would help, and is still switched off.**
+Forced on, hardware gives **+2.10** points at 1024 MiB and -0.15 at 2048
+(simulator: +2.12 and -0.36). It is not shipped because the gain is not
+sign-consistent across the four traces and because inertness there is what the
+control rows depend on. OPEN_QUESTIONS.md Q10.
 
 It is kept **off above the crossover** even though it helps there, because the
 gain is a wash rather than a sign-consistent win and inertness above the
@@ -327,6 +349,21 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
   is 4.2 to 7.3 points, which is larger than several of the differences being
   compared, so a positive mean is not evidence. Full LFU at 256 and 384 MiB
   would pass a mean test while three of four traces disagree with it.
+
+## Standing practice: check the router after every rebase
+
+**Level 1.** A base change can perturb the router's top-8, which changes the
+generated text and therefore invalidates the traces - EXP-0001 spent a whole
+iteration establishing that after the `78a8ae1` to `d854d98b` move.
+
+There is a one-run check. **Run B1 at 2048 MiB and compare against
+`61.38% / 58033.62 MiB`.** Nothing samples at that size, so the figure is fully
+deterministic; if it reproduces, the traces are still valid.
+
+Done after the move to `a4699400e` (33 upstream commits, EXP-0003): **exact at
+both 1024 and 2048 MiB**, so that base did *not* move the router and no
+re-collection was needed. Two bases have now been checked this way, with
+opposite answers, which is why the check is worth its one run.
 
 ## Resolved: the simulated tables now hold on the current base
 

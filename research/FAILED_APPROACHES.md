@@ -195,6 +195,6 @@ like obvious low-hanging fruit. It is **deliberate upstream**: ubatches above
 of a layer and would evict the generation hot set.
 
 Upstream PR #30594 is already attacking this properly (profile prefilling and
-zero-upload inference). ROADMAP R6 says to **prefer the upstream solution** and
+zero-upload inference). ROADMAP R9 says to **prefer the upstream solution** and
 revisit only if it stalls. Duplicating it would be both wasted work and a
 guaranteed upstream conflict.

@@ -37,7 +37,32 @@ LLAMA_MOE_CACHE_SAMPLE=$sample ./build/bin/llama-completion \
 arm. Sweep `mib` over `384,528,586,645,1024,2048`. 255 tokens are generated after
 the first.
 
-### Reference, base `d854d98b` (current)
+### Reference, base `a4699400e` (current)
+
+Source: EXP-0003, `research/results/experiments/EXP-0003/b1.csv`. The shipping
+policy is the sampled distance-weighted victim with 32 samples.
+
+| cache MiB | upstream | shipping | previous (16 samples) |
+|---:|---:|---:|---:|
+| 256 | 0.00% | **17.00%** / 120494.19 MiB | 16.36% |
+| 384 | 0.00% | **24.03%** / 110250.28 MiB | 23.17% |
+| 528 | 1.04% | **29.96%** / 101622.50 MiB | 29.30% |
+| 586 | 20.93% | **31.91%** / 98790.82 MiB | 31.38% |
+| 1024 | 41.36% | 41.36% / 87882.56 MiB | byte-identical |
+| 2048 | 61.38% | 61.38% / 58033.62 MiB | byte-identical |
+
+**The 2048 MiB row is the standard rebase check.** Nothing samples there, so it
+is fully deterministic: if it reproduces `61.38% / 58033.62 MiB` the traces are
+still valid for the new base. It has reproduced exactly across `d854d98b` and
+`a4699400e`.
+
+Caution on the A/B toggle: `LLAMA_MOE_CACHE_SAMPLE` clamps to `g.n_slots` while
+the automatic path does not, so on a group with fewer slots than the requested
+count the toggle is not exactly the shipping policy. EXP-0003 bounded the
+difference at 0.02 points, and it is zero wherever the count is below the
+group's slot count.
+
+### Reference, base `d854d98b`
 
 Source: `moe-bench/RESULTS.md` section 12.
 

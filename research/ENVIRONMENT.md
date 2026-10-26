@@ -102,6 +102,7 @@ Other models on disk, none MoE, available if a dense control is needed:
 |---|---|
 | Working dir | `C:\code\llama.cpp-fork` |
 | Branch | `moe-gpu-optimize`, tracking `origin/moe-gpu-optimize` |
+| Upstream base | `a4699400e` as of 2026-10-26 (was `d854d98b`, and `78a8ae1` before that) |
 | `origin` | `https://github.com/S95F/llama.cpp.git` (the fork) |
 | `upstream` | `https://github.com/ggml-org/llama.cpp.git` |
 
@@ -125,9 +126,10 @@ Recorded explicitly so no document implies these were tested.
   of expert weights plus a desktop session, so mmap page-cache misses contaminate
   any timing taken with little RAM free. This also makes the pinning result
   permanently confounded on this machine (KNOWLEDGE_BASE.md, Finding 4).
-- **`upstream` could not be fetched in this session** (`git fetch upstream`
-  exited 53, no network). `upstream/master` locally is `d854d98ba`, which equals
-  the branch base, so "no new upstream commits" here means "none known locally",
-  not "none exist".
+- **Fetching `upstream` may fail in a sandboxed session** (`git fetch upstream`
+  exited 53, no network, on 2026-10-25). When it does, "no new upstream commits"
+  means "none known locally", not "none exist". The base has since moved to
+  `a4699400e` through a merge the user performed outside these sessions, so check
+  the base rather than assuming it.
 - **Only one MoE model.** No second MoE architecture, expert count, or
   quantization has been tested.

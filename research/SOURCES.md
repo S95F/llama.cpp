@@ -27,7 +27,7 @@ Checked 2026-10-24 to avoid duplicating existing work. States not re-verified.
 | PR | what | relation to this work |
 |---|---|---|
 | #30848 | small-cache protected-set ramp, by another contributor | **Applied locally** as `0955c91b2` so the policy work could be measured on top of it. **Must not be resubmitted.** It explicitly leaves the small-cache policy alone ("performance may suffer") - that sentence is what motivated EXP-0000's main hypothesis |
-| #30594 | profile prefilling and zero-upload inference | Attacks Finding 5 (prefill is uncached) and the Belady gap of Finding 6. **Prefer this over a local reimplementation** - ROADMAP R6 |
+| #30594 | profile prefilling and zero-upload inference | Attacks Finding 5 (prefill is uncached) and the Belady gap of Finding 6. **Prefer this over a local reimplementation** - ROADMAP R9 |
 | #30966 | run missed experts on CPU | Orthogonal: changes what happens on a miss rather than the miss rate |
 | #29963 | pipeline parallelism with host experts | Orthogonal, needs multiple devices |
 | #30205 | per-device cache sizes | Orthogonal here - one GPU |

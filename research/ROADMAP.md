@@ -4,7 +4,7 @@ Prioritized optimization opportunities. Reordered after every experiment, not
 followed blindly. Each item carries an estimate of gain, complexity, risk and
 cost, and names the evidence that motivates it.
 
-Last reprioritized: 2026-10-26, after EXP-0002.
+Last reprioritized: 2026-10-26, after EXP-0003.
 
 ## Done
 
@@ -30,22 +30,20 @@ shared pool with a frequency-scored victim already allocates by cacheability
 (top8 share vs per-layer hit rate, r = +0.979). Candidate 3 (admission control)
 remains unexplored but EXP-0001 lowered its expected value.
 
-## Priority 1
-
 ### R6 - Raise the sample count below the crossover
 
-| | |
-|---|---|
-| Motivated by | EXP-0002's screen: `dist s32` beats `dist s16` by +0.39 to +0.87, sign-consistent on all four traces at 256 to 645 MiB |
-| Hypothesis | Sampling 32 slots instead of 16 is a free gain below the crossover, where the policy is already active. |
-| Falsifiable by | The hardware gain not matching the simulated one within the 0.7 to 0.8 point RNG margin, or a measurable cost in the eviction path. |
-| Expected gain | +0.39 to +0.87 points of hit rate, so roughly another 0.5 to 1% of traffic. Small but already measured. |
-| Complexity | **One constant.** `n_sample = 16` becomes 32 in the sub-crossover branch. |
-| Risk | Low. The eviction loop does twice the sampling work; EXP-0002 argued that cost is negligible against the traffic but did not measure it, and at 32 samples it is worth a look. |
-| Cost | Very low - the simulator screen is already done. |
+**EXP-0003, Adopt.** 16 -> 32 sampled slots: **+0.53 to +0.86 points** of hit
+rate on hardware and 0.76 to 1.12% less PCIe traffic, matching the simulated
+prediction within 0.18 points, byte-identical above the crossover, correctness
+8 of 8. One constant.
 
-The cheapest remaining item, and the only one whose gain is already measured.
-Ranked first for that reason, not because it is the largest.
+The screen also mapped the whole curve: marginal gain per doubling is +1.40
+(8->16), +0.62 (16->32), +0.21 (32->64), -0.04 (64->96), so it saturates near 48
+to 64. **32 deliberately leaves +0.21 on the table** for half the sampling work,
+per `AGENTS.md`'s preference for the simpler change. Revisiting it is a
+one-constant change. KNOWLEDGE_BASE.md Finding 7.
+
+## Priority 1
 
 ### R2b - Close the rest of the Belady gap
 
@@ -139,7 +137,7 @@ Blocked on acquiring a smaller MoE model. Recorded in OPEN_QUESTIONS.md as Q3.
 
 ## Priority 4 - not yet justified
 
-### R6 - Populate the cache from the prefill
+### R9 - Populate the cache from the prefill
 
 Finding 5 shows prompt processing pushes 5.7 GiB with zero reuse. Upstream
 #30594 is already attacking this, and the knowledge base records the bypass as

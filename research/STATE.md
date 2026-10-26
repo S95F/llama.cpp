@@ -4,16 +4,16 @@ Restart checkpoint. Read this first in every session.
 
 | | |
 |---|---|
-| Status | **`PAUSED`** |
-| Iteration | 3 in progress (EXP-0003) |
-| Experiment ID | EXP-0003 |
-| Phase | implementation done and built; **stopped at the game check, before benchmarking** |
-| Pause reason | **Game detected: Stellaris** (`D:\SteamLibrary\steamapps\common\Stellaris\stellaris.exe`), a real game executable under `steamapps`, not an idle launcher. Free host RAM had fallen to 9.41 GiB |
+| Status | `READY` |
+| Iteration | 3 complete (EXP-0003). Iteration 4 not started |
+| Experiment ID | none active; next is EXP-0004 |
+| Phase | awaiting user authorization (`go`) |
+| Pause reason | n/a - iteration 3 paused at the game check and finished on `go` |
 | Branch | `moe-gpu-optimize` |
-| HEAD | `83ffbea00` (the `no_alloc` merge fix) |
-| Upstream base | **`a4699400e`** - changed this iteration, see below |
-| Build | current with the working tree, including the uncommitted `n_sample = 32` |
-| Tree | **one uncommitted change**, see "Uncommitted work" |
+| Last code commit | `dabb2b026` (`n_sample = 32`), with `83ffbea00` before it (the `no_alloc` merge fix) |
+| Upstream base | **`a4699400e`** - moved from `d854d98b` this iteration |
+| Build | current with the source, built via `vcvars64` |
+| Tree | clean after the iteration 3 commit |
 
 ## Protocol
 
@@ -22,125 +22,50 @@ One user authorization (`go`) = exactly one iteration:
 Research -> Plan -> Code -> check for running games -> Benchmark and test ->
 Evaluate -> Document -> Commit -> STOP.
 
-While paused: do not monitor processes, do not recheck, do not schedule anything,
-do no background work, and **do not resume when the game closes**. Wait for the
-user.
+The game check happens after implementation and before any resource-intensive
+run. If a game is found: save state here, tell the user, stop everything, do not
+recheck, and do not resume when the game closes. `go` while paused resumes and
+overrides the check.
 
-`go` while paused = resume this iteration from here and finish it, overriding the
-game check. Do not restart research or implementation.
+## Last completed step
 
-## Uncommitted work
+**Iteration 3, EXP-0003, 2026-10-26: Adopt.** Raised the sampled-slot count from
+16 to 32 below the crossover - one constant.
 
-`src/llama-moe-cache.cpp`, **one line**, the whole of EXP-0003's change:
+- Hardware: hit rate **+0.53 to +0.86 points**, PCIe traffic **0.76 to 1.12%**
+  lower, matching the simulated prediction within 0.18 points.
+- **Byte-identical above the crossover**, verified against two earlier sessions'
+  recorded figures.
+- Correctness gate **8 of 8 byte-identical**, the first run on the new base.
+- The screen mapped the whole curve: marginal gain per doubling +1.40, +0.62,
+  +0.21, **-0.04**, saturating near 48 to 64. **32 leaves +0.21 on the table**
+  deliberately, for half the sampling work.
+- Found and fixed a build break from the user's upstream merge (`83ffbea00`):
+  `a4699400e` moved `no_alloc` off `llama_hparams`, and the branch's pinning line
+  still read `model.hparams.no_alloc`. A stale `.obj` had hidden it.
+- **Paused mid-iteration**: the game check found Stellaris running. Resumed on
+  `go`, by which time it had exited, so nothing was measured alongside it.
 
-```c
-// around line 501, in the branch taken when the cache is below one token's experts
-n_sample = 32;   // was 16
-```
+Cumulative against upstream, below the crossover, on hardware:
 
-The build already contains it. If the working tree is ever cleaned, re-apply that
-one constant - nothing else is pending.
+| MiB | upstream | EXP-0000 | EXP-0002 | **EXP-0003** |
+|---:|---:|---:|---:|---:|
+| 256 | 0.00% | 13.40% | 16.34% | **17.00%** |
+| 384 | 0.00% | 21.32% | 23.16% | **24.03%** |
+| 528 | 1.04% | 27.53% | 29.30% | **29.96%** |
+| 586 | 20.93% | 29.64% | 31.38% | **31.91%** |
 
-## The base changed mid-iteration
+### The base moved, and the router did not
 
-The user merged upstream master during this iteration. **Everything measured
-before now was on `d854d98b`; the base is now `a4699400e`.**
+The user merged 33 upstream commits mid-iteration. The one-run rebase check (B1
+at 2048 MiB) came out **exact** at both 1024 and 2048 MiB, so the router's top-8
+is unchanged and **the four committed traces remain valid for `a4699400e`**. No
+re-collection was needed, unlike the `78a8ae1` to `d854d98b` move that EXP-0001
+had to handle.
 
-New commits include `a4699400e llama : move no_alloc out of llama_hparams
-(#31141)`, which moved `no_alloc` off `llama_hparams` and threaded it through the
-`llama_moe_cache` constructor. The merge updated the signature and callers but
-missed the host-pinning line this branch added, so the file stopped compiling the
-moment it was touched. Fixed in `83ffbea00` by using the constructor argument
-that is already in scope.
-
-**This has the same consequence EXP-0001 was created to handle:** a base change
-can perturb the router's top-8, which changes the generated text and therefore
-the traces. So before quoting any simulated number on this base:
-
-- the four traces in `research/results/experiments/EXP-0001/` were collected on
-  `d854d98b`;
-- the simulator validation and the EXP-0003 knee screen below both rest on them;
-- EXP-0002's hardware figures were measured on `d854d98b`.
-
-There is a cheap check for whether the router moved, folded into the plan below.
-
-## Work already done this iteration
-
-The sample-count screen is **complete and its raw data is committed** (the
-`research` commit `e403ab429` holds `knee_prompt*.json` plus the new simulator
-policies). Simulated on the `d854d98b` traces, mean of four traces:
-
-| MiB | s8 | s16 | s24 | s32 | s48 | s64 | s96 | LFU | Belady |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 256 | 16.91 | 18.68 | 19.24 | 19.55 | 19.84 | 19.84 | 19.83 | 16.57 | 32.01 |
-| 384 | 24.63 | 26.21 | 26.71 | 26.92 | 27.10 | 27.16 | 27.14 | 22.53 | 43.51 |
-| 528 | 31.12 | 32.33 | 32.64 | 32.84 | 32.92 | 33.03 | 32.94 | 27.69 | 51.65 |
-| 586 | 33.24 | 34.29 | 34.54 | 34.68 | 34.78 | 34.80 | 34.78 | 29.45 | 54.07 |
-
-Marginal gain per doubling, averaged over sizes and traces: **s8->s16 +1.40,
-s16->s32 +0.62, s32->s64 +0.21, s64->s96 -0.04.** The curve saturates around
-s48 to s64.
-
-`s32` minus `s16` is **+0.39 to +0.87, sign-consistent on all four traces** at
-256 to 586 MiB, which is what EXP-0003 set out to confirm.
-
-**Why 32 and not 64**, which measures slightly better (+0.83 vs +0.62 average):
-32 captures three quarters of the available gain for half the sampling work, and
-`AGENTS.md` prefers the simpler change that does most of the job. The saturation
-data is recorded so the choice can be revisited; it is a one-constant change
-either way.
-
-Slots per cache group, computed this iteration and worth keeping:
-
-| MiB | group 0 (36 layers) | group 1 (1 layer) | group 2 (3 layers) |
-|---:|---:|---:|---:|
-| 256 | 124 | 2 | 9 |
-| 384 | 187 | 4 | 14 |
-| 528 | 258 | 6 | 20 |
-| 586 | 286 | 6 | 22 |
-| 645 | 315 | 7 | 25 |
-| 1024 | 502 | 12 | 40 |
-| 2048 | 1005 | 26 | 82 |
-
-Two things follow. Group 1 never reaches `n_expert_used = 8` below the crossover,
-which is why it is uncached and why layer 1 is missing from EXP-0002's per-layer
-table. And group 2 has only 9 to 22 slots there, so sampling 16 or 32 of them
-**oversamples with repeats** - which raises coverage rather than wasting work
-(16 draws from 9 slots cover about 83% of them against 63% for 9 draws), so the
-default is deliberately **not** clamped to `n_slots`.
-
-## Exact next action on `go`
-
-Resume EXP-0003 at the benchmark step. Implementation and build are done.
-
-1. **Re-check free host RAM and the game.** `go` overrides the game check, but
-   note in the record whether Stellaris was still running, because it competes
-   for RAM and the GPU and will distort any timing.
-2. **Hardware B1** with `research/results/experiments/EXP-0002/bench.sh` as the
-   model, pointing the arms at `LLAMA_MOE_CACHE_SAMPLE=16` against the new
-   default of 32, over 256, 384, 528, 586, plus 1024 and 2048 as inertness
-   controls. Both arms measured in the same session, so the paired comparison is
-   valid on the new base whatever the router did.
-3. **Fold in the base-change check, which is nearly free:** the 2048 MiB row
-   should reproduce `61.38% / 58033.62 MiB` exactly if the router is unchanged
-   from `d854d98b`. If it does not, say so - the committed traces then need
-   re-collecting before any simulated figure is quoted for `a4699400e`, and the
-   EXP-0003 screen above becomes provisional.
-4. Expect the hardware gain to match the simulated +0.39 to +0.87 within the 0.7
-   to 0.8 point RNG margin.
-5. **Watch the eviction path cost.** 32 samples is twice the work per fill, with
-   the draw cap rising from 64 to 128. EXP-0002 argued this is negligible against
-   the roughly 360 microseconds each 1.812 MiB upload takes, but neither
-   iteration has measured it.
-6. **Correctness gate B3** - mandatory, it is a source change.
-   `./moe-bench/check-correctness.sh <model>`.
-7. Then document EXP-0003 (`research/experiments/EXP-0003.md` is **not yet
-   written**), update KNOWLEDGE_BASE.md Finding 7, BENCHMARKS.md, ROADMAP.md
-   (R6), EXPERIMENTS.md, and commit the `n_sample` change on its own.
-
-Throughput: do not claim it. Free RAM was 9.41 GiB with the game running, far
-below the ~18 GiB where the floor is +-1.3%. EXP-0002's control row moved 6.9% at
-17 GiB free.
+**Make that check a standing step after every rebase**: B1 at 2048 MiB should
+reproduce `61.38% / 58033.62 MiB`. It costs one run and tells you whether every
+simulated figure is still quotable.
 
 ## Environment facts needed to run anything
 
@@ -164,15 +89,44 @@ Python is 3.13.1 at `/c/Python313/python`. Model:
 `C:\code\Codey\models\qwen3.6-35b\Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf`. See
 ENVIRONMENT.md.
 
-## Recommended experiment after EXP-0003
+## Exact next action on `go`
 
-- **Re-validate on `a4699400e`** if step 3 shows the router moved: re-collect the
-  four traces and re-run the simulator validation, as EXP-0001 did. This is now a
-  recurring cost of every base change and should be a standing step.
-- **OPEN_QUESTIONS.md Q6** - is the host-to-device copy actually overlapped with
-  compute? Still unmeasured, needs no new hardware, and would reprioritize the
-  roadmap if transfers turn out to be serialized.
-- **Q7** - layer-to-layer expert prediction, the only remaining policy candidate
-  with an unexploited information source. Pure analysis on committed traces.
-- **Q10** - whether the distance term should also run above the crossover; needs
-  more than four traces.
+Start **EXP-0004**: **OPEN_QUESTIONS.md Q6 - is the host-to-device copy actually
+overlapped with compute?**
+
+This is now the highest-value open question. Finding 4 concluded generation is
+bandwidth-bound on the copy and treated the derived 3.4 to 5.5 GB/s as a lower
+bound *because* compute overlaps the copies - but **that overlap has never been
+measured.** If transfers turn out to be serialized with compute, the lever is
+overlap rather than fewer bytes, and the whole roadmap reprioritizes. Three
+iterations of policy work have been spent cutting bytes on an unverified
+assumption.
+
+Start with the cheap version, which needs no new instrumentation:
+
+1. For each cache size, compare measured time per token against
+   `max(compute_time, bytes / measured_bandwidth)` and see which bound is active.
+   Compute time can be estimated from a cache size large enough that uploads are
+   small, or from `--moe-cache-mib 0` against a fully resident configuration.
+2. If that is ambiguous, add CUDA event timing around the upload in
+   `llama_moe_cache::copy` behind an env flag, in the style of the existing
+   `LLAMA_MOE_CACHE_LOG`, and compare the summed upload time against wall time
+   per token.
+3. No source change is needed for step 1, so **no correctness gate** until step 2
+   adds one.
+
+Note the hazard: this is a **timing** question on a host where throughput has
+been unresolvable for two iterations (control rows moving 4 to 7%). Prefer
+measures that are ratios within a single run over comparisons across runs, and
+state plainly if the host cannot answer it.
+
+Alternatives if Q6 looks unanswerable here: **Q7** (layer-to-layer prediction,
+pure offline analysis on committed traces, the only remaining policy candidate
+with an unexploited information source) or **Q10** (now has a +2.10 point
+hardware datapoint at 1024 MiB and needs only more traces, which are cheap -
+four took 4 minutes).
+
+## Pending benchmark commands
+
+None queued. `research/results/experiments/EXP-0003/bench.sh` is the current B1
+harness; point its arms at whatever two configurations an experiment compares.
