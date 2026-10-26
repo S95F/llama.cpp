@@ -498,7 +498,7 @@ struct llama_moe_cache::impl {
             int32_t n_sample = 0;
             if (g.n_slots < n_expert_token) {
                 LLAMA_LOG_WARN("%s: MoE cache is too small to hold the experts of one token for %zu layers, performance may suffer\n", __func__, g.layers.size());
-                n_sample = 16;
+                n_sample = 32;
             }
             // LLAMA_MOE_CACHE_SAMPLE sets the number of slots sampled, 0 restores plain LRU eviction
             if (const char * env = getenv("LLAMA_MOE_CACHE_SAMPLE")) {
