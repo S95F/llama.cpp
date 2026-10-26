@@ -628,7 +628,7 @@ struct llama_moe_cache::impl {
             }
         }
 
-        if (!model.hparams.no_alloc) {
+        if (!no_alloc) {
             pin_host_experts();
         }
     }
