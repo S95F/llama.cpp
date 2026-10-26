@@ -169,21 +169,52 @@ python moe-bench/trace_stats.py trace.csv --layout moe-bench/layout-*.json
 Policies implemented: `lru`, `slru50`, `slru-ramp`, `lfu`, `s3fifo`, `belady`,
 `ramp-freq4/8/16`, `lru-freq8`, `ramp-rand`, `lru-rand`.
 
-**Validation status: bit-exact on `78a8ae1`** (2048 MiB: simulator 60.82% /
-58867.3 MiB / 2044.1 MiB VRAM, llama.cpp 60.82% / 58867.26 / 2044.11).
-**Not yet validated on `d854d98b`** - that is ROADMAP item R1, and until it is
-done no simulated number may be quoted for the current base.
+**Validation status: validated on both bases.**
 
-Agreement margin when validated: measured hit rates land within 0.7 to 0.8 points
-of simulated ones, the residual being that the C++ uses a small LCG where the
-simulator uses Python's RNG, so the two draw different slot samples.
+- `78a8ae1`, one trace, 2048 MiB: simulator 60.82% / 58867.3 MiB / 2044.1 MiB
+  VRAM against llama.cpp 60.82% / 58867.26 / 2044.11.
+- **`d854d98b`, all four traces, 2048 MiB (EXP-0001): exact to the integer hit
+  and fill counts.** prompt 50092 / 31516, prompt_b 49846 / 31762, prompt_c
+  53248 / 28360, prompt_d 48715 / 32893, identical in both implementations.
+  Uploaded bytes and VRAM match to the printed precision.
+
+2048 MiB is the size used for validation because the branch is inert there, so
+the policy is fully deterministic and the agreement should be exact. **Below the
+crossover exact agreement is not expected**: the C++ uses a small LCG where the
+simulator uses Python's RNG, so the two draw different slot samples. EXP-0000
+measured that residual on hardware at 0.7 to 0.8 points.
+
+**Re-validate after every rebase.** The traces are base-specific even though the
+simulator is not: upstream's own commits can change the router's top-8 and
+therefore the generated text.
+
+### Screening rule for policy comparisons
+
+From EXP-0001. One policy's hit rate varies by **4.2 to 7.3 points between the
+four traces**, which is larger than several of the differences worth testing.
+Therefore:
+
+- compare policies **paired per trace**, not by their four-trace means;
+- require the **sign of the delta to agree on all four traces** before calling a
+  difference real.
+
+Full LFU at 256 and 384 MiB is the worked counter-example: its mean beats the
+branch at 256 by 0.63 points while three of the four traces go the other way.
 
 ## Raw results
 
 `research/results/baseline/` and `research/results/experiments/`. JSON or CSV,
 one directory per experiment ID, never overwritten.
 
+Committed so far:
+
+- `research/results/experiments/EXP-0001/` - the four `d854d98b` traces
+  (`trace_*.csv`, 10202 lines each), the cache counters (`telemetry_2048.txt`),
+  per-trace simulator output (`sim_validate_*.json`, `sim_sweep_*.json`), the
+  routing statistics (`trace_stats.txt`), and the two scripts that produced and
+  reduced them (`collect.sh`, `aggregate.py`).
+
 **Gap: nothing from the pre-`research/` work was preserved.**
-`moe-bench/.gitignore` excludes `out/` and `*.csv`, so every number in the
-reference tables above is traceable only to the prose of `moe-bench/RESULTS.md`,
-not to a raw file. Fixed going forward; the historical raw data is gone.
+`moe-bench/.gitignore` excludes `out/` and `*.csv`, so the `78a8ae1` reference
+tables above are traceable only to the prose of `moe-bench/RESULTS.md`, not to a
+raw file. Fixed from EXP-0001 onward; the historical raw data is gone.

@@ -1,0 +1,6 @@
+commit   : 2c0af642d
+base     : d854d98ba
+model    : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+cache    : 2048 MiB
+started  : 2026-10-26T06:12:29Z
+finished : 2026-10-26T06:16:33Z

@@ -1,0 +1,60 @@
+### prompt
+print_info: file type   = Q4_K - Medium
+print_info: file size   = 20.81 GiB (5.16 BPW) 
+llama_prepare_model_devices: using device CUDA0 (NVIDIA GeForce RTX 4060 Ti) (0000:01:00.0) - 7075 MiB free
+print_info: arch                  = qwen35moe
+print_info: n_layer               = 40
+print_info: n_expert              = 256
+print_info: n_expert_used         = 8
+print_info: n_expert_groups       = 0
+print_info: model type            = 35B.A3B
+print_info: model params          = 34.66 B
+impl:      CUDA0 MoE cache size =  2044.11 MiB for 18760.00 MiB of host experts
+llama_moe_cache: ubatch <= 8: hits = 50092, misses = 31516, hit rate = 61.38%, uploaded = 58033.62 MiB
+llama_moe_cache: large batches: 6315 uploads of uncached experts, 5707.74 MiB
+
+### prompt_b
+print_info: file type   = Q4_K - Medium
+print_info: file size   = 20.81 GiB (5.16 BPW) 
+llama_prepare_model_devices: using device CUDA0 (NVIDIA GeForce RTX 4060 Ti) (0000:01:00.0) - 7075 MiB free
+print_info: arch                  = qwen35moe
+print_info: n_layer               = 40
+print_info: n_expert              = 256
+print_info: n_expert_used         = 8
+print_info: n_expert_groups       = 0
+print_info: model type            = 35B.A3B
+print_info: model params          = 34.66 B
+impl:      CUDA0 MoE cache size =  2044.11 MiB for 18760.00 MiB of host experts
+llama_moe_cache: ubatch <= 8: hits = 49846, misses = 31762, hit rate = 61.08%, uploaded = 58497.38 MiB
+llama_moe_cache: large batches: 5904 uploads of uncached experts, 5153.51 MiB
+
+### prompt_c
+print_info: file type   = Q4_K - Medium
+print_info: file size   = 20.81 GiB (5.16 BPW) 
+llama_prepare_model_devices: using device CUDA0 (NVIDIA GeForce RTX 4060 Ti) (0000:01:00.0) - 7075 MiB free
+print_info: arch                  = qwen35moe
+print_info: n_layer               = 40
+print_info: n_expert              = 256
+print_info: n_expert_used         = 8
+print_info: n_expert_groups       = 0
+print_info: model type            = 35B.A3B
+print_info: model params          = 34.66 B
+impl:      CUDA0 MoE cache size =  2044.11 MiB for 18760.00 MiB of host experts
+llama_moe_cache: ubatch <= 8: hits = 53248, misses = 28360, hit rate = 65.25%, uploaded = 52297.39 MiB
+llama_moe_cache: large batches: 6462 uploads of uncached experts, 6065.68 MiB
+
+### prompt_d
+print_info: file type   = Q4_K - Medium
+print_info: file size   = 20.81 GiB (5.16 BPW) 
+llama_prepare_model_devices: using device CUDA0 (NVIDIA GeForce RTX 4060 Ti) (0000:01:00.0) - 7075 MiB free
+print_info: arch                  = qwen35moe
+print_info: n_layer               = 40
+print_info: n_expert              = 256
+print_info: n_expert_used         = 8
+print_info: n_expert_groups       = 0
+print_info: model type            = 35B.A3B
+print_info: model params          = 34.66 B
+impl:      CUDA0 MoE cache size =  2044.11 MiB for 18760.00 MiB of host experts
+llama_moe_cache: ubatch <= 8: hits = 48715, misses = 32893, hit rate = 59.69%, uploaded = 60505.34 MiB
+llama_moe_cache: large batches: 6978 uploads of uncached experts, 7003.48 MiB
+

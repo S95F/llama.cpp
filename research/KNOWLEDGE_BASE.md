@@ -51,17 +51,32 @@ cache slots / experts used by one token.
 ## Finding 2: routing is strongly skewed, so a small resident hot set pays
 
 **Level 1.** From `moe-bench/trace_stats.py` over four traces, averaged over
-layers (RESULTS.md section 4). Traces were collected on `78a8ae1`.
+layers. Re-measured on `d854d98b` by EXP-0001; the `78a8ae1` ranges are kept for
+comparison.
 
-| hottest k experts of a layer (of 256) | share of that layer's selections |
-|---:|---:|
-| 8 | 31 - 33% |
-| 16 | 46 - 47% |
-| 32 | 64 - 66% |
-| 64 | 83 - 85% |
+| hottest k experts of a layer (of 256) | `78a8ae1` | **`d854d98b`** | `prompt_d` alone |
+|---:|---:|---:|---:|
+| 8 | 31 - 33% | **25.9 - 33.2%** | 25.9% |
+| 16 | 46 - 47% | **39.1 - 46.8%** | 39.1% |
+| 32 | 64 - 66% | **57.0 - 65.7%** | 57.0% |
+| 64 | 83 - 85% | **79.1 - 85.1%** | 79.1% |
 
 The hot set exists; recency cannot find it under thrash, frequency can. This is
 the mechanism behind Finding 3.
+
+**The wider range is entirely `prompt_d`**, the multilingual translation task;
+the other three traces sit inside the old ranges. Even `prompt_d` is strongly
+skewed - 79.1% from the hottest 64 of 256 against 25% for uniform routing - and
+it is where the sampled victim beats full LFU by the widest margin. The cause is
+that greedy decode diverges between the two bases, so the traces cover
+**different generated text**, and a multilingual continuation drifts most. Do
+not requote the old narrow ranges.
+
+Token-to-token overlap within a layer, which is what rules out a previous-token
+prefetch, also shifted up slightly: **31.4 to 38.7%** at a lag of 1 token
+(`78a8ae1`: 31 to 37%) and **19.6 to 25.3%** at a lag of 8 (19 to 23%). Still far
+below the 79 to 85% the hottest 64 deliver, so FAILED_APPROACHES.md's rejection
+stands.
 
 ## Finding 3: a frequency-aware victim recovers 8.7 to 26.5 points below the crossover
 
@@ -154,23 +169,44 @@ and nothing populates the cache from the prefill. This is deliberate upstream:
 large batches touch most experts of a layer and would evict the generation hot
 set. Upstream PR #30594 attacks exactly this.
 
+EXP-0001 recorded the large-batch counters for all four prompts, which are all
+32 to 41 words. The cost is **not** proportional to prompt length alone:
+
+| prompt | words | large-batch uploads | MiB |
+|---|---:|---:|---:|
+| prompt (technical prose) | 41 | 6315 | 5707.74 |
+| prompt_b (C++ code) | 32 | 5904 | 5153.51 |
+| prompt_c (history summary) | 35 | 6462 | 6065.68 |
+| prompt_d (translation) | 37 | 6978 | 7003.48 |
+
+`prompt_d` costs 36% more than `prompt_b` for 5 more words, which is the same
+flatter routing that widened Finding 2's range: a prompt that touches more
+distinct experts pays more in the uncached prefill. The `prompt` row reproduces
+the separately measured 5707.74 MiB exactly.
+
+These are generation-run prefills of a short prompt, not the `-p 512` sweep,
+which is still untabulated (OPEN_QUESTIONS.md Q8).
+
 ## Finding 6: a large gap to offline optimal remains everywhere
 
-**Level 1** (simulated, validated bit-exact against llama.cpp on `78a8ae1`).
+**Level 1** (simulated; the simulator is validated to exact hit and fill counts
+against llama.cpp on both bases).
 
-Belady at the same slot count (RESULTS.md section 8):
+Belady at the same slot count, re-measured on `d854d98b` by EXP-0001:
 
-| cache MiB | upstream | branch | Belady |
-|---:|---:|---:|---:|
-| 256 | 0.00% | 15.77% | 31.86% |
-| 384 | 0.00% | 23.90% | 43.35% |
-| 528 | 1.17% | 29.98% | 51.53% |
-| 586 | 24.27% | 31.97% | 53.93% |
-| 1024 | 44.34% | 44.34% | 64.74% |
-| 2048 | 61.65% | 61.65% | 77.30% |
+| cache MiB | upstream | branch | Belady | gap closed | Belady on `78a8ae1` |
+|---:|---:|---:|---:|---:|---:|
+| 256 | 0.00% | 15.94% | 32.01% | 50% | 31.86% |
+| 384 | 0.00% | 24.17% | 43.51% | 56% | 43.35% |
+| 528 | 1.18% | 30.42% | 51.65% | 58% | 51.53% |
+| 586 | 24.54% | 32.42% | 54.07% | 27% | 53.93% |
+| 645 | 35.89% | 35.89% | 56.31% | 0% | not tabulated |
+| 1024 | 44.67% | 44.67% | 64.96% | 0% | 64.74% |
+| 2048 | 61.85% | 61.85% | 77.48% | 0% | 77.30% |
 
-The branch closes roughly half the gap below the crossover and none of it above.
-This is the headroom a profile-driven resident hot set (#30594) aims at.
+The branch closes 50 to 58% of the gap at 256 to 528 MiB, 27% at 586, and none
+of it above the crossover. This is the headroom a profile-driven resident hot set
+(#30594) aims at, and ROADMAP R2 targets.
 
 ---
 
@@ -209,21 +245,37 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
   15% lower. Record free RAM with every throughput number.
 - **Do not time with `llama-completion -v`.** The per-token debug logging hides
   the effect. Use `llama-bench`.
-- **The simulator is trustworthy but base-specific.** `moe-bench/moe_sim.py`
-  matched llama.cpp to the digit on `78a8ae1` (60.82% hit, 58867.3 vs
-  58867.26 MiB uploaded, 2044.1 vs 2044.11 MiB VRAM). Its traces have **not**
-  been re-collected on `d854d98b`.
+- **The simulator is trustworthy, and now validated on the current base.**
+  `moe-bench/moe_sim.py` matched llama.cpp to the digit on `78a8ae1` (60.82% hit,
+  58867.3 vs 58867.26 MiB uploaded, 2044.1 vs 2044.11 MiB VRAM). EXP-0001
+  re-validated it on `d854d98b` on **all four traces**, to the integer hit and
+  fill counts (prompt: 50092 / 31516 in both). Validation must be redone on any
+  future rebase: the traces are base-specific even though the code is not.
+- **Compare policies paired per trace, and require the sign to agree on all four
+  traces.** Level 1, from EXP-0001. The spread of one policy **between** traces
+  is 4.2 to 7.3 points, which is larger than several of the differences being
+  compared, so a positive mean is not evidence. Full LFU at 256 and 384 MiB
+  would pass a mean test while three of four traces disagree with it.
 
-## Open caveat on the current base
+## Resolved: the simulated tables now hold on the current base
 
-**Level 1.** Upstream's own commits between `78a8ae1` and `d854d98b` changed the
-router's top-8 at some positions: with `--moe-cache-mib 0`, where the cache is
-never constructed, the two bases generate different text from the same greedy
-decode. Consistent with `c49edf096` (fused FFN gate/up matmuls and GLU in MMQ)
-and `a55c16e4e` (fused MRoPE and set-rows) changing reduction order and therefore
-rounding, but intermediate commits were not built, so the attribution is **level
-4**. Consequence: every simulated table above still rests on `78a8ae1` traces.
-Re-collecting them is ROADMAP item R1.
+**Level 1.** EXP-0001 settled this. Upstream's own commits between `78a8ae1` and
+`d854d98b` changed the router's top-8 at some positions: with
+`--moe-cache-mib 0`, where the cache is never constructed, the two bases generate
+different text from the same greedy decode. Consistent with `c49edf096` (fused
+FFN gate/up matmuls and GLU in MMQ) and `a55c16e4e` (fused MRoPE and set-rows)
+changing reduction order and therefore rounding, but intermediate commits were
+not built, so the attribution is **level 4**.
+
+The four traces were re-collected on `d854d98b` and the simulator re-validated.
+**Every simulated figure in this document reproduces within +0.45 points**, every
+delta in the same direction, and no policy ranking changed. Traffic reductions
+reproduce within 0.4 points. The crossover did not move.
+
+Simulator agreement is now established more strongly than before: at 2048 MiB,
+where the branch is inert and the policy fully deterministic, the simulator
+reproduces llama.cpp's **integer hit and fill counts** on all four traces
+(prompt: 50092 / 31516 in both), not merely the ratios.
 
 Note that an expert-selection change does not move uploaded bytes at a 0% hit
 rate - every selected expert is uploaded, 8 per layer per token, and expert size

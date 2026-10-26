@@ -1,0 +1,76 @@
+
+=== research/results/experiments/EXP-0001/trace_prompt.csv: 40 layers, 255 tokens ===
+  experts touched      : 6065 of 10240 (59.2%)
+  selections served by the hottest k experts of a layer:
+    k=  8:  30.7%
+    k= 16:  46.3%
+    k= 32:  65.7%
+    k= 64:  85.1%
+  overlap with token t-1       :  31.4% of this token's experts were also used 1 token(s) ago
+  overlap with token t-2       :  27.2% of this token's experts were also used 2 token(s) ago
+  overlap with token t-4       :  21.8% of this token's experts were also used 4 token(s) ago
+  overlap with token t-8       :  19.6% of this token's experts were also used 8 token(s) ago
+  distinct experts per layer in   8 tokens:   34.7
+  distinct experts per layer in  32 tokens:   76.4
+  distinct experts per layer in 128 tokens:  131.1
+  experts of one token : 586 MiB
+  hottest  16 per layer    : 1172 MiB
+  hottest  32 per layer    : 2345 MiB
+  hottest  64 per layer    : 4690 MiB
+
+=== research/results/experiments/EXP-0001/trace_prompt_b.csv: 40 layers, 255 tokens ===
+  experts touched      : 6427 of 10240 (62.8%)
+  selections served by the hottest k experts of a layer:
+    k=  8:  33.2%
+    k= 16:  46.7%
+    k= 32:  63.8%
+    k= 64:  82.9%
+  overlap with token t-1       :  37.3% of this token's experts were also used 1 token(s) ago
+  overlap with token t-2       :  30.0% of this token's experts were also used 2 token(s) ago
+  overlap with token t-4       :  25.5% of this token's experts were also used 4 token(s) ago
+  overlap with token t-8       :  22.8% of this token's experts were also used 8 token(s) ago
+  distinct experts per layer in   8 tokens:   33.4
+  distinct experts per layer in  32 tokens:   74.8
+  distinct experts per layer in 128 tokens:  136.7
+  experts of one token : 586 MiB
+  hottest  16 per layer    : 1172 MiB
+  hottest  32 per layer    : 2345 MiB
+  hottest  64 per layer    : 4690 MiB
+
+=== research/results/experiments/EXP-0001/trace_prompt_c.csv: 40 layers, 255 tokens ===
+  experts touched      : 5901 of 10240 (57.6%)
+  selections served by the hottest k experts of a layer:
+    k=  8:  32.6%
+    k= 16:  46.8%
+    k= 32:  65.1%
+    k= 64:  85.0%
+  overlap with token t-1       :  38.7% of this token's experts were also used 1 token(s) ago
+  overlap with token t-2       :  31.4% of this token's experts were also used 2 token(s) ago
+  overlap with token t-4       :  26.1% of this token's experts were also used 4 token(s) ago
+  overlap with token t-8       :  25.3% of this token's experts were also used 8 token(s) ago
+  distinct experts per layer in   8 tokens:   32.3
+  distinct experts per layer in  32 tokens:   70.6
+  distinct experts per layer in 128 tokens:  125.8
+  experts of one token : 586 MiB
+  hottest  16 per layer    : 1172 MiB
+  hottest  32 per layer    : 2345 MiB
+  hottest  64 per layer    : 4690 MiB
+
+=== research/results/experiments/EXP-0001/trace_prompt_d.csv: 40 layers, 255 tokens ===
+  experts touched      : 6673 of 10240 (65.2%)
+  selections served by the hottest k experts of a layer:
+    k=  8:  25.9%
+    k= 16:  39.1%
+    k= 32:  57.0%
+    k= 64:  79.1%
+  overlap with token t-1       :  34.6% of this token's experts were also used 1 token(s) ago
+  overlap with token t-2       :  27.5% of this token's experts were also used 2 token(s) ago
+  overlap with token t-4       :  23.9% of this token's experts were also used 4 token(s) ago
+  overlap with token t-8       :  21.0% of this token's experts were also used 8 token(s) ago
+  distinct experts per layer in   8 tokens:   34.8
+  distinct experts per layer in  32 tokens:   80.3
+  distinct experts per layer in 128 tokens:  142.9
+  experts of one token : 586 MiB
+  hottest  16 per layer    : 1172 MiB
+  hottest  32 per layer    : 2345 MiB
+  hottest  64 per layer    : 4690 MiB

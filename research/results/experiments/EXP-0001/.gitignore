@@ -1,0 +1,4 @@
+# The full verbose llama.cpp logs are ~630 KB each and are almost entirely the
+# model loader's per-key and per-tensor dump. provenance.txt keeps the lines that
+# matter (device, model shape, cache size, cache counters) and is committed.
+log_*.txt

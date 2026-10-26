@@ -1,0 +1,40 @@
+[
+ {
+  "cache_mib": 2048,
+  "policy": "slru-ramp",
+  "hits": 53248,
+  "fills": 28360,
+  "hit_rate": 65.24850504852465,
+  "uploaded_mib": 52297.390625,
+  "vram_mib": 2044.109375,
+  "per_group": {
+   "0": {
+    "n_slots": 1005,
+    "hits": 49098,
+    "fills": 24342,
+    "bytes": 46263042048,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 3.4895833333333335
+   },
+   "1": {
+    "n_slots": 26,
+    "hits": 595,
+    "fills": 1445,
+    "bytes": 3326320640,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 3.25
+   },
+   "2": {
+    "n_slots": 82,
+    "hits": 3555,
+    "fills": 2573,
+    "bytes": 5248425984,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 3.4166666666666665
+   }
+  }
+ }
+]

@@ -1,0 +1,1598 @@
+[
+ {
+  "cache_mib": 256,
+  "policy": "slru-ramp",
+  "hits": 0,
+  "fills": 79568,
+  "hit_rate": 0.0,
+  "uploaded_mib": 145030.875,
+  "vram_mib": 246.015625,
+  "per_group": {
+   "0": {
+    "n_slots": 124,
+    "hits": 0,
+    "fills": 73440,
+    "bytes": 139575951360,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.4305555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 9,
+    "hits": 0,
+    "fills": 6128,
+    "bytes": 12499943424,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.375
+   }
+  }
+ },
+ {
+  "cache_mib": 256,
+  "policy": "ramp-s16-age8",
+  "hits": 10670,
+  "fills": 68898,
+  "hit_rate": 13.409913533078624,
+  "uploaded_mib": 125675.9609375,
+  "vram_mib": 246.015625,
+  "per_group": {
+   "0": {
+    "n_slots": 124,
+    "hits": 10553,
+    "fills": 62887,
+    "bytes": 119519510528,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.4305555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 9,
+    "hits": 117,
+    "fills": 6011,
+    "bytes": 12261285888,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.375
+   }
+  }
+ },
+ {
+  "cache_mib": 256,
+  "policy": "lfu",
+  "hits": 12463,
+  "fills": 67105,
+  "hit_rate": 15.66333199276091,
+  "uploaded_mib": 122424.8203125,
+  "vram_mib": 246.015625,
+  "per_group": {
+   "0": {
+    "n_slots": 124,
+    "hits": 12336,
+    "fills": 61104,
+    "bytes": 116130840576,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.4305555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 9,
+    "hits": 127,
+    "fills": 6001,
+    "bytes": 12240887808,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.375
+   }
+  }
+ },
+ {
+  "cache_mib": 256,
+  "policy": "s3fifo",
+  "hits": 0,
+  "fills": 79568,
+  "hit_rate": 0.0,
+  "uploaded_mib": 145030.875,
+  "vram_mib": 246.015625,
+  "per_group": {
+   "0": {
+    "n_slots": 124,
+    "hits": 0,
+    "fills": 73440,
+    "bytes": 139575951360,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.4305555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 9,
+    "hits": 0,
+    "fills": 6128,
+    "bytes": 12499943424,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.375
+   }
+  }
+ },
+ {
+  "cache_mib": 256,
+  "policy": "ramp-rand",
+  "hits": 2550,
+  "fills": 77018,
+  "hit_rate": 3.2048059521415646,
+  "uploaded_mib": 140405.546875,
+  "vram_mib": 246.015625,
+  "per_group": {
+   "0": {
+    "n_slots": 124,
+    "hits": 2524,
+    "fills": 70916,
+    "bytes": 134778978304,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.4305555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 9,
+    "hits": 26,
+    "fills": 6102,
+    "bytes": 12446908416,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.375
+   }
+  }
+ },
+ {
+  "cache_mib": 256,
+  "policy": "belady",
+  "hits": 23855,
+  "fills": 55713,
+  "hit_rate": 29.98064548562236,
+  "uploaded_mib": 101747.8671875,
+  "vram_mib": 246.015625,
+  "per_group": {
+   "0": {
+    "n_slots": 124,
+    "hits": 23510,
+    "fills": 49930,
+    "bytes": 94894161920,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.4305555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 9,
+    "hits": 345,
+    "fills": 5783,
+    "bytes": 11796209664,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.375
+   }
+  }
+ },
+ {
+  "cache_mib": 384,
+  "policy": "slru-ramp",
+  "hits": 0,
+  "fills": 79568,
+  "hit_rate": 0.0,
+  "uploaded_mib": 145030.875,
+  "vram_mib": 369.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 187,
+    "hits": 0,
+    "fills": 73440,
+    "bytes": 139575951360,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.6493055555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 14,
+    "hits": 0,
+    "fills": 6128,
+    "bytes": 12499943424,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.5833333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 384,
+  "policy": "ramp-s16-age8",
+  "hits": 16846,
+  "fills": 62722,
+  "hit_rate": 21.171827870500703,
+  "uploaded_mib": 114387.1328125,
+  "vram_mib": 369.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 187,
+    "hits": 16015,
+    "fills": 57425,
+    "bytes": 109138739200,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.6493055555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 14,
+    "hits": 831,
+    "fills": 5297,
+    "bytes": 10804862976,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.5833333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 384,
+  "policy": "lfu",
+  "hits": 17432,
+  "fills": 62136,
+  "hit_rate": 21.908304846169315,
+  "uploaded_mib": 113340.1484375,
+  "vram_mib": 369.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 187,
+    "hits": 16715,
+    "fills": 56725,
+    "bytes": 107808358400,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.6493055555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 14,
+    "hits": 717,
+    "fills": 5411,
+    "bytes": 11037401088,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.5833333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 384,
+  "policy": "s3fifo",
+  "hits": 3843,
+  "fills": 75725,
+  "hit_rate": 4.829831087874522,
+  "uploaded_mib": 138027.8515625,
+  "vram_mib": 369.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 187,
+    "hits": 3560,
+    "fills": 69880,
+    "bytes": 132810014720,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.6493055555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 14,
+    "hits": 283,
+    "fills": 5845,
+    "bytes": 11922677760,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.5833333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 384,
+  "policy": "ramp-rand",
+  "hits": 6923,
+  "fills": 72645,
+  "hit_rate": 8.700733963402373,
+  "uploaded_mib": 132425.1640625,
+  "vram_mib": 369.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 187,
+    "hits": 6488,
+    "fills": 66952,
+    "bytes": 127245221888,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.6493055555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 14,
+    "hits": 435,
+    "fills": 5693,
+    "bytes": 11612626944,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.5833333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 384,
+  "policy": "belady",
+  "hits": 32697,
+  "fills": 46871,
+  "hit_rate": 41.09315302634225,
+  "uploaded_mib": 85555.0625,
+  "vram_mib": 369.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 187,
+    "hits": 31097,
+    "fills": 42343,
+    "bytes": 80474734592,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.6493055555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 14,
+    "hits": 1600,
+    "fills": 4528,
+    "bytes": 9236250624,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.5833333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 528,
+  "policy": "slru-ramp",
+  "hits": 895,
+  "fills": 78673,
+  "hit_rate": 1.1248240498692943,
+  "uploaded_mib": 143289.8203125,
+  "vram_mib": 510.2890625,
+  "per_group": {
+   "0": {
+    "n_slots": 258,
+    "hits": 0,
+    "fills": 73440,
+    "bytes": 139575951360,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.8958333333333334
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 20,
+    "hits": 895,
+    "fills": 5233,
+    "bytes": 10674315264,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.8333333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 528,
+  "policy": "ramp-s16-age8",
+  "hits": 21956,
+  "fills": 57612,
+  "hit_rate": 27.59400764126282,
+  "uploaded_mib": 105057.7890625,
+  "vram_mib": 510.2890625,
+  "per_group": {
+   "0": {
+    "n_slots": 258,
+    "hits": 20617,
+    "fills": 52823,
+    "bytes": 100392435712,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.8958333333333334
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 20,
+    "hits": 1339,
+    "fills": 4789,
+    "bytes": 9768640512,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.8333333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 528,
+  "policy": "lfu",
+  "hits": 21882,
+  "fills": 57686,
+  "hit_rate": 27.50100542931832,
+  "uploaded_mib": 105213.9609375,
+  "vram_mib": 510.2890625,
+  "per_group": {
+   "0": {
+    "n_slots": 258,
+    "hits": 20709,
+    "fills": 52731,
+    "bytes": 100217585664,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.8958333333333334
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 20,
+    "hits": 1173,
+    "fills": 4955,
+    "bytes": 10107248640,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.8333333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 528,
+  "policy": "s3fifo",
+  "hits": 21394,
+  "fills": 58174,
+  "hit_rate": 26.887693545143776,
+  "uploaded_mib": 106061.9375,
+  "vram_mib": 510.2890625,
+  "per_group": {
+   "0": {
+    "n_slots": 258,
+    "hits": 19946,
+    "fills": 53494,
+    "bytes": 101667700736,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.8958333333333334
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 20,
+    "hits": 1448,
+    "fills": 4680,
+    "bytes": 9546301440,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.8333333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 528,
+  "policy": "ramp-rand",
+  "hits": 12152,
+  "fills": 67416,
+  "hit_rate": 15.272471345264428,
+  "uploaded_mib": 122893.8125,
+  "vram_mib": 510.2890625,
+  "per_group": {
+   "0": {
+    "n_slots": 258,
+    "hits": 11312,
+    "fills": 62128,
+    "bytes": 118076997632,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.8958333333333334
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 20,
+    "hits": 840,
+    "fills": 5288,
+    "bytes": 10786504704,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.8333333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 528,
+  "policy": "belady",
+  "hits": 39445,
+  "fills": 40123,
+  "hit_rate": 49.57394932636236,
+  "uploaded_mib": 73218.328125,
+  "vram_mib": 510.2890625,
+  "per_group": {
+   "0": {
+    "n_slots": 258,
+    "hits": 37047,
+    "fills": 36393,
+    "bytes": 69166497792,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.8958333333333334
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 20,
+    "hits": 2398,
+    "fills": 3730,
+    "bytes": 7608483840,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.8333333333333334
+   }
+  }
+ },
+ {
+  "cache_mib": 586,
+  "policy": "slru-ramp",
+  "hits": 17505,
+  "fills": 62063,
+  "hit_rate": 22.000050271465916,
+  "uploaded_mib": 113129.875,
+  "vram_mib": 564.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 286,
+    "hits": 16201,
+    "fills": 57239,
+    "bytes": 108785238016,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.9930555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 22,
+    "hits": 1304,
+    "fills": 4824,
+    "bytes": 9840033792,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.9166666666666666
+   }
+  }
+ },
+ {
+  "cache_mib": 586,
+  "policy": "ramp-s16-age8",
+  "hits": 23678,
+  "fills": 55890,
+  "hit_rate": 29.7581942489443,
+  "uploaded_mib": 101919.1328125,
+  "vram_mib": 564.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 286,
+    "hits": 22207,
+    "fills": 51233,
+    "bytes": 97370570752,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.9930555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 22,
+    "hits": 1471,
+    "fills": 4657,
+    "bytes": 9499385856,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.9166666666666666
+   }
+  }
+ },
+ {
+  "cache_mib": 586,
+  "policy": "lfu",
+  "hits": 23406,
+  "fills": 56162,
+  "hit_rate": 29.416348280715866,
+  "uploaded_mib": 102434.3125,
+  "vram_mib": 564.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 286,
+    "hits": 22102,
+    "fills": 51338,
+    "bytes": 97570127872,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.9930555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 22,
+    "hits": 1304,
+    "fills": 4824,
+    "bytes": 9840033792,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.9166666666666666
+   }
+  }
+ },
+ {
+  "cache_mib": 586,
+  "policy": "s3fifo",
+  "hits": 23319,
+  "fills": 56249,
+  "hit_rate": 29.307007842348682,
+  "uploaded_mib": 102556.671875,
+  "vram_mib": 564.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 286,
+    "hits": 21749,
+    "fills": 51691,
+    "bytes": 98241019904,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.9930555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 22,
+    "hits": 1570,
+    "fills": 4558,
+    "bytes": 9297444864,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.9166666666666666
+   }
+  }
+ },
+ {
+  "cache_mib": 586,
+  "policy": "ramp-rand",
+  "hits": 13885,
+  "fills": 65683,
+  "hit_rate": 17.450482606072793,
+  "uploaded_mib": 119731.234375,
+  "vram_mib": 564.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 286,
+    "hits": 12883,
+    "fills": 60557,
+    "bytes": 115091243008,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.9930555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 22,
+    "hits": 1002,
+    "fills": 5126,
+    "bytes": 10456055808,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.9166666666666666
+   }
+  }
+ },
+ {
+  "cache_mib": 586,
+  "policy": "belady",
+  "hits": 41471,
+  "fills": 38097,
+  "hit_rate": 52.120199075005026,
+  "uploaded_mib": 69522.296875,
+  "vram_mib": 564.9296875,
+  "per_group": {
+   "0": {
+    "n_slots": 286,
+    "hits": 38893,
+    "fills": 34547,
+    "bytes": 65658093568,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 0.9930555555555556
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 22,
+    "hits": 2578,
+    "fills": 3550,
+    "bytes": 7241318400,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 0.9166666666666666
+   }
+  }
+ },
+ {
+  "cache_mib": 645,
+  "policy": "slru-ramp",
+  "hits": 25300,
+  "fills": 54268,
+  "hit_rate": 31.796702191835912,
+  "uploaded_mib": 98921.8828125,
+  "vram_mib": 623.328125,
+  "per_group": {
+   "0": {
+    "n_slots": 315,
+    "hits": 23397,
+    "fills": 50043,
+    "bytes": 95108923392,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.09375
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 25,
+    "hits": 1903,
+    "fills": 4225,
+    "bytes": 8618188800,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.0416666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 645,
+  "policy": "ramp-s16-age8",
+  "hits": 25097,
+  "fills": 54471,
+  "hit_rate": 31.54157450231249,
+  "uploaded_mib": 99328.3359375,
+  "vram_mib": 623.328125,
+  "per_group": {
+   "0": {
+    "n_slots": 315,
+    "hits": 23484,
+    "fills": 49956,
+    "bytes": 94943576064,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.09375
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 25,
+    "hits": 1613,
+    "fills": 4515,
+    "bytes": 9209733120,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.0416666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 645,
+  "policy": "lfu",
+  "hits": 25050,
+  "fills": 54518,
+  "hit_rate": 31.48250552986125,
+  "uploaded_mib": 99428.9296875,
+  "vram_mib": 623.328125,
+  "per_group": {
+   "0": {
+    "n_slots": 315,
+    "hits": 23553,
+    "fills": 49887,
+    "bytes": 94812438528,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.09375
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 25,
+    "hits": 1497,
+    "fills": 4631,
+    "bytes": 9446350848,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.0416666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 645,
+  "policy": "s3fifo",
+  "hits": 25044,
+  "fills": 54524,
+  "hit_rate": 31.47496480997386,
+  "uploaded_mib": 99405.9375,
+  "vram_mib": 623.328125,
+  "per_group": {
+   "0": {
+    "n_slots": 315,
+    "hits": 23292,
+    "fills": 50148,
+    "bytes": 95308480512,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.09375
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 25,
+    "hits": 1752,
+    "fills": 4376,
+    "bytes": 8926199808,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.0416666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 645,
+  "policy": "ramp-rand",
+  "hits": 15729,
+  "fills": 63839,
+  "hit_rate": 19.76799718479791,
+  "uploaded_mib": 116367.203125,
+  "vram_mib": 623.328125,
+  "per_group": {
+   "0": {
+    "n_slots": 315,
+    "hits": 14563,
+    "fills": 58877,
+    "bytes": 111898329088,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.09375
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 25,
+    "hits": 1166,
+    "fills": 4962,
+    "bytes": 10121527296,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.0416666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 645,
+  "policy": "belady",
+  "hits": 43373,
+  "fills": 36195,
+  "hit_rate": 54.51060727930827,
+  "uploaded_mib": 66044.5078125,
+  "vram_mib": 623.328125,
+  "per_group": {
+   "0": {
+    "n_slots": 315,
+    "hits": 40566,
+    "fills": 32874,
+    "bytes": 62478483456,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.09375
+   },
+   "1": {
+    "n_slots": 0,
+    "hits": 0,
+    "fills": 0,
+    "bytes": 0,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 0.0
+   },
+   "2": {
+    "n_slots": 25,
+    "hits": 2807,
+    "fills": 3321,
+    "bytes": 6774202368,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.0416666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 1024,
+  "policy": "slru-ramp",
+  "hits": 33751,
+  "fills": 47857,
+  "hit_rate": 41.35746495441624,
+  "uploaded_mib": 87882.5625,
+  "vram_mib": 1019.984375,
+  "per_group": {
+   "0": {
+    "n_slots": 502,
+    "hits": 30991,
+    "fills": 42449,
+    "bytes": 80676192256,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.7430555555555556
+   },
+   "1": {
+    "n_slots": 12,
+    "hits": 346,
+    "fills": 1694,
+    "bytes": 3899506688,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 1.5
+   },
+   "2": {
+    "n_slots": 40,
+    "hits": 2414,
+    "fills": 3714,
+    "bytes": 7575846912,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.6666666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 1024,
+  "policy": "ramp-s16-age8",
+  "hits": 33850,
+  "fills": 47758,
+  "hit_rate": 41.47877659053034,
+  "uploaded_mib": 87713.5234375,
+  "vram_mib": 1019.984375,
+  "per_group": {
+   "0": {
+    "n_slots": 502,
+    "hits": 31189,
+    "fills": 42251,
+    "bytes": 80299884544,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.7430555555555556
+   },
+   "1": {
+    "n_slots": 12,
+    "hits": 357,
+    "fills": 1683,
+    "bytes": 3874185216,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 1.5
+   },
+   "2": {
+    "n_slots": 40,
+    "hits": 2304,
+    "fills": 3824,
+    "bytes": 7800225792,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.6666666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 1024,
+  "policy": "lfu",
+  "hits": 33361,
+  "fills": 48247,
+  "hit_rate": 40.87957063033036,
+  "uploaded_mib": 88619.25,
+  "vram_mib": 1019.984375,
+  "per_group": {
+   "0": {
+    "n_slots": 502,
+    "hits": 30833,
+    "fills": 42607,
+    "bytes": 80976478208,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.7430555555555556
+   },
+   "1": {
+    "n_slots": 12,
+    "hits": 350,
+    "fills": 1690,
+    "bytes": 3890298880,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 1.5
+   },
+   "2": {
+    "n_slots": 40,
+    "hits": 2178,
+    "fills": 3950,
+    "bytes": 8057241600,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.6666666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 1024,
+  "policy": "s3fifo",
+  "hits": 32803,
+  "fills": 48805,
+  "hit_rate": 40.195814135869036,
+  "uploaded_mib": 89640.765625,
+  "vram_mib": 1019.984375,
+  "per_group": {
+   "0": {
+    "n_slots": 502,
+    "hits": 30261,
+    "fills": 43179,
+    "bytes": 82063589376,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.7430555555555556
+   },
+   "1": {
+    "n_slots": 12,
+    "hits": 302,
+    "fills": 1738,
+    "bytes": 4000792576,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 1.5
+   },
+   "2": {
+    "n_slots": 40,
+    "hits": 2240,
+    "fills": 3888,
+    "bytes": 7930773504,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.6666666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 1024,
+  "policy": "ramp-rand",
+  "hits": 26051,
+  "fills": 55557,
+  "hit_rate": 31.92211547887462,
+  "uploaded_mib": 101910.4609375,
+  "vram_mib": 1019.984375,
+  "per_group": {
+   "0": {
+    "n_slots": 502,
+    "hits": 23838,
+    "fills": 49602,
+    "bytes": 94270783488,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.7430555555555556
+   },
+   "1": {
+    "n_slots": 12,
+    "hits": 350,
+    "fills": 1690,
+    "bytes": 3890298880,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 1.5
+   },
+   "2": {
+    "n_slots": 40,
+    "hits": 1863,
+    "fills": 4265,
+    "bytes": 8699781120,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.6666666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 1024,
+  "policy": "belady",
+  "hits": 52333,
+  "fills": 29275,
+  "hit_rate": 64.12729144201549,
+  "uploaded_mib": 53958.6953125,
+  "vram_mib": 1019.984375,
+  "per_group": {
+   "0": {
+    "n_slots": 502,
+    "hits": 48214,
+    "fills": 25226,
+    "bytes": 47943122944,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 1.7430555555555556
+   },
+   "1": {
+    "n_slots": 12,
+    "hits": 600,
+    "fills": 1440,
+    "bytes": 3314810880,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 1.5
+   },
+   "2": {
+    "n_slots": 40,
+    "hits": 3519,
+    "fills": 2609,
+    "bytes": 5321859072,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 1.6666666666666667
+   }
+  }
+ },
+ {
+  "cache_mib": 2048,
+  "policy": "slru-ramp",
+  "hits": 50092,
+  "fills": 31516,
+  "hit_rate": 61.38123713361435,
+  "uploaded_mib": 58033.625,
+  "vram_mib": 2044.109375,
+  "per_group": {
+   "0": {
+    "n_slots": 1005,
+    "hits": 46068,
+    "fills": 27372,
+    "bytes": 52021690368,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 3.4895833333333335
+   },
+   "1": {
+    "n_slots": 26,
+    "hits": 598,
+    "fills": 1442,
+    "bytes": 3319414784,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 3.25
+   },
+   "2": {
+    "n_slots": 82,
+    "hits": 3426,
+    "fills": 2702,
+    "bytes": 5511561216,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 3.4166666666666665
+   }
+  }
+ },
+ {
+  "cache_mib": 2048,
+  "policy": "ramp-s16-age8",
+  "hits": 48753,
+  "fills": 32855,
+  "hit_rate": 59.74046662091952,
+  "uploaded_mib": 60452.0703125,
+  "vram_mib": 2044.109375,
+  "per_group": {
+   "0": {
+    "n_slots": 1005,
+    "hits": 44714,
+    "fills": 28726,
+    "bytes": 54595026944,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 3.4895833333333335
+   },
+   "1": {
+    "n_slots": 26,
+    "hits": 624,
+    "fills": 1416,
+    "bytes": 3259564032,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 3.25
+   },
+   "2": {
+    "n_slots": 82,
+    "hits": 3415,
+    "fills": 2713,
+    "bytes": 5533999104,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 3.4166666666666665
+   }
+  }
+ },
+ {
+  "cache_mib": 2048,
+  "policy": "lfu",
+  "hits": 47774,
+  "fills": 33834,
+  "hit_rate": 58.5408293304578,
+  "uploaded_mib": 62234.9609375,
+  "vram_mib": 2044.109375,
+  "per_group": {
+   "0": {
+    "n_slots": 1005,
+    "hits": 43825,
+    "fills": 29615,
+    "bytes": 56284610560,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 3.4895833333333335
+   },
+   "1": {
+    "n_slots": 26,
+    "hits": 638,
+    "fills": 1402,
+    "bytes": 3227336704,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 3.25
+   },
+   "2": {
+    "n_slots": 82,
+    "hits": 3311,
+    "fills": 2817,
+    "bytes": 5746139136,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 3.4166666666666665
+   }
+  }
+ },
+ {
+  "cache_mib": 2048,
+  "policy": "s3fifo",
+  "hits": 48995,
+  "fills": 32613,
+  "hit_rate": 60.03700617586511,
+  "uploaded_mib": 60032.7734375,
+  "vram_mib": 2044.109375,
+  "per_group": {
+   "0": {
+    "n_slots": 1005,
+    "hits": 45030,
+    "fills": 28410,
+    "bytes": 53994455040,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 3.4895833333333335
+   },
+   "1": {
+    "n_slots": 26,
+    "hits": 586,
+    "fills": 1454,
+    "bytes": 3347038208,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 3.25
+   },
+   "2": {
+    "n_slots": 82,
+    "hits": 3379,
+    "fills": 2749,
+    "bytes": 5607432192,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 3.4166666666666665
+   }
+  }
+ },
+ {
+  "cache_mib": 2048,
+  "policy": "ramp-rand",
+  "hits": 42152,
+  "fills": 39456,
+  "hit_rate": 51.65179884325066,
+  "uploaded_mib": 72503.15625,
+  "vram_mib": 2044.109375,
+  "per_group": {
+   "0": {
+    "n_slots": 1005,
+    "hits": 38644,
+    "fills": 34796,
+    "bytes": 66131329024,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 3.4895833333333335
+   },
+   "1": {
+    "n_slots": 26,
+    "hits": 559,
+    "fills": 1481,
+    "bytes": 3409190912,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 3.25
+   },
+   "2": {
+    "n_slots": 82,
+    "hits": 2949,
+    "fills": 3179,
+    "bytes": 6484549632,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 3.4166666666666665
+   }
+  }
+ },
+ {
+  "cache_mib": 2048,
+  "policy": "belady",
+  "hits": 62952,
+  "fills": 18656,
+  "hit_rate": 77.13949612783061,
+  "uploaded_mib": 34430.4765625,
+  "vram_mib": 2044.109375,
+  "per_group": {
+   "0": {
+    "n_slots": 1005,
+    "hits": 57485,
+    "fills": 15955,
+    "bytes": 30323179520,
+    "skipped": 0,
+    "expert_bytes": 1900544,
+    "n_slots_ratio": 3.4895833333333335
+   },
+   "1": {
+    "n_slots": 26,
+    "hits": 1009,
+    "fills": 1031,
+    "bytes": 2373312512,
+    "skipped": 0,
+    "expert_bytes": 2301952,
+    "n_slots_ratio": 3.25
+   },
+   "2": {
+    "n_slots": 82,
+    "hits": 4458,
+    "fills": 1670,
+    "bytes": 3406479360,
+    "skipped": 0,
+    "expert_bytes": 2039808,
+    "n_slots_ratio": 3.4166666666666665
+   }
+  }
+ }
+]

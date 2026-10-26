@@ -1,0 +1,25 @@
+Write a C++ class that implements a thread-safe LRU cache with a fixed capacity. Include the header, the implementation, and a short unit test using assert. Explain the locking strategy in comments.
+
+<think>
+Here's a thinking process:
+
+1.  **Understand User Requirements:**
+   - **Language:** C++
+   - **Component:** Thread-safe LRU cache with fixed capacity
+   - **Deliverables:** Header, Implementation, Short unit test using `assert`
+   - **Documentation:** Explain locking strategy in comments
+
+2.  **Key Components of an LRU Cache:**
+   - Fixed capacity
+   - `get(key)` -> returns value if exists, else -1/optional
+   - `put(key, value)` -> inserts/updates, evicts LRU if at capacity
+   - Thread-safety
+   - Efficient operations (O(1) for get/put typically)
+
+3.  **Data Structures for LRU:**
+   - Standard approach: `std::unordered_map` for O(1) lookup + `std::list` (or `std::deque`) to maintain order (most recent at front/back)
+   - Alternatively, `std::list` with iterators stored in the map
+   - I'll use `std::unordered_map<Key, std::list<std::pair<Key, Value>>::iterator>` for O(1) operations
+
+4.  **Thread-S
+

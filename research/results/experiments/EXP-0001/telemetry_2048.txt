@@ -1,0 +1,16 @@
+### prompt
+0.00.176.624 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+0.01.083.997 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+0.53.958.662 I llama_moe_cache: ubatch <= 8: hits = 50092, misses = 31516, hit rate = 61.38%, uploaded = 58033.62 MiB
+### prompt_b
+0.00.193.595 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+0.01.179.313 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+0.56.570.441 I llama_moe_cache: ubatch <= 8: hits = 49846, misses = 31762, hit rate = 61.08%, uploaded = 58497.38 MiB
+### prompt_c
+0.00.127.354 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+0.00.972.267 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+0.58.907.665 I llama_moe_cache: ubatch <= 8: hits = 53248, misses = 28360, hit rate = 65.25%, uploaded = 52297.39 MiB
+### prompt_d
+0.00.118.850 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+0.00.996.986 I llama_model_loader: - kv   0:                       general.architecture str              = qwen35moe
+1.00.286.329 I llama_moe_cache: ubatch <= 8: hits = 48715, misses = 32893, hit rate = 59.69%, uploaded = 60505.34 MiB

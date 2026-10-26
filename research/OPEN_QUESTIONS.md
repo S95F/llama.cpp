@@ -3,36 +3,25 @@
 Unresolved questions, missing evidence, and what it would take to settle each.
 Ordered by value, not by age.
 
-## Q1 - Do the simulated policy rankings still hold on `d854d98b`?
-
-**Status: blocking.** Every simulated table in KNOWLEDGE_BASE.md (Findings 2 and
-6, and the whole of FAILED_APPROACHES.md's policy comparisons) rests on four
-traces collected on `78a8ae1`. Upstream's own commits changed the router's top-8
-at some positions between the two bases, which is measured (level 1) even though
-its attribution to specific commits is not (level 4).
-
-**To settle:** ROADMAP R1 - re-collect the four traces, re-validate the simulator
-bit-exactly, re-run the policy sweep. This is EXP-0001.
-
-**What hangs on it:** the ranking could in principle change, but the *mechanism*
-(routing skew plus a cyclic sweep) is base-independent, so the expected outcome
-is "unchanged within the 0.8-point agreement margin". The point of asking is that
-until it is checked, nothing simulated is quotable.
-
 ## Q2 - How much of the Belady gap is actually reachable online?
 
-Below the crossover the branch gets 15.8 to 32.0% where Belady gets 31.9 to
-53.9%. Belady is offline and therefore not a target, but the *shape* of the gap
-is informative: is the remaining loss concentrated in a few cold layers, or
-spread evenly?
+**Now the top question, and cheap.** Below the crossover the branch gets 15.9 to
+32.4% where Belady gets 32.0 to 54.1%. Belady is offline and therefore not a
+target, but the *shape* of the gap is informative: is the remaining loss
+concentrated in a few cold layers, or spread evenly?
 
-**To settle:** per-layer hit-rate and per-layer reuse-distance breakdown from an
-existing trace. `trace_stats.py` reports skew averaged over layers; a per-layer
-version is a small addition and needs **no GPU time**.
+EXP-0001 added a reason to think it is **structured**: the share of the gap the
+branch closes is 50%, 56%, 58% at 256, 384, 528 MiB but drops to **27% at
+586 MiB**. A uniformly spread loss would not do that.
+
+**To settle:** per-layer hit-rate and per-layer reuse-distance breakdown.
+`trace_stats.py` reports skew averaged over layers; a per-layer version is a
+small addition. **No GPU time, and the traces are now committed** in
+`research/results/experiments/EXP-0001/`.
 
 **Why it matters:** it decides between ROADMAP R2's three candidates. If the loss
 is concentrated, per-layer budgets (candidate 1) are the lever; if it is spread,
-a better victim score (candidate 2) is.
+a better victim score (candidate 2) is. R2 should start here.
 
 ## Q3 - Is the pinning gain real once page residency is controlled for?
 
@@ -109,7 +98,13 @@ transition matrix built offline from the traces.
 **To settle:** entirely offline from existing traces - measure the mutual
 information between layer `il`'s selection and layer `il+1`'s in the same token,
 and the accuracy of a transition-matrix predictor. **No GPU time, no code in
-llama.cpp.** The traces needed are the ones R1 collects anyway.
+llama.cpp.** The traces are committed in
+`research/results/experiments/EXP-0001/`, so this is now purely analysis.
+
+EXP-0001 re-measured the one predictor that was already rejected: token-to-token
+overlap is **31.4 to 38.7%** at a lag of 1 token, slightly above the old 31 to
+37% range but still far below the 79 to 85% the hottest 64 experts deliver. The
+rejection stands and the untried predictors above are unaffected.
 
 **Why it matters:** a predictor that beats frequency would attack the Belady gap
 (Q2) from a different direction. The cost of asking is low enough that it should
@@ -150,3 +145,4 @@ Kept so they are not reopened without new evidence.
 | Is counter aging optional? | No - 6 to 9 points over a multi-topic session | FAILED_APPROACHES.md |
 | Sample the LRU end or uniformly? | Uniformly: 14.2% vs 1.1% at 256 MiB | Finding 3, level 1 |
 | Does the cache change generated output? | No, byte-identical in every configuration | Correctness invariant, level 1 |
+| **Q1** - do the simulated rankings hold on `d854d98b`? | **Yes.** Simulator exact to hit and fill counts on all four traces; every figure within +0.45 points; no ranking changed; crossover unmoved | EXP-0001, level 1 |

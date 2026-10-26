@@ -1,0 +1,249 @@
+{
+ "base": "d854d98b",
+ "traces": [
+  "prompt",
+  "prompt_b",
+  "prompt_c",
+  "prompt_d"
+ ],
+ "rows": [
+  {
+   "cache_mib": 256,
+   "branch_default": 15.94233862859441,
+   "slru-ramp": {
+    "hit_rate": 0.0,
+    "uploaded_mib": 145030.875,
+    "hit_rate_spread": 0.0
+   },
+   "ramp-s16-age8": {
+    "hit_rate": 15.94233862859441,
+    "uploaded_mib": 122020.984375,
+    "hit_rate_spread": 4.151166298009249
+   },
+   "lfu": {
+    "hit_rate": 16.568532575909913,
+    "uploaded_mib": 121117.873046875,
+    "hit_rate_spread": 5.1503116830886775
+   },
+   "s3fifo": {
+    "hit_rate": 0.0,
+    "uploaded_mib": 145030.875,
+    "hit_rate_spread": 0.0
+   },
+   "ramp-rand": {
+    "hit_rate": 3.626457872511563,
+    "uploaded_mib": 139797.884765625,
+    "hit_rate_spread": 0.8269656143173134
+   },
+   "belady": {
+    "hit_rate": 32.014440478584355,
+    "uploaded_mib": 98813.958984375,
+    "hit_rate_spread": 3.2236577518600456
+   }
+  },
+  {
+   "cache_mib": 384,
+   "branch_default": 24.170835009048865,
+   "slru-ramp": {
+    "hit_rate": 0.0,
+    "uploaded_mib": 145030.875,
+    "hit_rate_spread": 0.0
+   },
+   "ramp-s16-age8": {
+    "hit_rate": 24.170835009048865,
+    "uploaded_mib": 110052.625,
+    "hit_rate_spread": 5.277247134526444
+   },
+   "lfu": {
+    "hit_rate": 22.534184596822843,
+    "uploaded_mib": 112435.73046875,
+    "hit_rate_spread": 6.546601648904083
+   },
+   "s3fifo": {
+    "hit_rate": 7.433893022320531,
+    "uploaded_mib": 134276.833984375,
+    "hit_rate_spread": 7.267997184797909
+   },
+   "ramp-rand": {
+    "hit_rate": 9.686054695354915,
+    "uploaded_mib": 131004.23046875,
+    "hit_rate_spread": 1.8864367584958774
+   },
+   "belady": {
+    "hit_rate": 43.508696963603455,
+    "uploaded_mib": 82062.87109375,
+    "hit_rate_spread": 4.433943293786442
+   }
+  },
+  {
+   "cache_mib": 528,
+   "branch_default": 30.416436255781218,
+   "slru-ramp": {
+    "hit_rate": 1.1785516790669617,
+    "uploaded_mib": 143206.658203125,
+    "hit_rate_spread": 0.11059722501508129
+   },
+   "ramp-s16-age8": {
+    "hit_rate": 30.416436255781218,
+    "uploaded_mib": 100980.1953125,
+    "hit_rate_spread": 5.38030363965413
+   },
+   "lfu": {
+    "hit_rate": 27.690151819827065,
+    "uploaded_mib": 104947.8203125,
+    "hit_rate_spread": 7.196360345867685
+   },
+   "s3fifo": {
+    "hit_rate": 29.961479489241906,
+    "uploaded_mib": 101639.375,
+    "hit_rate_spread": 5.229489241906293
+   },
+   "ramp-rand": {
+    "hit_rate": 16.632628694952746,
+    "uploaded_mib": 120924.46484375,
+    "hit_rate_spread": 2.9295696762517593
+   },
+   "belady": {
+    "hit_rate": 51.65110345867686,
+    "uploaded_mib": 70213.48828125,
+    "hit_rate_spread": 4.369847174743612
+   }
+  },
+  {
+   "cache_mib": 586,
+   "branch_default": 32.41943997586969,
+   "slru-ramp": {
+    "hit_rate": 24.540958676855016,
+    "uploaded_mib": 109457.01953125,
+    "hit_rate_spread": 4.838628594409812
+   },
+   "ramp-s16-age8": {
+    "hit_rate": 32.41943997586969,
+    "uploaded_mib": 98074.2578125,
+    "hit_rate_spread": 5.007038005228232
+   },
+   "lfu": {
+    "hit_rate": 29.44776794691333,
+    "uploaded_mib": 102398.197265625,
+    "hit_rate_spread": 7.423838729137341
+   },
+   "s3fifo": {
+    "hit_rate": 32.313555700784235,
+    "uploaded_mib": 98212.75,
+    "hit_rate_spread": 5.311180374019706
+   },
+   "ramp-rand": {
+    "hit_rate": 19.069852201890207,
+    "uploaded_mib": 117391.876953125,
+    "hit_rate_spread": 3.576814799919564
+   },
+   "belady": {
+    "hit_rate": 54.07041775588176,
+    "uploaded_mib": 66701.083984375,
+    "hit_rate_spread": 4.299467122461294
+   }
+  },
+  {
+   "cache_mib": 645,
+   "branch_default": 35.88534335411221,
+   "slru-ramp": {
+    "hit_rate": 35.88534335411221,
+    "uploaded_mib": 93011.853515625,
+    "hit_rate_spread": 7.325809370601249
+   },
+   "ramp-s16-age8": {
+    "hit_rate": 34.135582143575306,
+    "uploaded_mib": 95580.62890625,
+    "hit_rate_spread": 5.078674844158453
+   },
+   "lfu": {
+    "hit_rate": 31.27042278302835,
+    "uploaded_mib": 99749.896484375,
+    "hit_rate_spread": 7.590991353307864
+   },
+   "s3fifo": {
+    "hit_rate": 34.38254071988739,
+    "uploaded_mib": 95207.33984375,
+    "hit_rate_spread": 5.355167906696156
+   },
+   "ramp-rand": {
+    "hit_rate": 21.586881660969233,
+    "uploaded_mib": 113734.16796875,
+    "hit_rate_spread": 3.8256585562034964
+   },
+   "belady": {
+    "hit_rate": 56.31001156243716,
+    "uploaded_mib": 63443.28515625,
+    "hit_rate_spread": 4.198924190629398
+   }
+  },
+  {
+   "cache_mib": 1024,
+   "branch_default": 44.673009999019705,
+   "slru-ramp": {
+    "hit_rate": 44.673009999019705,
+    "uploaded_mib": 82952.984375,
+    "hit_rate_spread": 6.175865111263597
+   },
+   "ramp-s16-age8": {
+    "hit_rate": 42.90051220468582,
+    "uploaded_mib": 85596.08984375,
+    "hit_rate_spread": 4.981129301048917
+   },
+   "lfu": {
+    "hit_rate": 39.75284285854328,
+    "uploaded_mib": 90291.947265625,
+    "hit_rate_spread": 7.729634349573573
+   },
+   "s3fifo": {
+    "hit_rate": 42.64257180668562,
+    "uploaded_mib": 86001.529296875,
+    "hit_rate_spread": 5.19434369179492
+   },
+   "ramp-rand": {
+    "hit_rate": 33.77855112243898,
+    "uploaded_mib": 99150.591796875,
+    "hit_rate_spread": 4.5228408979511805
+   },
+   "belady": {
+    "hit_rate": 64.96238113910401,
+    "uploaded_mib": 52716.212890625,
+    "hit_rate_spread": 3.8550142142927157
+   }
+  },
+  {
+   "cache_mib": 2048,
+   "branch_default": 61.85086020978335,
+   "slru-ramp": {
+    "hit_rate": 61.85086020978335,
+    "uploaded_mib": 57333.435546875,
+    "hit_rate_spread": 5.554602489951961
+   },
+   "ramp-s16-age8": {
+    "hit_rate": 58.77456866973826,
+    "uploaded_mib": 61887.8671875,
+    "hit_rate_spread": 7.721056759141263
+   },
+   "lfu": {
+    "hit_rate": 56.008602097833545,
+    "uploaded_mib": 66010.775390625,
+    "hit_rate_spread": 8.761395941574357
+   },
+   "s3fifo": {
+    "hit_rate": 60.972576218017835,
+    "uploaded_mib": 58648.580078125,
+    "hit_rate_spread": 6.728507009116747
+   },
+   "ramp-rand": {
+    "hit_rate": 52.64679933339869,
+    "uploaded_mib": 71026.369140625,
+    "hit_rate_spread": 5.0987648269777495
+   },
+   "belady": {
+    "hit_rate": 77.48321243015391,
+    "uploaded_mib": 33920.55859375,
+    "hit_rate_spread": 3.3330065679835315
+   }
+  }
+ ]
+}

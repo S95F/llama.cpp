@@ -4,59 +4,53 @@ Prioritized optimization opportunities. Reordered after every experiment, not
 followed blindly. Each item carries an estimate of gain, complexity, risk and
 cost, and names the evidence that motivates it.
 
-Last reprioritized: 2026-10-25, during setup (iteration 0). No experiment has run
-under this roadmap yet, so the ordering rests entirely on the findings
-consolidated from `moe-bench/RESULTS.md`.
+Last reprioritized: 2026-10-26, after EXP-0001.
 
-## Priority 1
+## Done
 
 ### R1 - Re-collect the four traces on `d854d98b` and re-validate the simulator
 
-| | |
-|---|---|
-| Motivated by | KNOWLEDGE_BASE.md "Open caveat on the current base" |
-| Hypothesis | The simulator still matches llama.cpp to the digit on the current base, and the policy rankings of Findings 2, 3 and 6 are unchanged by upstream's router perturbation. |
-| Falsifiable by | A simulated hit rate that misses the measured one by more than the 0.7 to 0.8 points already attributed to RNG differences, or any reordering of the policy table. |
-| Expected gain | None directly. This is **infrastructure**: it unblocks R2 and R3, which both need the simulator to screen policies without GPU time. |
-| Complexity | Low. The harness exists; this is four trace collections, one simulator validation run, and one re-run of the policy sweep. |
-| Risk | Low. No source change. |
-| Cost | High in wall clock, low in risk: four 256-token greedy decodes plus a 2048 MiB validation run. |
+**EXP-0001, Adopt.** Simulator validated to exact hit and fill counts on all four
+traces; every simulated figure reproduces within +0.45 points and no ranking
+changed. Raw results committed. This unblocked R2 and R3, and it added the paired
+per-trace screening rule that both must now use (BENCHMARKS.md).
 
-Why first: every simulated table in the knowledge base is currently unquotable
-for the base we are actually on, and the two experiments below are policy work
-that would be screened by the simulator. Doing R2 first would mean validating
-each candidate on hardware one at a time, which is far more expensive than fixing
-the screen.
-
-This is also the first chance to **commit raw results**. The prior work left no
-machine-readable artifacts in the repository: `moe-bench/.gitignore` excludes
-`out/` and `*.csv`, so no trace, no JSON and no CSV from any earlier measurement
-survives. `research/results/` must hold them from now on.
-
-## Priority 2
+## Priority 1
 
 ### R2 - Close more of the Belady gap below the crossover
 
 | | |
 |---|---|
-| Motivated by | Finding 6: branch 15.8 to 32.0% against Belady 31.9 to 53.9% |
+| Motivated by | Finding 6, re-measured by EXP-0001: the branch closes 50 to 58% of the Belady gap at 256 to 528 MiB but only **27% at 586 MiB**, and 0% above the crossover |
 | Hypothesis | Below one token's experts, a victim that combines frequency with the known cyclic structure of the sweep beats frequency alone, because the access pattern is not an arbitrary skewed stream - the next access to layer `il` is almost exactly one token away. |
-| Falsifiable by | No candidate beating `ramp-s16-age8` by more than the simulator's agreement margin at 256 to 586 MiB. |
-| Expected gain | Up to 10 to 20 points of hit rate below the crossover if half the remaining gap is reachable; at the measured near-linear bytes-to-tokens conversion that is a large throughput win on this machine. Realistically less: Belady is offline. |
+| Falsifiable by | No candidate whose paired per-trace delta against `ramp-s16-age8` has the same sign on all four traces at 256 to 586 MiB. |
+| Expected gain | Belady leaves 16 to 27 points on the table below the crossover. Half of that would be a large win at the measured near-linear bytes-to-tokens conversion. Realistically less: Belady is offline. |
 | Complexity | Medium. Sampling already exists; a structure-aware score is a change inside the same function. |
 | Risk | Medium. Must stay inert above the crossover and must not change output. |
-| Cost | Low once R1 is done - the simulator screens candidates with no GPU time. |
+| Cost | Low - the simulator is validated and screens candidates with no GPU time. |
 
-Concrete candidates, in the order they should be screened:
+**Screening rule, from EXP-0001:** compare paired per trace and require the sign
+of the delta to agree on all four traces. One policy varies by 4.2 to 7.3 points
+between traces, so a positive mean is not evidence.
+
+Concrete candidates, reordered after EXP-0001:
 
 1. **Per-layer slot budgets.** The budget is currently split by cache group, not
-   by layer. Layers differ in routing entropy (not yet measured per layer), so a
-   budget proportional to each layer's measured reuse could beat a uniform one.
+   by layer. **Do the Q2 per-layer breakdown first** - it is pure offline
+   analysis on the committed traces and it decides between this candidate and the
+   next. Promoted to first because EXP-0001 found the gap is *not* uniform across
+   cache sizes (27% closed at 586 against 58% at 528), which hints the loss is
+   structured rather than spread.
 2. **Frequency plus position in the sweep.** Prefer evicting an expert of a layer
    the sweep has just passed, since it will not be read again for a whole token.
-3. **Admission control.** Do not admit a one-off expert at all; S3-FIFO's gain at
-   large caches came from admission, and FAILED_APPROACHES.md rejected it on
-   small-cache erraticness rather than on the idea.
+3. **Admission control.** Do not admit a one-off expert at all. EXP-0001 sharpens
+   the case: S3-FIFO is a **wash** with the branch from 528 to 1024 MiB and only
+   beats it at 2048 MiB, where the branch is inert anyway and `slru-ramp` beats
+   S3-FIFO. So admission is worth isolating from the FIFO structure, but the
+   expected gain is smaller than EXP-0000 implied.
+
+Not a candidate: **full LFU**. EXP-0001 showed it wins only at 256 MiB, and not
+sign-consistently. See FAILED_APPROACHES.md.
 
 ### R3 - Measure whether the crossover switch should be a ramp
 
@@ -64,15 +58,22 @@ Concrete candidates, in the order they should be screened:
 |---|---|
 | Motivated by | Finding 3: frequency wins below 1.0 slots per token, loses 2 to 3 points above it; the switch is currently a hard step at 1.0 |
 | Hypothesis | Between 1.0 and about 1.2 slots per token a blend beats both pure policies, because thrash decays gradually rather than stopping at exactly one token. |
-| Falsifiable by | No blend beating `max(frequency, recency)` at any size in 1.0 to 1.3 slots per token. |
+| Falsifiable by | No blend beating `max(frequency, recency)` at any size in 1.0 to 1.3 slots per token, with the sign agreeing on all four traces. |
 | Expected gain | Small, 1 to 3 points over a narrow band of cache sizes. |
 | Complexity | Low. |
 | Risk | Low, but it adds a tuning constant, which upstream dislikes and which the current hard switch deliberately avoids. |
-| Cost | Low after R1. |
+| Cost | Low - the simulator is validated. |
 
 Deliberately ranked below R2: the band is narrow and the gain is small, and the
 present design's main virtue with reviewers is that it introduces **no** new
 constant.
+
+EXP-0001 made this slightly less attractive. At 586 MiB (0.99 slots per token)
+the sampled victim already wins by 7.88 points, sign-consistent on all four
+traces, and at 645 MiB (1.09) it loses by 1.75. The transition is sharp rather
+than gradual, which is what a hard switch handles well. The remaining question is
+only whether anything useful sits between 0.99 and 1.09, a band this model's
+group arithmetic barely resolves.
 
 ## Priority 3
 
