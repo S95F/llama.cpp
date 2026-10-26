@@ -555,6 +555,10 @@ POLICIES = {
     "ramp-s16-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 16, aging=8*max(1, ns)),
     "ramp-s32-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 32, aging=8*max(1, ns)),
     "ramp-s8-age8-dist":   lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 8, aging=8*max(1, ns)),
+    "ramp-s24-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 24, aging=8*max(1, ns)),
+    "ramp-s48-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 48, aging=8*max(1, ns)),
+    "ramp-s64-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 64, aging=8*max(1, ns)),
+    "ramp-s96-age8-dist":  lambda n_layer, ne, ns, net, fut: SlruSampleDistCache(n_layer, ne, ns, max_protected_ramp(ns, net), 96, aging=8*max(1, ns)),
 }
 
 
