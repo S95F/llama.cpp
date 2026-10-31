@@ -1,0 +1,18 @@
+C:/nsys/exp0004/2048-pageable_long.sqlite: 1020 tokens, 66.78 ms/token (median 58.38)
+  per token: compute 12.82  h2d 27.11  d2h 0.12  idle 26.73  compute/h2d overlap 0.000 ms
+  shares: compute 19.2%  h2d 40.6%  d2h 0.2%  memset 0.0%  idle 40.0%  overlap_compute_h2d 0.0%
+  overlap / min(compute, h2d) = 0.00%
+  h2d 222.1 MiB/token (222.1 expert), 8.59 GB/s while copying, 3.49 GB/s over token time
+  by source kind MiB/token: {'pageable': 222.11433823529413, 'pinned': 0.02479110418581495}
+  calls/token: {'n_h2d': 411.4264705882353, 'n_h2d_expert': 361.4264705882353, 'n_h2d_small': 50, 'n_d2h': 41, 'n_graph_launch': 40.85490196078431, 'n_kernel': 5.949019607843137}
+  host API ms/token: cudaGraphLaunch 1.18, cudaMemcpyAsync 48.91, cudaStreamSynchronize 15.49
+  GPU idle ms/token while host in: cudaStreamSynchronize 1.96, cudaMemcpyAsync 23.80, cudaGraphLaunch 0.16, cudaLaunchKernel 0.01, no_api 0.80, expert_copy_slow 17.05, expert_copy_fast 6.11
+  host ms/token in expert copies: slow 17.49, fast 30.57 (9.9 slow copies/token)
+  app prompt eval time: prompt eval time =    7289.31 ms /    46 tokens (  158.46 ms per token,     6.31 tokens per second)
+  app eval time: eval time =   68365.85 ms /  1023 runs   (   66.83 ms per token,    14.96 tokens per second)
+  app graphs reused: graphs reused =       1018
+  app ubatch <= 8:: ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB
+  app large batches:: large batches: 6315 uploads of uncached experts, 5707.74 MiB
+  expert copies from pageable: n=368655, aggregate GPU 8.60 GB/s, host 4.84 GB/s, per-copy GPU median 8.12
+  expert copies from pageable/fast: n=358508, aggregate GPU 8.57 GB/s, host 7.41 GB/s, per-copy GPU median 8.11
+  expert copies from pageable/slow: n=10147, aggregate GPU 9.79 GB/s, host 0.36 GB/s, per-copy GPU median 9.21

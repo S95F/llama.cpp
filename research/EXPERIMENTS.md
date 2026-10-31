@@ -14,9 +14,11 @@ with the missing test named).
 | EXP-0001 | 2026-10-26 | The simulator still matches llama.cpp on `d854d98b`, and the policy rankings are unchanged | **Adopt** (infrastructure; no perf claim) | simulator exact to hit and fill counts on 4/4 traces; every simulated figure within +0.45 points; no ranking changed | [EXP-0001.md](experiments/EXP-0001.md) |
 | EXP-0002 | 2026-10-26 | Weighting the sampled victim by the known cyclic distance to its layer's next visit beats use count alone | **Adopt** | hit rate +1.74 to +2.94 points on hardware, PCIe traffic a further -2.3 to -3.4%, sign-consistent on 4/4 traces at 8/8 sizes, byte-identical above the crossover, correctness 8/8 | [EXP-0002.md](experiments/EXP-0002.md) |
 | EXP-0003 | 2026-10-26 | Sampling 32 slots instead of 16 is a free gain below the crossover | **Adopt** | hit rate +0.53 to +0.86 points, traffic -0.76 to -1.12%, within 0.18 of the simulated prediction, byte-identical above the crossover, correctness 8/8 on a new base | [EXP-0003.md](experiments/EXP-0003.md) |
+| EXP-0004 | 2026-10-31 | The expert uploads overlap compute, so the copy is the bottleneck (Q6) | **Adopt** (measurement; no code change). H1 falsified | overlap 0 ns in every token of 15 traced runs; warm 2048 MiB token 56.2 ms = 12.8 compute + 27.1 DMA + 0.1 read-back + 16.1 idle; cold short pageable runs 55-66% page-fault waits; overlap bound 9.4 ms/token (17%) | [EXP-0004.md](experiments/EXP-0004.md) |
 
-Next: **EXP-0004**, OPEN_QUESTIONS.md **Q6** - whether the host-to-device copy is
-actually overlapped with compute. Not started; awaiting authorization.
+Next: **EXP-0005**, ROADMAP **R11** - pin up to the WDDM cap, choosing ranges by
+miss frequency, on R10's controlled page-cache baseline. Not started; awaiting
+authorization.
 
 ## Dependency graph
 
@@ -35,11 +37,20 @@ EXP-0000  (frequency victim below the crossover; pinning inconclusive)
           |      +-- Q10 (distance term above the crossover too?)  <- needs more traces
           +-- R3 (ramp the crossover switch)
           +-- Q7 (layer-to-layer prediction)  <- uses EXP-0001's traces
+
+EXP-0004  (timeline: no overlap; faults, staging, DMA)  DONE
+   |      ^-- rests on EXP-0003's binary and the B1 rebase check only
+   +-- R10 (controlled page-cache baseline; a prerequisite, not a gain)
+          |
+          +-- R11 (pin to the WDDM cap, frequency-ordered) <-- order from EXP-0001's traces
+          +-- R12 (batched prefetch of missed experts)
+          +-- R13 (copy stream + next-layer prediction) <-- Q7 supplies the predictor
+          +-- R14 (per-layer round trip)
 ```
 
-R4 (separate pinning from page residency) and R5 (`--load-mode none`) depend only
-on EXP-0000, not on the simulator. R4 is additionally blocked on hardware, see
-OPEN_QUESTIONS.md Q3.
+R4 (separate pinning from page residency) depends on EXP-0000 and on EXP-0004's
+split of the pinning gain, not on the simulator, and is blocked on hardware, see
+OPEN_QUESTIONS.md Q3. R5 (`--load-mode none`) now runs as an arm of R11.
 
 **Everything downstream of EXP-0001 inherits its traces.** If the branch is
 rebased again, the traces must be re-collected and the simulator re-validated
@@ -56,8 +67,12 @@ to a context it was never tested in.
 | Frequency victim wins below the crossover | **Skewed routing** (hottest 8 of 256 experts take 25.9 to 33.2% of selections, hottest 64 take 79.1 to 85.1%). A model with fewer experts per layer or flatter routing should show less. EXP-0001's `prompt_d`, the multilingual trace, is the flattest and still gives the largest margin over full LFU, which is weak evidence that the effect survives flatter routing. Also depends on the cyclic layer sweep, a property of generation, not of prefill. |
 | The crossover sits at 1.0 slots per token | The cyclic sweep. Holds per cache group, not globally. |
 | Counter aging is required | Multi-topic sessions. A single-topic session would tolerate no aging; a four-topic 1024-token session loses 6 to 9 points without it. |
-| Generation is bandwidth-bound | **This link** (PCIe 4.0 x8) against **this compute** (RTX 4060 Ti) and **this quantization**. A wider link or a slower GPU moves the balance. |
-| Pinning gains | **This host's RAM/working-set ratio** (31.11 GiB against 18.32 GiB). Permanently confounded here. |
+| Uploads never overlap compute (Finding 4) | **The code**, not the hardware: one stream and two host waits per MoE layer. Holds for any model and GPU until the scheduling changes. |
+| Warm, DMA is the largest part of a token (Finding 9) | **This link** (PCIe 4.0 x8) against **this compute** (RTX 4060 Ti) and **this quantization**, and a cache large enough to be warm. A wider link or a slower GPU moves the balance. |
+| Cold short runs are dominated by page faults (Finding 9) | **This host's RAM/working-set ratio** (31.11 GiB against 18.32 GiB) and its disk (about 175 us per 64 KiB fault). A host that keeps the model cached would not show it. Also on the page-cache state left by the previous process. |
+| Pageable DMA at 8.2 GB/s when the host stages concurrently | **This host's memory system and driver** under WDDM. Untested elsewhere. |
+| Pinning gains | **This host's RAM/working-set ratio**. EXP-0004 split them (cold: 78 to 86% avoided faults; warm: mostly DMA contention), but whether pinning pays when nothing faults still needs a host with more RAM. |
+| Overlap bound 9.4 ms/token (Finding 10) | The per-layer compute and upload times of this model on this GPU and link; scales with them. |
 | Byte-identical inertness above the crossover | Construction, not measurement luck - the branch sets `n_sample = 0` there. Holds for any model. |
 | The cyclic-distance victim score (Finding 7) | **The layer sweep being cyclic**, which is a property of generation in any MoE model, so this is the least model-specific result here. It still rides on the same skew as Finding 3, since the score is `dist/use`. It does nothing for prefill, which bypasses the cache. |
 | Per-layer budgets being pointless (Finding 8) | **A shared slot pool per cache group** plus a frequency-scored victim. A model whose layers were in separate pools, or a policy without use counters, could still gain from explicit budgets. |

@@ -1,0 +1,591 @@
+{
+ "surveyed": "2026-10-31",
+ "note": "level 3: published, not reproduced. literature_check holds a second reader's verdict per source; corrections there override the source entries.",
+ "sources": [
+  {
+   "title": "Fast Inference of Mixture-of-Experts Language Models with Offloading",
+   "authors": "Artyom Eliseev, Denis Mazur",
+   "venue": "arXiv preprint 2312.17238 (code: github.com/dvmazur/mixtral-offloading)",
+   "year": "2023",
+   "url": "https://arxiv.org/abs/2312.17238",
+   "mechanism": "Per-layer LRU cache of k experts on GPU (k=2 on 12GB cards, k=4 on 16GB) plus speculative expert loading: the NEXT layer's gating function is applied to the CURRENT layer's hidden state, and the 1-2 most likely experts of the next layer are fetched. Speculative loads are issued once all experts of the current layer have finished loading. Mixed HQQ quantization (attention 4-bit, experts 2- or 3-bit). Mispredictions are simply fetched on demand (output exact).",
+   "claimed_result": "Mixtral-8x7B, Table 2, tokens/s, 2-bit experts: full algorithm A100 3.061, RTX 3080 Mobile (16GB, PCIe Gen4) 2.655, RTX 3060 (12GB, PCIe Gen3) 2.278, T4 Colab (PCIe Gen3) 2.092; without expert pre-loading 2.918 / 2.227 / 2.051 / 1.567; without LRU and pre-loading 2.265 / 1.758 / 1.547 / 1.168; naive accelerate offloading 1.392 / 1.059 / 0.919 / 0.661. 3-bit experts full algorithm 2.845 / 2.475 / 2.038 / 1.603 (T4 on Azure). Derived by me, not stated: pre-loading adds about +5% (A100), +19% (3080 Mobile), +11% (3060), +34% (T4) over LRU-only.",
+   "prediction_accuracy": "Not stated numerically. Recall for 1, 2 and 10 layers ahead is shown only in Figure 2 (right); recall 1.0 is defined as both active Mixtral experts having been prefetched.",
+   "relevance": "Highest. Exactly the regime: batch-1 decode, one consumer GPU, PCIe Gen3/Gen4, training-free predictor that needs only the next layer's router weights. The ablation is the cleanest published isolation of what next-layer speculative prefetch adds on top of an LRU cache (single-digit to ~1/3 gain, largest on the slowest-PCIe/weakest GPUs). Model was 8-expert top-2; many-expert top-8/10 models are not covered."
+  },
+  {
+   "title": "Pre-gated MoE: An Algorithm-System Co-Design for Fast and Scalable Mixture-of-Expert Inference",
+   "authors": "Ranggi Hwang et al.",
+   "venue": "ISCA 2024 (pp. 1018-1031, DOI 10.1109/ISCA59077.2024.00078); arXiv 2308.12066",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2308.12066",
+   "mechanism": "Architecture change: the gate in block N is trained (during fine-tuning) to select the experts of block N+1, so block N+1's expert migration from CPU overlaps block N's execution. First block keeps its own gate; last block has no pre-gate. Requires fine-tuning of pre-gates.",
+   "claimed_result": "Single A100 80GB, AMD EPYC 7V12, PCIe gen4; Switch Transformer Base-8/64/128 and Large-128, primarily single-batch. MoE block latency 1.7x lower than MoE-OnDemand on average (max 1.9x) and 42x lower than MoE-Prefetch (max 125x); 19% latency overhead vs GPU-only in Sec. VI-A (introduction says 23%); throughput 81% of GPU-only; peak GPU memory 23% of GPU-only (4.2x reduction).",
+   "prediction_accuracy": "Not stated. The pre-gate output is the routing decision itself, so there is no misprediction in the usual sense; task accuracy is compared instead (e.g. SQuAD EM Base-8 77.4 baseline vs 78.2 pre-gated; CB Web QA EM Base-128 27.4 vs 25.8). Looking 2-3 blocks ahead is said to lower accuracy (figure only).",
+   "relevance": "Low for direct use: requires retraining/fine-tuning the router, so it does not apply to stock GGUF checkpoints. Useful as the upper bound of the 'route one layer early' idea and as evidence that one block of compute is enough to hide one block of expert migration on A100/PCIe4 for small Switch experts."
+  },
+  {
+   "title": "MoE-Infinity: Efficient MoE Inference on Personal Machines with Sparsity-Aware Expert Cache (earlier titles: Activation-Aware Expert Offloading for Efficient MoE Serving; Offloading-Efficient MoE Model Serving)",
+   "authors": "Leyang Xue, Yao Fu, Zhan Lu, Luo Mai, Mahesh Marina",
+   "venue": "arXiv 2401.14361 (v1 Jan 2024, v2 Aug 2024, v3 Mar 2025); code github.com/TorchMoE/MoE-Infinity",
+   "year": "2024-2025",
+   "url": "https://arxiv.org/abs/2401.14361",
+   "mechanism": "Traces an Expert Activation Matrix (layers x experts token counts) per request; matches the current iteration's matrix against a stored collection by cosine distance; aggregated matches give per-expert activation probabilities, weighted by layer proximity (1-(i-l)/L). A per-GPU I/O thread prefetches with pinned memory/DMA, re-ranked after each layer's routing; experts whose prefetch failed get top priority. Traces also guide cache replacement. Output exact.",
+   "claimed_result": "v3: single RTX A5000, PCIe 4.0 (stated as 32GB/s; Table 1 caption says 24GB/s), batch size one, prompt 512 / decode 32. DeepSeek-V2-Lite average TPOT: MoE-Infinity 155 ms vs vLLM 485, DeepSpeed 737, Mixtral-Offloading 1250, Ollama 2590 ms; abstract claims 3.1-16.7x per-token latency improvement (conclusion says 2.7-13.7x). Mixtral as low as 836 ms TPOT, about 1.4x vs BrainStorm/Mixtral-Offloading. v2 (8x A5000 server): buffer hit rate Mixtral 17% (ideal 21%).",
+   "prediction_accuracy": "Not stated as a prediction accuracy. v2 reports prefetch-related hits only for some models (68% Arctic, 81% NLLB 'hit in GPU'). v3 states no accuracy or cache hit rate numbers.",
+   "relevance": "High: v3 explicitly targets batch-1 decode on a personal machine with one GPU over PCIe and benchmarks Ollama (llama.cpp). Its predictor is request-level trace matching rather than a layer-ahead router, and its absolute Mixtral TPOT (836 ms) shows the transfer-bound regime remains dominant."
+  },
+  {
+   "title": "ProMoE: Fast MoE-based LLM Serving using Proactive Caching",
+   "authors": "Xiaoniu Song, Zihang Zhong, Rong Chen, Haibo Chen",
+   "venue": "arXiv 2410.22134 (v3 Sep 2025)",
+   "year": "2024-2025",
+   "url": "https://arxiv.org/abs/2410.22134",
+   "mechanism": "Per-layer learned predictor (2-layer MLP, ~2M params, runs on CPU, ~200 us) maps the layer input to expert selections; layer-wise prefetch plus 'stride' prefetch (predict one more layer ahead to start earlier). Defines GoodPred = Accuracy x FetchRate. Worker thread with two queues (low-priority speculative, high-priority precise on miss); chunked prefetching (each expert split into 3 linear-layer chunks so a high-priority task waits at most one chunk); early preemption via a hook after the gate; reordered inference (compute cached experts first, then in-flight, then not-started). Integrated into llama.cpp and transformers. Output exact.",
+   "claimed_result": "RTX 4090 24GB, i9-14900K, 128GB DRAM, PCIe 4.0 (32 GB/s unidirectional). Models DeepSeek-MoE 16B, DeepSeek-V2-Lite, Qwen1.5-MoE (FP16), Qwen2-MoE 57B, Mixtral-8x7B (INT4). Abstract v3: prefill 2.20x avg (up to 3.21x), decode 2.07x avg (up to 5.02x) vs existing offloading. On llama.cpp decode: 1.49x vs static cache (up to 1.79x) and 1.09x vs LRU (up to 1.17x); for Mixtral the LO baseline is faster than ProMoE in decode. Default batch 1 (tested 1-4).",
+   "prediction_accuracy": "Learned predictor average accuracy 84.7%; token-based predictor 58.3%; skip-based predictor on Qwen2-MoE 66.9%; stride prefetching lowers accuracy by about 5%. FetchRate not given numerically.",
+   "relevance": "Very high: same hardware class (4090, PCIe4), batch 1, and implemented inside llama.cpp. Key sobering data point: inside llama.cpp the gain over a plain LRU cache is only 1.09x on average (up to 1.17x). Its chunked, preemptible transfer queue is a directly reusable design for mixing speculative and demand uploads."
+  },
+  {
+   "title": "AdapMoE: Adaptive Sensitivity-based Expert Gating and Management for Efficient MoE Inference",
+   "authors": "Shuzhang Zhong et al. (incl. Meng Li)",
+   "venue": "arXiv 2408.10284; ACM DOI 10.1145/3676536.3676741; code github.com/PKU-SEC-Lab/AdapMoE",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2408.10284",
+   "mechanism": "(1) Adaptive gating: per token and layer, number of active experts chosen by output sensitivity (changes outputs). (2) Prefetching by applying the gate functions of the next 2-3 layers to the current layer's activations; optional auxiliary predictive gate for the first layer from the previous token's last-layer activation. (3) Cache sizes per layer by dynamic programming (knapsack). (4) Tile-wise CUDA stream controller (compute stream + communication stream; experts split into tiles processed as they arrive).",
+   "claimed_result": "Mixtral-8x7B on RTX 4090 and A6000 (8x22B on A6000), HQQ 4-bit and 4+2-bit; PCIe and batch size not stated. 25% fewer activated experts and 1.35x speedup vs a modified Mixtral-Offloading 'without accuracy degradation'. Ablation (Mixtral 4-bit, RTX 4090, 128 cached experts), latency per token: baseline 0.392 s, +prefetch 0.322 s (1.22x), +gating 0.313 s (1.25x), all 0.288 s (1.36x).",
+   "prediction_accuracy": "Sec. 6.5: most layers achieve rates 'around 90%'; per-distance values only in Figure 9(b).",
+   "relevance": "High for the prefetch half (training-free, next-layer router on current activation, single consumer GPU). The ablation isolates prefetch alone at 1.22x per-token on a 4090. Adaptive gating changes model output, which llama.cpp would treat as a separate opt-in."
+  },
+  {
+   "title": "HOBBIT: A Mixed Precision Expert Offloading System for Fast MoE Inference",
+   "authors": "Peng Tang et al.",
+   "venue": "arXiv 2411.01433",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2411.01433",
+   "mechanism": "Built on llama.cpp (~8000 lines C/C++). Token-level dynamic expert loading: on a cache miss, less important experts (by gating-weight score) are loaded in low precision (int4 for fp16 models, int2 for int8) or skipped (Mixtral thresholds T1=0.6, T2=0.9; split 67% high / 30% low / 3% skipped). Layer-level adaptive prefetching: the current layer's gate input is fed to the gates of up to p later layers (p=1..3 recommended), computed together ('stacking computer'); lookahead stops at the first uncached predicted expert; predicted experts are masked from eviction. Sequence-level multidimensional cache policy. Scheduler thread loads missing experts ('GPU-centric' mode).",
+   "claimed_result": "RTX 4090 24GB, 256GB host, PCIe 4.0 (32GB/s theoretical), fp16 models; Jetson AGX Orin 32GB, int8 models; batch size 1; Mixtral-8x7B and Phi-MoE. Abstract: up to 9.93x decoding speedup vs state-of-the-art offloading systems. RTX 4090: 3.21x (Mixtral) and 3.29x (Phi-MoE) vs MoE-Offloading; 2.30x and 3.92x vs MoE-Infinity. Jetson Orin: 3.64x / 9.93x vs MoE-Infinity; 13.0x / 18.9x vs llama.cpp. Absolute tokens/s only in figures.",
+   "prediction_accuracy": "Mixtral-8x7B: next layer top-1 averaging 96% across layers; next two or three layers around 90% on average.",
+   "relevance": "Very high: llama.cpp-based, batch 1, consumer GPU over PCIe, uses the training-free next-layer-gate predictor. Much of the speedup comes from loading misses in low precision or skipping them, which changes outputs; the pure-prefetch contribution is not isolated in the text."
+  },
+  {
+   "title": "Fiddler: CPU-GPU Orchestration for Fast Inference of Mixture-of-Experts Models",
+   "authors": "Keisuke Kamahori, Tian Tang, Yile Gu, Kan Zhu, Baris Kasikci",
+   "venue": "ICLR 2025; arXiv 2402.07033; code github.com/efeslab/fiddler",
+   "year": "2024-2025",
+   "url": "https://arxiv.org/abs/2402.07033",
+   "mechanism": "Does not hide the transfer; avoids it. Experts placed on GPU statically by offline popularity; for a non-resident expert a latency model chooses between copying weights to GPU and running the expert on the CPU (copying only activations, under 1% of latency). No prefetching or prediction described; transfer/compute overlap not stated.",
+   "claimed_result": "Quadro RTX 6000 24GB + Xeon Gold 6126, PCIe Gen3 x16; RTX 6000 Ada 48GB + Xeon Platinum 8480+, PCIe Gen4 x16; Mixtral-8x7B 16-bit (>90GB). Runs uncompressed Mixtral at over 3 tokens/s on one 24GB GPU. v3 text: single-batch 1.26x faster on average than llama.cpp (best baseline); inter-token latency 1.43x average across baselines; beam search 11.57x vs llama.cpp.",
+   "prediction_accuracy": "Not stated (no predictor).",
+   "relevance": "Medium-high as the alternative strategy: at batch 1 a CPU computing a miss from host RAM can beat a PCIe upload. llama.cpp PR 30966 (CPU execution of cache misses) and PR 30594 (hybrid) follow this line; only 1.26x over llama.cpp shows the baseline was already CPU-expert execution."
+  },
+  {
+   "title": "MoE-Lightning: High-Throughput MoE Inference on Memory-constrained GPUs",
+   "authors": "Shiyi Cao et al.",
+   "venue": "arXiv 2411.11217",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2411.11217",
+   "mechanism": "CGOPipe: CPU-GPU-I/O pipeline with paged weights; next layer's weight pages transferred while the current layer computes over micro-batches; CPU computes attention softmax for a micro-batch two ahead; weight buffer 2x the CPU-resident layer weight size; HRM performance model (Roofline extension). No expert prediction; whole-layer weight prefetch.",
+   "claimed_result": "T4 16GB, L4 24GB, 2x/4x T4; up to 10.3x higher throughput than offloading-enabled systems for Mixtral 8x7B on a single T4; e.g. Table 4 Synthetic Reasoning on L4: MoE-Lightning(p) 105.29 tokens/s vs FlexGen 50.138. Batch sizes in the hundreds (N=504, micro-batch 36).",
+   "prediction_accuracy": "Not stated (no predictor).",
+   "relevance": "Low for 1-token decode: relies on large batches to make per-layer compute long enough to hide whole-layer weight streaming; the paper itself remarks that for one or two prompts static weight placement is preferable."
+  },
+  {
+   "title": "ExpertFlow: Optimized Expert Activation and Token Allocation for Efficient Mixture-of-Experts Inference",
+   "authors": "Xin He et al.",
+   "venue": "arXiv 2410.17954 (v2 2026 retitled 'Efficient Mixture-of-Experts Inference via Predictive Expert Caching and Token Scheduling')",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2410.17954",
+   "mechanism": "Separate T5 encoder-decoder routing-path predictor that, from the input tokens, predicts expert selection for all tokens at all layers in one pass before MoE compute; expert cache engine prefetches predicted experts with real-time correction (missed experts loaded first, mis-prefetched evicted first) and a multi-stream pipeline using bidirectional PCIe; token scheduler regroups tokens across batches by routing similarity (K-means on Hamming distance).",
+   "claimed_result": "Single A40 48GB, Xeon Gold 6338; Switch-32/64/128 and Mixtral-8x7B (batch 16). Up to 93.72% GPU memory savings; 2-10x faster than baselines; cache hit ratio up to 91.96% (avg +27.65% over LRU); Mixtral 1.96x (WMT16) and 1.99x (XSUM) vs an unspecified baseline.",
+   "prediction_accuracy": "Batch-level accuracy on Switch models only (Table 1): 73.55%-87.01% across Switch-32/64/128, WMT16/XSUM, batch 8/16/32. None reported for Mixtral.",
+   "relevance": "Low-medium: batched, encoder-decoder oriented; predicting a whole sequence's routing up front does not map naturally to autoregressive 1-token decode."
+  },
+  {
+   "title": "Fate: Fast Edge Inference of Mixture-of-Experts Models via Cross-Layer Gate (v1 title: Accurate Expert Predictions in MoE Inference via Cross-Layer Gate)",
+   "authors": "Zhiyuan Fang, Zicong Hong, Yuegui Huang, Yufeng Lyu, Wuhui Chen, Yue Yu, Fan Yu, Zibin Zheng",
+   "venue": "arXiv 2502.12224 (v2 May 2025)",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2502.12224",
+   "mechanism": "Block i's gate input is cloned to the CPU, where block i+1's gate runs on it in parallel with GPU compute. Decode transfers are capped at n = T / t_expert with T = t_moe + t_attn + t_gate profiled offline. Shallow-favoring cache (all experts of layers 0-3 cached because shallow-layer prediction is weakest). Popularity-aware hybrid quantization (INT4 popular, INT2 others) to cut I/O.",
+   "claimed_result": "RTX 3090 24GB, i9-9900X, PCIe 3.0 x16 (16 GB/s); GTX 1080Ti 11GB, PCIe 1.0 x16 (4 GB/s); DeepSeekMoE 16.4B (top-6 of 64), Qwen1.5-MoE 14.3B (top-4 of 60); batch size not stated. Abstract: up to 4.1x decode speedup vs Load-on-Demand and 2.2x vs EAP; body: DeepSeekMoE 3.7x vs LoD and 2.2x vs EAP on the 3090 box; Qwen1.5-MoE 14 tokens/s. Ablation: prefetching alone about 30% average speedup; quantization up to 3.7x.",
+   "prediction_accuracy": "97.15% 'prefetch accuracy' when transferring all experts whose confidence exceeds the 75th percentile (over-provisioned). Table 1 decoding prefetch accuracy: 78.79% using block i gate input; 83.99% using block i+1 attention input; 76.94% at a later position. Shallow-favoring cache gives 99.08% expert hit rate.",
+   "relevance": "High: training-free, consumer GPU, slow PCIe, explicit time-budget rule for how many experts can be hidden per layer. Shows exact top-k decode prediction for a top-6 model is ~79%, versus ~97% when over-fetching. Quantization part changes outputs."
+  },
+  {
+   "title": "Pre-Attention Expert Prediction and Prefetching for Mixture-of-Experts Large Language Models",
+   "authors": "Shien Zhu, Samuel Bohl, Robin Oester, Gustavo Alonso",
+   "venue": "arXiv 2511.10676",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2511.10676",
+   "mechanism": "Predicts a layer's experts from that same layer's pre-attention activation with a per-layer 2-linear-layer predictor (hidden 2048) trained with a ranking-aware loss; transfer overlaps that layer's attention; also works for the first layer.",
+   "claimed_result": "No end-to-end speedup reported (system integration left as future work). Timing: self-attention 0.7385-1.1279 ms on V100/A100-40GB/A100-80GB; prediction ~0.15 ms; 0.818-1.257 ms available for prefetch; per-expert host-memory-to-GPU transfer 0.7-1.6 ms. Analytical estimate 0.66 ms/token vs 2.01 ms/token for FATE on V100. Training/eval on TITAN RTX 24GB.",
+   "prediction_accuracy": "Exact match of the full top-k set: DeepSeek-V2-Lite 93.03%, Qwen3-30B 94.69%, Phi-mini-MoE 97.62%; top-1: 98.85% / 99.55% / 98.95%; over-provisioning: 98.65% / 98.81% / 99.05%.",
+   "relevance": "Medium-high for prediction quality on modern many-expert models (Qwen3-30B-A3B class). By the paper's own timing figures, the attention window is roughly one expert transfer long, so same-layer prefetch can hide only a small part of a top-8 miss set over PCIe; needs a trained predictor per model."
+  },
+  {
+   "title": "Speculating Experts Accelerates Inference for Mixture-of-Experts",
+   "authors": "Vivan Madan, Prajwal Singhania, Abhinav Bhatele, Tom Goldstein, Ashwinee Panda",
+   "venue": "arXiv 2603.19289",
+   "year": "2026",
+   "url": "https://arxiv.org/abs/2603.19289",
+   "mechanism": "Applies layer l+1's router to a 'quasi-hidden state' q_l = LN_{l+1}(d_l + r_l) (default-vector estimate of the MoE output plus post-attention residual) to prefetch the next layer's experts during the current layer; optional shallow estimator distilled to the next router's logits (Est-PF, Hybrid-PF on low-hit layers). Mispredicted experts are EXECUTED with their predicted weights instead of being refetched, so outputs change. Implemented in the YALIS engine.",
+   "claimed_result": "Batch 1, 32 generated tokens, prompts 1K-64K. Qwen3-30B-A3B on A6000 (PCIe 4.0): 9-14% TPOT reduction vs on-demand loading (also stated 12-14%); A100 80GB PCIe 4.0 and GH200: 5-8%. Downstream average (6 benchmarks) Qwen3-30B-A3B: baseline 0.817, Router-PF 0.641, Est-PF 0.750, Hybrid-PF 0.766 (GSM8k 0.950 -> 0.576 Router-PF); GPT-OSS-120B baseline 0.849, Router-PF 0.857.",
+   "prediction_accuracy": "Qwen3-30B-A3B Router-PF recall@k approximately 90% on average beyond the early layers (early layers lower); estimator approximately 90% average hit rate; GPT-OSS-120B estimator 83%, GPT-OSS-20B 88%.",
+   "relevance": "Very high: same regime (batch 1, single GPU, PCIe 4.0, A3B-class top-8 model) and the most recent direct measurement. Even when skipping the miss refetch entirely, TPOT gain vs on-demand is only 5-14%, and executing mispredicted experts hurts accuracy badly on some models, so an exact llama.cpp implementation should refetch misses."
+  },
+  {
+   "title": "SpecMD: A Comprehensive Study On Speculative Expert Prefetching",
+   "authors": "Duc Hoang, Ajay Jaiswal, Mohammad Samragh, Minsik Cho",
+   "venue": "arXiv 2602.03921",
+   "year": "2026",
+   "url": "https://arxiv.org/abs/2602.03921",
+   "mechanism": "Benchmarking framework for MoE cache and prefetch policies, reproducing next-layer speculative prefetch (Eliseev and Mazur), top-k with overfetch (1.5x), score-percentile prefetch, HOBBIT and others. Proposes Least-Stale eviction: stale queue (experts from previous forward passes) evicted before current-pass experts, FIFO by layer position, motivated by finding that expert access is a deterministic sequential-layer pattern rather than recency-based reuse.",
+   "claimed_result": "Single A100 80GB with software-limited cache (1/5/25% of model) and ~5 GB/s modeled bandwidth; OLMoE-1B-7B, Mixtral-8x7B, Qwen1.5-MoE, Phi-3.5-MoE. Least-Stale: over 88% hit rate on OLMoE at 5% capacity (~0.6 GB), up to 34.7% TTFT reduction, up to 85x fewer collision misses than LRU (abstract; body 2.6-8.6x vs LRU at 5%). Drop-in Least-Stale TTFT gain over the Eliseev'23 policy: OLMoE 10.7%, Mixtral 17.8%. Notes bandwidth limits dynamic prefetch benefit for Mixtral (~336 MB experts).",
+   "prediction_accuracy": "Not stated numerically (precision/recall only in Figure 6; top-k at 1.0x said to have the highest prediction accuracy).",
+   "relevance": "Medium-high for llama.cpp's cache: layer-sequential, stale-first eviction is directly applicable to a cross-layer slot pool during 1-token decode. Bandwidth is modeled, not real PCIe, and metrics emphasize TTFT."
+  },
+  {
+   "title": "DuoServe-MoE: Dual-Phase Expert Prefetch and Cache Scheduling for Efficient MoE LLM Inference",
+   "authors": "Yuning Zhang, Grant Pinkert, Nan Yang, Yanli Li, Dong Yuan",
+   "venue": "arXiv 2509.07379",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2509.07379",
+   "mechanism": "Prefill: two-stream pipeline overlapping expert weight prefetch with non-MoE compute. Decode: offline-trained 7-layer MLP (ExpertMLP) on previous layers' selected experts, layer popularity and inter-layer affinity predicts next-layer experts; prediction stream runs during layer N; communication stream prefetches after the first expert finishes; mismatches refetched from CPU (output exact).",
+   "claimed_result": "RTX A5000 24GB + Threadripper PRO 3945WX and RTX A6000 48GB + 5955WX, PCIe 4.0; Mixtral-8x7B and 8x22B 4-bit AWQ; batch 1. End-to-end latency 1.42x-7.54x; decode throughput 1.78x-7.04x vs HF Accelerate and MoESys (reimplemented in vLLM); TTFT 1.78x-3.8x; peak memory ~15% of full model.",
+   "prediction_accuracy": "Exact top-2: Mixtral 8x7B 66.85% (Orca), 60.23% (SQuAD); 8x22B 56.21%, 54.16%. At least one of two correct: 95.45%, 92.31%, 90.45%, 90.31%.",
+   "relevance": "Medium: batch-1 single-GPU over PCIe4, exact outputs. Its accuracy table is a useful caution that exact-set prediction is far lower than top-1/at-least-one metrics; baselines are weak."
+  },
+  {
+   "title": "SP-MoE: Speculative Decoding and Prefetching for Accelerating MoE-based Model Inference",
+   "authors": "Liangkun Chen, Zijian Wen, Tian Wu, Xiaoxi Zhang, Chuan Wu",
+   "venue": "arXiv 2510.10302",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2510.10302",
+   "mechanism": "With speculative decoding, the draft model's per-layer attention output is fed to the target model's gate for the same layer to prefetch target experts during drafting; a cutoff layer bounds prefetch depth by memory and drafting time; prefetcher worker thread on a dedicated CUDA stream with events and batched per-layer non-blocking copies; LRU cache.",
+   "claimed_result": "RTX 3090, RTX 4090, A100 40GB, all PCIe 4.0 x16; batch 1; pairs Mixtral 8x7B/Mistral 7B, Phi-3.5-MoE/Phi-mini-MoE, DeepSeek-Lite/DeepSeek-Lite-AWQ. 1.07x-3.5x TPOT speedup; average TPOT reduction 34% vs Mixtral-Offloading, 19% vs MoE-Infinity, 12% vs AdapMoE.",
+   "prediction_accuracy": "DeepSeek-Lite 88.94% top-1 expert prediction accuracy on average across layers; Mixtral and Phi-3.5-MoE approximately 88%.",
+   "relevance": "Medium: relevant only when llama.cpp runs speculative decoding (draft or MTP), where drafting time creates a longer window to hide expert uploads for the verify pass."
+  },
+  {
+   "title": "MoE-SpeQ: Speculative Quantized Decoding with Proactive Expert Prefetching and Offloading for Mixture-of-Experts",
+   "authors": "Wenfeng Wang, Jiacheng Liu, et al.",
+   "venue": "arXiv 2511.14102",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2511.14102",
+   "mechanism": "An INT4 (GPTQ) copy of the MoE runs on GPU as the draft model and predicts experts for the next k tokens into an Expert Lookahead Buffer built on the CPU non-blockingly; three-phase prefetch (locality-aware priming, bandwidth-guided, high-priority before verification); drafting overlaps I/O; Amortization Roofline Model picks draft length.",
+   "claimed_result": "Single A100 40GB, Xeon Silver 4310, PCIe 4.0 x16; Phi-3.5-MoE, Qwen1.5-MoE-A2.7B, DeepSeek-V2-Lite. Abstract: up to 2.34x vs state-of-the-art offloading for Phi-MoE; text: Phi-MoE 536.7 ms -> 163.1 ms per token (3.3x vs Mixtral-Offloading-SC); Qwen MoE 74.1 ms/token.",
+   "prediction_accuracy": "Qwen-MoE INT4 draft vs FP16 target, top-4: 90.9% total (44.1% hard + 46.8% soft matches); per-step cache coverage DeepSeek-V2-Lite 96.25%-99.85%.",
+   "relevance": "Medium: applicable to llama.cpp only with a self-speculative low-bit draft; shows a quantized copy of the same model is a high-fidelity routing predictor."
+  },
+  {
+   "title": "FloE: On-the-Fly MoE Inference on Memory-constrained GPU",
+   "authors": "Yuxin Zhou, Zheng Li, Jun Zhang, Jue Wang, Yiping Wang, Zhongle Xie, Ke Chen, Lidan Shou",
+   "venue": "ICML 2025; arXiv 2505.05950",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2505.05950",
+   "mechanism": "Compresses experts (contextual sparsity + ultra-low-bit quantization) so less is transferred; learned inter-expert predictor (current hidden state + selection history) predicts next-layer routing; intra-expert sparsity predictor reuses the next layer's up-projection; pipelined transfer with pinned memory, multithreading and multiple CUDA streams.",
+   "claimed_result": "RTX 3090 24GB, PCIe 4.0, Mixtral-8x7B, single-batch: 48.7x vs DeepSpeed-MII, 2.60x vs Mixtral-Offloading, 3.14x vs Fiddler; 91% of Mixtral-GPU speed (95% max); 9.3x per-expert compression; runs with 11GB VRAM; 4.4%-7.6% average performance degradation.",
+   "prediction_accuracy": "Inter-expert predictor average precision 0.88; intra-expert predictor average recall 0.95 (paper's figure caption swaps the labels).",
+   "relevance": "Medium: shows transfer can be hidden once expert bytes shrink ~9x, but at an accuracy cost and with custom sparse kernels; not exact."
+  },
+  {
+   "title": "DAOP: Data-Aware Offloading and Predictive Pre-Calculation for Efficient MoE Inference",
+   "authors": "Yujie Zhang, Shivam Aggarwal, Tulika Mitra",
+   "venue": "arXiv 2501.10375",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2501.10375",
+   "mechanism": "Predicts next-block experts by applying block i+1's gate to block i's non-MoE output (only for i>=4; original gate for blocks 0-3); predicted CPU-resident experts are pre-calculated on the CPU so they start right after the previous block's non-MoE compute; sequence-level placement between CPU and GPU; 'graceful degradation' replaces a low-scoring CPU expert by the next-best GPU-resident one (changes output).",
+   "claimed_result": "RTX A6000 48GB, PCIe 4.0, i9-10980XE, batch 1; Mixtral 8x7B 4.52 tokens/s and Phi-3.5 MoE 8.21 tokens/s at 46.9% expert cache ratio, 40.4% faster than Fiddler; 3.23 / 5.03 tokens/s at 25%; abstract up to 8.20x vs expert caching/prefetching and 1.35x vs offloading. Accuracy loss: Mixtral GSM8K 58.91 -> 33.51 at 25% cache ratio.",
+   "prediction_accuracy": "Mixtral 8x7B 84.11% average layer-wise accuracy one layer ahead during decode; Phi-3.5 not stated.",
+   "relevance": "Medium: same regime; uses the training-free next-gate predictor to schedule CPU work rather than PCIe uploads. Shows next-gate accuracy for Mixtral at ~84% and that early layers need the real gate."
+  },
+  {
+   "title": "HybriMoE: Hybrid CPU-GPU Scheduling and Cache Management for Efficient MoE Inference",
+   "authors": "Zhong et al. (PKU-SEC-Lab)",
+   "venue": "DAC 2025; arXiv 2504.05897",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2504.05897",
+   "mechanism": "Built on kTransformers. Intra-layer dynamic split: cached experts on GPU, uncached on CPU, with simulated CPU/GPU/PCIe timelines deciding which uncached high-load experts to upload; inter-layer prefetch predicting the next three layers by reusing those layers' gates, prioritized by simulated gain; Minus Recent Score (MRS) cache; fine-grained CUDA stream scheduling.",
+   "claimed_result": "RTX A6000, Xeon Gold 5220R (10 cores); PCIe and batch size not stated; Mixtral-8x7B, DeepSeek-V2-Lite, Qwen2-57B-A14B. Average 1.33x prefill and 1.70x decode vs kTransformers. No numeric decode comparison to llama.cpp (text says llama.cpp is relatively strong in decode).",
+   "prediction_accuracy": "Not stated. Only cache hit rates at 25% cache: MRS vs LRU Mixtral 36.2% vs 30.2%, DeepSeek 52.7% vs 47.7%, Qwen2 52.8% vs 45.0%.",
+   "relevance": "Medium-high: the closest published design to llama.cpp PR 30966 (CPU runs misses, GPU runs hits, selective uploads) with added lookahead prefetch."
+  },
+  {
+   "title": "KTransformers: Unleashing the Full Potential of CPU/GPU Hybrid Inference for MoE Models",
+   "authors": "Hongtao Chen, Weiyu Xie, Boxin Zhang, et al., Mingxing Zhang",
+   "venue": "SOSP 2025 (DOI 10.1145/3731569.3764843)",
+   "year": "2025",
+   "url": "https://madsys.cs.tsinghua.edu.cn/publication/ktransformers-unleashing-the-full-potential-of-cpu/gpu-hybrid-inference-for-moe-models/",
+   "mechanism": "Experts computed on CPU with AMX kernels; asynchronous CPU-GPU scheduler; Expert Deferral runs some experts of a layer concurrently with the next layer's GPU computation (mainly attention), raising CPU utilization from typically below 75% to almost 100% (changes computation order/results slightly). No PCIe weight streaming.",
+   "claimed_result": "4.62-19.74x prefill and 1.25-4.09x decode speedups vs existing systems; Expert Deferral up to 1.45x throughput with average accuracy drop no more than 0.5%. Hardware not named in the abstract.",
+   "prediction_accuracy": "Not stated (no predictor).",
+   "relevance": "Medium: an overlap trick on the CPU path rather than the PCIe path; relevant if llama.cpp keeps misses on the CPU."
+  },
+  {
+   "title": "SeqMoE: Toward Full-Load Performance via Predictive and Graph-Compatible MoE Offloading",
+   "authors": "Zihan Wang, Yuqi Wang, Lei Gong, Cheng Tang, Wenqi Lou, Teng Wang, Chao Wang, Xuehai Zhou",
+   "venue": "arXiv 2609.12978",
+   "year": "2026",
+   "url": "https://arxiv.org/abs/2609.12978",
+   "mechanism": "GPU-resident Linear-Mamba2-Linear sequence predictor over expert activation traces forecasts several decode steps and layers ahead (recursive rollout of 8 steps; two predictors triggered at L/2 and L); prefetch scheduling as Job Sequencing with Deadlines; probabilistic Belady eviction. CUDA-graph-compatible runtime: one slot pool at a fixed base address shared by all MoE layers plus an expert_id->slot lookup table; a CPU worker issues cudaMemcpyAsync on a dedicated copy stream; demand misses are copied by a custom kernel from cudaHostAllocMapped memory so the main stream stays graph-capturable; a pinned mapped control region with tags guards slot updates.",
+   "claimed_result": "RTX 4090 (PCIe 4.0), RTX 5090 (PCIe 5.0), RTX PRO 6000 Blackwell (PCIe 5.0); Qwen3-30B-A3B-FP8, Qwen3.6-35B-A3B-BF16, GPT-OSS-120B-MXFP4, DeepSeek-V4-Flash; batch size one stated for the first results row. At 45% expert residency (40% for Qwen3.6): 84.82% / 75.69% / 79.20% / 76.65% of full-load decode, average 80.22%; FreeToken 51.50% average; other baselines (llama.cpp, MoE-Infinity, KTransformers) at most 28.03%. Hit rate 96.97% at 45% capacity vs LRU 88.50%. Predictor 3.46% of execution time, 112-228 MB.",
+   "prediction_accuracy": "One-step recall (top k+3): 90.90% Qwen3-30B-A3B, 88.39% Qwen3.6-35B-A3B, 90.76% GPT-OSS-120B, 85.81% DeepSeek-V4-Flash; 8-step horizon drops recall by only 3.58 points on average. States that cross-layer (residual-similarity) predictors degrade quickly with distance and are limited to 1-3 layers.",
+   "relevance": "Very high: consumer GPUs, the same model families llama.cpp users run, llama.cpp as a measured baseline, and a design (fixed slot pool + id->slot table + copy stream + graph-capturable miss path) that maps onto llama.cpp's MoE cache and CUDA graphs. Predicting several tokens ahead widens the overlap window beyond one layer."
+  },
+  {
+   "title": "fMoE: Fine-Grained Expert Offloading for Large Mixture-of-Experts Serving (v2: Taming Latency-Memory Trade-Off in MoE-Based LLM Serving via Fine-Grained Expert Offloading)",
+   "authors": "Hanfei Yu et al.",
+   "venue": "arXiv 2502.05370",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2502.05370",
+   "mechanism": "Expert maps (per-iteration gate probability distributions) stored historically; semantic matching on prompt embeddings for the first d layers and trajectory matching for later layers; prefetch distance d=3 layers; asynchronous publisher-subscriber prefetch outside the inference path; prefetching paused on a miss.",
+   "claimed_result": "Six RTX 3090 (24GB) with PCIe 4.0 32GB/s, Threadripper PRO 3955WX; Mixtral-8x7B, Qwen1.5-MoE, Phi-3.5-MoE; built on the MoE-Infinity codebase. Abstract: latency -47%, expert hit rate +36%. Average TPOT reduction vs DeepSpeed-Inference / Mixtral-Offloading / ProMoE / MoE-Infinity: 70% / 61% / 55% / 48%.",
+   "prediction_accuracy": "Not stated as absolute numbers in text; relative hit-rate gains of 147% / 11% / 34% / 63% over the four baselines.",
+   "relevance": "Medium: serving-oriented and built on a slow Python codebase, but evidence that semantic/history matching can beat a pure trajectory predictor for multi-layer-ahead prefetch."
+  },
+  {
+   "title": "DoMoE: Domain-Aware Semantic Expert Prediction for Efficient MoE Inference Under Expert Offloading",
+   "authors": "Yao Mu, Fahao Chen, Wenbin Zhu, Mengying Zhao, Zhaoyan Shen, Dongxiao Yu",
+   "venue": "IJCAI 2026",
+   "year": "2026",
+   "url": "https://www.ijcai.org/proceedings/2026/0657.pdf",
+   "mechanism": "Offline domain-specific expert routing tables; online domain match, semantic similarity restricted to in-domain tokens; multi-layer-ahead prediction with a horizon chosen to balance accuracy against prediction overhead; built on MoE-Infinity.",
+   "claimed_result": "NVIDIA L40 GPU with Intel Xeon host; Mixtral-8x7B, Phi-3.5-MoE, Qwen1.5-MoE. 1.32x average throughput and 1.22x expert hit ratio vs FMoE; throughput values in Table 2 are around 1-2.3 tokens/s.",
+   "prediction_accuracy": "Not stated as prediction accuracy; expert hit ratios in Table 2 roughly in the 49%-72% range for baselines; DoMoE about 1.2-1.3x MoE-Infinity's hit ratio.",
+   "relevance": "Low-medium: domain profiling and low absolute speed; mainly a data point that multi-layer-ahead horizons trade accuracy for amortized prediction cost."
+  },
+  {
+   "title": "EdgeMoE: Empowering Sparse Large Language Models on Mobile Devices (v1: Fast On-Device Inference of MoE-based Large Language Models)",
+   "authors": "Yi et al.",
+   "venue": "arXiv 2308.14352",
+   "year": "2023",
+   "url": "https://arxiv.org/abs/2308.14352",
+   "mechanism": "Offline statistics table keyed by expert activations of the two previous MoE layers gives next-layer expert probabilities; a preload thread (on small CPU cores) loads 1-3 likely experts per layer from storage while the current block computes; mispredicted experts reloaded on demand.",
+   "claimed_result": "Jetson TX2, Raspberry Pi 4B, Xiaomi 14; Switch Transformers, GPTSAN, MiniCPM MoE 8x2B. 2.64x-3.03x TPOT vs IO-EXP on Jetson TX2; ablation ST-base-8 latency 0.392 s -> 0.305 s from preloading.",
+   "prediction_accuracy": "Not stated as a hit rate; example conditional probability P(E3=5|E1=3,E2=1)=87.1%.",
+   "relevance": "Low: storage-to-memory tier on edge devices with Switch models; same overlap principle."
+  },
+  {
+   "title": "SiDA: Sparsity-Inspired Data-Aware Serving for Efficient and Scalable Large Mixture-of-Experts Models",
+   "authors": "Zhixu Du et al.",
+   "venue": "MLSys 2024; arXiv 2310.18859",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2310.18859",
+   "mechanism": "Offline-trained LSTM-based hash function predicts, from token embeddings, the experts for every token at every layer before inference; a hash-building thread runs ahead of the inference thread, which loads predicted experts and offloads inactive ones (FIFO).",
+   "claimed_result": "A100 80GB, Xeon Platinum 8358; Switch-base-8/64/128/256; batch 1 for latency. Throughput 2.60x / 3.93x (SST2, Switch-base-128/256); latency claims inconsistent in the paper (abstract 'up to 72% reduction').",
+   "prediction_accuracy": "Top-3 hash hit rate: Switch-base-8 99.00% / 97.41% / 91.74% and Switch-base-128 98.78% / 98.65% / 90.49% on SST2 / MRPC / MultiRC.",
+   "relevance": "Low: encoder-style classification workloads where all tokens are known up front; not autoregressive decode."
+  },
+  {
+   "title": "BuddyMoE: Exploiting Expert Redundancy to Accelerate Memory-Constrained Mixture-of-Experts Inference",
+   "authors": "Wang et al.",
+   "venue": "arXiv 2511.10054",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2511.10054",
+   "mechanism": "On a prefetch miss, substitutes a GPU-resident 'buddy' expert (from offline co-activation statistics) instead of waiting for a PCIe load; gated by Token Activating Entropy; custom CUDA kernel. Implemented in llama.cpp with the CUDA backend. Changes outputs.",
+   "claimed_result": "Single A100 (PCIe), Xeon Platinum 8457C, DeepSeek-V2-Lite; cache rate 0.375: 24.78 -> 27.33 tokens/s (10.3%); cache rate 0.75: 34.23 -> 36.75 tokens/s; ARC average accuracy 0.735 -> 0.695 at c=0.75.",
+   "prediction_accuracy": "Not stated (no own predictor described).",
+   "relevance": "Medium as a llama.cpp-based data point on the cost of a miss; inexact."
+  },
+  {
+   "title": "Mixture of Cache-Conditional Experts for Efficient Mobile Device Inference",
+   "authors": "Andrii Skliar, Ties van Rozendaal, Romain Lepert, Todor Boinovski, Mart van Baalen, Markus Nagel, Paul Whatmough, Babak Ehteshami Bejnordi",
+   "venue": "TMLR 2025; arXiv 2412.00099",
+   "year": "2024-2025",
+   "url": "https://arxiv.org/abs/2412.00099",
+   "mechanism": "Training-free cache-aware routing (e.g. boosting router logits of cached experts) to raise cache hit rate during batch-1 generation; reduces transfers rather than hiding them; changes outputs.",
+   "claimed_result": "2x speedup on mobile devices (abstract); evaluated on language modeling, MMLU, GSM8K.",
+   "prediction_accuracy": "Not stated (no predictor).",
+   "relevance": "Low-medium: complementary to prefetch; inexact (llama.cpp PR 30763 attempted cache-aware routing and was closed)."
+  },
+  {
+   "title": "Not All Models Suit Expert Offloading: On Local Routing Consistency of Mixture-of-Expert Models",
+   "authors": "Jingcong Liang, Siyuan Wang, Miren Tian, Yitong Li, Duyu Tang, Zhongyu Wei",
+   "venue": "arXiv 2505.16056 (v4 Feb 2026; listed as an ICLR 2026 poster on iclr.cc)",
+   "year": "2025-2026",
+   "url": "https://arxiv.org/abs/2505.16056",
+   "mechanism": "Analysis, not a system: defines Segment Routing Best Performance and Segment Cache Best Hit Rate to measure how consistently nearby tokens route to the same experts, across 20 MoE LLMs.",
+   "claimed_result": "Shared experts and constrained expert-combination spaces lower local routing consistency; models with MoE in every layer and no shared experts are most consistent; most models balance cache effectiveness and efficiency at a cache of about twice the active expert count.",
+   "prediction_accuracy": "Not applicable.",
+   "relevance": "Medium: helps predict per model whether caching and prefetching will pay off before implementing."
+  },
+  {
+   "title": "PROBE: Co-Balancing Computation and Communication in MoE Inference via Real-Time Predictive Prefetching",
+   "authors": "not verified",
+   "venue": "arXiv 2602.00509",
+   "year": "2026",
+   "url": "https://arxiv.org/abs/2602.00509",
+   "mechanism": "Lookahead Gating: layer L's frozen pre-trained router applied to h_{L-1} plus a zero-initialized residual MLP distilled online against the true router; predicted experts moved peer-to-peer (NVSHMEM) during the previous layer.",
+   "claimed_result": "Expert-parallel 8x Hopper-141GB with NVSwitch, batch 512-1536 per rank; prefill up to 1.32x vs SGLang, decode throughput up to 1.26x vs DeepSeek-EPLB.",
+   "prediction_accuracy": "Distilled predictor per-layer Top-K accuracy 87%-94% (about 90%); the untrained frozen next-layer router on the previous hidden state reaches roughly 70%-80% (Qwen3-MoE-235B top-8 of 128, GPT-OSS-120B top-4 of 128).",
+   "relevance": "Low for the setting (multi-GPU, large batch), but a useful accuracy data point: on modern 128-expert models the training-free next-layer-router predictor gives only ~70-80% Top-K, and a tiny distilled residual lifts it to ~90%."
+  },
+  {
+   "title": "Read-ME: Refactorizing LLMs as Router-Decoupled Mixture of Experts with System Co-Design",
+   "authors": "Ruisi Cai, Zhangyang Wang, et al.",
+   "venue": "NeurIPS 2024; arXiv 2410.19123",
+   "year": "2024",
+   "url": "https://arxiv.org/abs/2410.19123",
+   "mechanism": "Converts a dense LLM into an MoE whose router is decoupled from the backbone, so all routing can be computed before inference (pre-gating), enabling lookahead prefetch and Belady-inspired caching.",
+   "claimed_result": "Up to 10.1% MMLU improvement over similar-scale dense models and up to 6.1% mean end-to-end latency improvement.",
+   "prediction_accuracy": "Not applicable (routing known exactly in advance by construction).",
+   "relevance": "Low: requires a purpose-built model; not applicable to existing GGUF MoEs."
+  },
+  {
+   "title": "Accelerating Mixture-of-Expert Inference with Adaptive Expert Split Mechanism (MoEpic)",
+   "authors": "Jiaming Yan, Jianchun Liu, Hongli Xu, Liusheng Huang",
+   "venue": "arXiv 2509.08342",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2509.08342",
+   "mechanism": "Splits each expert vertically into top and bottom segments; caches top segments of hot experts so more experts are partially resident; prefetches next-layer predicted experts, fetching only the uncached segments; per-layer budget and split ratio set by a fixed-point divide-and-conquer algorithm.",
+   "claimed_result": "About half the GPU cost saved; 37.51%-65.73% lower inference latency vs baselines (abstract). Hardware not stated in the abstract.",
+   "prediction_accuracy": "Not stated in the abstract.",
+   "relevance": "Medium: partial-expert residency shortens each miss transfer, which directly enlarges what a one-layer overlap window can hide."
+  },
+  {
+   "title": "PreScope: Unleashing the Power of Prefetching for Resource-Constrained MoE Inference",
+   "authors": "Enda Yu, Zhaoning Zhang, Dezun Dong, Yongwei Wu, Xiangke Liao",
+   "venue": "arXiv 2509.23638",
+   "year": "2025",
+   "url": "https://arxiv.org/abs/2509.23638",
+   "mechanism": "Per-block learned predictor on PCA-compressed previous-layer features; prefetch count from the CPU compute gap f=(Tgap+t_attn)/t_io; async I/O with pre-registered buffers and three CUDA streams (gate/up/down) from pinned memory while CPU computes cold experts.",
+   "claimed_result": "V100 (PCIe 3.0 x16) and A100 (PCIe 4.0 x16), Xeon Gold 6230R; batch 4-64. Up to 141% throughput vs Klotski and 70.8% vs HybriMoE; decode latency down up to 74.6% vs Klotski, 42.1% vs HybriMoE.",
+   "prediction_accuracy": "Hot Top-4: DeepSeek 94%, Mixtral 99%, Qwen3 97%, Moonlight 99%; never below 80% for any model or layer.",
+   "relevance": "Low-medium: evaluated at batch 4-64, not 1."
+  }
+ ],
+ "upstream": [
+  "#29887 MERGED 2026-10-07 'llama : add a GPU cache for MoE experts kept in host memory' (am17an; port of qvac-fabric cache): LRU slot cache, only misses uploaded, ubatch <= 32 tokens; RTX 4090 25.0 -> 40.7 t/s, RTX 5090 30.8 -> 67.8 t/s on Qwen3.8-Flash-Next Q4_0 (PCIe 4.0 x16). No prefetch. https://github.com/ggml-org/llama.cpp/pull/29887",
+  "#30112 MERGED 2026-10-08 'llama: support MoE cache over multiple GPUs'. https://github.com/ggml-org/llama.cpp/pull/30112",
+  "#30637 MERGED 2026-10-19 'Replace MoE LRU cache with a 50/50 SLRU cache' (reported 1-5% better than LRU). https://github.com/ggml-org/llama.cpp/pull/30637",
+  "#30848 CLOSED unmerged 2026-10-27 'Handle small moe caches better' (ramp down SLRU protected set below 1.8x a token's experts). https://github.com/ggml-org/llama.cpp/pull/30848",
+  "#31421 OPEN issue 'MoE cache hit rate drops to 0.6% at one token of slots since #30637, still on master' (Metal, gemma-4-26B-A4B). https://github.com/ggml-org/llama.cpp/issues/31421",
+  "#30594 OPEN 'llama : hybrid MoE expert cache with profile prefilling and zero-upload inference' (profiled hot experts resident; CPU computes misses in parallel, no PCIe uploads during generation). https://github.com/ggml-org/llama.cpp/pull/30594",
+  "#30966 OPEN 'llama_moe_cache: run missed experts on CPU, add tuning script' (--moe-cache-cpu-share; tuner measured e.g. uploads 9.6 GiB/s on the author's desktop). https://github.com/ggml-org/llama.cpp/pull/30966",
+  "#31233 OPEN 'moe-cache : LRFU/MQ-like hybrid cache, ClassLRU'; #31286 OPEN 'moe-cache : --moe-cache-cpu-share auto, CRF admission for the CPU misses'. https://github.com/ggml-org/llama.cpp/pull/31233 https://github.com/ggml-org/llama.cpp/pull/31286",
+  "#21067 OPEN (draft, since 2026-03-27) 'ggml: allow prefetching tensor overrides' (am17an, --prefetch-weights): next-layer weight prefetch on a separate backend instance/stream overlapping current-layer compute; needs --no-mmap (pinned). Author notes MoE prefetch cannot know next-layer experts, so it copies whole expert tensors and helps only at large ubatch; comments report MoE regressions on PCIe 3.0 and a TTFT regression, and reviewers ask for an explicit transfer-queue API. https://github.com/ggml-org/llama.cpp/pull/21067",
+  "#28414 CLOSED unmerged 2026-10-14 'ggml : --prefetch-experts-slots - lookahead H2D prefetch of host-resident MoE experts': 1-split-ahead uploads on a second same-device backend (separate CUDA stream) into rotating staging slots with cross-stream events; prefill-only by design (decode keeps per-split copy of used experts); multi-GPU -sm layer correctness problem reported. https://github.com/ggml-org/llama.cpp/pull/28414",
+  "#25859 OPEN issue 'Offloaded-MoE prefill leaves the GPU idle waiting on serial expert H2D copies (single-GPU -ncmoe)': RTX 3060 PCIe 4.0; page-locking mmap'd experts ~+21%, second-stream overlap with staging slots gives most of the rest (prefill only). https://github.com/ggml-org/llama.cpp/issues/25859",
+  "#27861 OPEN 'llama: GPU-resident LRU cache for host-offloaded MoE expert weights' (decode-only, dual mul_mat_id chain: hits on GPU slots, misses on CPU; cache inserts are asynchronous via a worker thread and published at a later sync point; author reports synchronous uploads ate the entire win; 18.4 -> 24.2 tok/s). https://github.com/ggml-org/llama.cpp/pull/27861",
+  "#25319 OPEN 'ggml: asynchronous scheduler memory copies' (JohannesGaessler): proposes backend/event API changes for async split copies; notes earlier async-copy PRs #17795 and #20793 (both MERGED) were later reverted for side effects on some setups. https://github.com/ggml-org/llama.cpp/pull/25319",
+  "#21609 CLOSED (withdrawn by author 2026-04-08) 'expert-cache: N-slot LFRU cache with FATE prefetch for MoE weight offloading' - the only upstream PR found that named a next-layer-gate (Fate-style) predictor; never reviewed. Related same-day withdrawals #21614, #21620. https://github.com/ggml-org/llama.cpp/pull/21609",
+  "#20757 CLOSED issue 'Two-tier GPU+RAM expert cache for MoE offload (pluggable eviction policy)'; #29949 OPEN issue 'MoE expert cache with GPU-resident LRU - cache decisions and copies run on the GPU inside the compute graph'. https://github.com/ggml-org/llama.cpp/issues/20757 https://github.com/ggml-org/llama.cpp/issues/29949",
+  "#31122 CLOSED unmerged 2026-10-25 'llama : opt-in host expert page pinning for the MoE cache' (cudaHostRegister of expert ranges; RTX 4060 Ti PCIe 4.0 x8: pageable mmap uploads 18.8 t/s vs fully pinned 32.3 t/s). https://github.com/ggml-org/llama.cpp/pull/31122",
+  "#15346 MERGED 2025-08-20 'sched : copy only the used experts when offloading prompt processing' (slaren) - the selective-copy path that all decode/prefill expert uploads build on. https://github.com/ggml-org/llama.cpp/pull/15346",
+  "#23170 CLOSED 'ggml: treat experts as cache residents during MoE offloading' (staging tensor as cache); #24524 CLOSED 'cuda: MoE expert cache, adaptive VRAM caching of CPU-resident experts' (closed for scope; continued as discussion #24528 RFC, open, 50 comments incl. an offline-replay comment claiming <10% gain from smarter admission/eviction/prediction even at near-perfect prediction on a proxy trace). https://github.com/ggml-org/llama.cpp/discussions/24528",
+  "#29963 OPEN 'ggml : pipeline parallelism with MoE experts in host RAM'; #31469 OPEN 'out-of-core MoE expert streaming with VRAM slot pool and RAM victim cache (--moe-direct-io)' (overlaps shared-expert GPU compute with miss servicing via in-stream KICK/WAIT); #25294 OPEN 'stream MoE routed experts from disk'; #30971 OPEN draft 'adaptive single-graph MoE offload'. https://github.com/ggml-org/llama.cpp/pull/29963 https://github.com/ggml-org/llama.cpp/pull/31469",
+  "#4688 CLOSED issue (2024-04) 'Mixtral expert offloading and speculative loading' and #4729 CLOSED issue (2024-01) 'MoE offloading strategy' - early requests to port dvmazur/mixtral-offloading; closed without implementation. https://github.com/ggml-org/llama.cpp/issues/4688",
+  "Local fork observation (C:\\code\\llama.cpp-fork at 5df437a57, master merged): src/llama-moe-cache.cpp reads each layer's selected expert ids back with ggml_backend_tensor_get_async + ggml_backend_synchronize at the lookup split, then issues miss uploads with ggml_backend_tensor_set_async on the same compute backend, so uploads serialize with compute and there is no lookahead prefetch; a decode prefetch would need a second backend instance/copy stream plus events as in #21067/#28414."
+ ],
+ "synthesis": "1) Three ways to deal with the host-to-GPU expert transfer. (a) Hide it: predict the experts early and upload them on a copy stream while the GPU computes (Eliseev-Mazur, AdapMoE, HOBBIT, ProMoE, Fate, MoE-Infinity, DuoServe, SeqMoE, Speculating Experts, SP-MoE, MoE-SpeQ). (b) Avoid it: run the miss on the CPU from host RAM (Fiddler, DAOP, HybriMoE, KTransformers, llama.cpp #30966/#30594/#27861). (c) Make each miss cheaper or rarer: low-bit or skipped misses (HOBBIT, Fate, FloE), substitution (BuddyMoE), cache-aware routing (Skliar), partial residency (MoEpic). Only (a) without substitution, plus (b), keep outputs exact, which is the llama.cpp default.\n\n2) The training-free predictor is the next layer's router applied to the current hidden state (Eliseev-Mazur, AdapMoE, HOBBIT, DAOP, Fate, HybriMoE, Speculating Experts). Reported accuracy depends heavily on the metric, and the metrics do not compare with each other:\n- Mixtral-like top-2 models: HOBBIT 96% top-1; DAOP 84.11% per layer; AdapMoE about 90%.\n- Fate, top-6 DeepSeekMoE: 78.79% exact decode prediction, rising to 97.15% only when over-fetching every expert above the 75th-percentile score.\n- Speculating Experts, Qwen3-30B-A3B: recall@k about 90%, lower in early layers.\n- PROBE, 128-expert models: the frozen router gives 70-80% Top-K.\n- DuoServe, Mixtral: exact top-2 54-67%.\n- Learned or extra-signal predictors reach about 85-97%: ProMoE 84.7%; pre-attention exact-match 93-98%; SeqMoE recall@(k+3) 86-91%; MoE-SpeQ 90.9%; SP-MoE about 88% top-1.\n- Early layers are weak in every study (Fate caches layers 0-3 whole; DAOP uses the real gate for blocks 0-3).\n\n3) At 1 token/ubatch the measured value of prefetch alone is small:\n- Eliseev-Mazur ablation, pre-loading on top of LRU (my arithmetic): +5% A100, +11% RTX 3060, +19% 3080 Mobile, +34% T4.\n- AdapMoE, prefetch only: 1.22x per token on a 4090.\n- Fate, prefetch only: about 30% on average.\n- Speculating Experts: 5-14% TPOT vs on-demand, even while executing mispredicted experts.\n- ProMoE inside llama.cpp: only 1.09x on average over an LRU cache (up to 1.17x).\n- The big headline speedups (3-10x) come from weak baselines (naive or DeepSpeed offloading) or from inexact miss handling.\n\nThe reason is the time budget. At batch 1 one layer's compute is about 1 ms; the pre-attention paper measures 0.74-1.13 ms of attention against 0.7-1.6 ms per expert upload. So one layer of lookahead hides about one or two expert uploads, while a top-8/top-10 model can miss several experts per layer. Fate makes this explicit with n = T / t_expert. Prefetch therefore complements a high-hit-rate cache by covering part of the residual misses; it does not replace the cache. The ways to get past one layer are:\n- predicting several tokens ahead (SeqMoE: only 3.58 points of recall lost at 8 steps);\n- using speculative-decoding draft time (SP-MoE, MoE-SpeQ);\n- shrinking the bytes per miss (partial or low-bit experts).\n\n4) Engineering patterns that recur:\n- a dedicated copy stream or second backend instance with events and fixed staging/slot buffers (#28414, #21067, SeqMoE, SP-MoE);\n- pinned host memory, which is essential (#31122: 18.8 vs 32.3 t/s on PCIe x8; #25859: +21%);\n- demand misses preempting speculative loads, with chunked transfers so a demand load waits at most one chunk (ProMoE, MoE-Infinity);\n- graph-capturable slot updates: fixed slot pool, id->slot table, tag-guarded publish, misses read from mapped host memory (SeqMoE; it reports llama.cpp at no more than 28% of full-load speed, against 80% for SeqMoE);\n- asynchronous, lagged cache inserts (#27861; its author says synchronous uploads erased the gain);\n- stale-first, layer-ordered eviction (SpecMD Least-Stale).\n\n5) Upstream status today:\n- Merged: the MoE cache (#29887, LRU then SLRU via #30637, multi-GPU #30112).\n- Open: CPU-miss execution (#30966) and hybrid (#30594).\n- Weight prefetch: #21067 is still an open draft; #28414 (prefill-only) was closed.\n- No upstream PR implements router-based next-layer prediction for decode. #21609 ('FATE prefetch') was withdrawn without review.\n- In the fork, miss uploads go on the compute stream after a blocking id readback, so nothing overlaps yet.\n\nModel dependence matters (Liang et al.: shared experts reduce local routing consistency). A commenter on #21067 reports low cross-layer expert overlap on DeepSeek-V4-Flash. A community replay in discussion #24528 claims less than 10% gain from better policy or prediction. Both are anecdotal.\n\nSuggested first experiment for this fork: log, per layer, the recall@k of the next layer's router applied to the post-attention residual of the current layer, on the target models. Combine that with measured per-layer decode compute time and pinned-upload GiB/s to bound the hideable miss bytes before building a copy-stream prefetcher.",
+ "literature_check": {
+  "verdicts": [
+   {
+    "id": "Fast Inference of Mixture-of-Experts Language Models with Offloading",
+    "verdict": "confirmed",
+    "reason": "URL resolves to the work (v1, 28 Dec 2023, technical report). Every Table 2 number matches. The derived pre-loading gains (+5/+19/+11/+34%) are correct ratios of Full vs W/o pre-loading. k=2 for 12GB and k=4 for 16GB, 1-2 speculative experts, and loads issued after the current layer's experts finish are all verbatim. Recall is shown only in Fig. 2 (1, 2 and 10 layers ahead); 1.0 means both active experts were prefetched.",
+    "evidence": "Sec 3.3: 'we use k=2 for 12GB GPUs and k=4 for 16GB ones... trigger speculative expert loading immediately after the system finished loading all experts for the current layer... fetches 1 - 2 most likely experts'. Table 2 rows: Full 3.061/2.655/2.278/2.092 | 2.845/2.475/2.038/1.603; W/o pre-loading 2.918/2.227/2.051/1.567; W/o LRU & pre-loading 2.265/1.758/1.547/1.168; Naive 1.392/1.059/0.919/0.661. Sec 4.3 lists the T4 Colab (Gen3), 3080 Mobile (16GB, Gen4), 3060 (12GB, Gen3) and Azure T4 for 3-bit. Minor: the paper says k=4 is used for 'all other GPUs' including the A100-SXM."
+   },
+   {
+    "id": "Pre-gated MoE: An Algorithm-System Co-Design for Fast and Scalable Mixture-of-Expert Inference",
+    "verdict": "confirmed",
+    "reason": "arXiv 2308.12066 (v3 Apr 2024) is the ISCA-51 author preprint. DOI 10.1109/ISCA59077.2024.00078 and pp. 1018-1031 are confirmed by IEEE-indexed records. All latency, memory and accuracy numbers match.",
+    "evidence": "Sec VI: 'average 1.7x (max 1.9x) and 42x (max 125x) vs. MoE-OnDemand/MoE-Prefetch', 'only 19% latency overhead across all Switch-Base', 'consume only 23% of GPU-only's peak GPU memory', 'achieve 81% of' GPU-only throughput. The intro says 23% overhead and 4.2x memory reduction. Setup is AMD EPYC 7V12, single A100 80GB, PCIe gen4, primarily single batch. Table II: SQuAD EM Base-8 77.4 vs 78.2; CB Web QA EM Base-128 27.4 vs 25.8. Fig. 13 (N=2/3) shows the accuracy drop with no numbers in the text."
+   },
+   {
+    "id": "MoE-Infinity: Efficient MoE Inference on Personal Machines with Sparsity-Aware Expert Cache (earlier titles: Activation-Aware Expert Offloading for Efficient MoE Serving; Offloading-Efficient MoE Model Serving)",
+    "verdict": "confirmed",
+    "reason": "v1, v2 and v3 dates and all three titles are verified. v3 numbers match, including the 32GB/s vs 24GB/s inconsistency, the 3.1-16.7x vs 2.7-13.7x inconsistency, and Mixtral at 836 ms with about 1.4x. The v2 numbers also match. Minor: the v3 PDF lists a sixth author (Chuanhao Sun) who is not in the arXiv metadata.",
+    "evidence": "v3 Table 1 (TPOT Avg.): DeepSpeed 737, Mixtral-Offloading 1250, Ollama 2590, vLLM 485, MoE-Infinity 155 ms; caption says 'PCIe4.0 (24GB/s)', while Sec 5 says 'PCIe 4.0 interface (32GB/s)'. The prompt is 512 and the decode is 32. The conclusion says '2.7x-13.7x'. v2 Table 5: Mixtral buffer hit rate Ours 17% vs Ideal 21% (39 slots), and 'Among all traffic 68% for Arctic and 81% for NLLB are hit in GPU' on an 8x A5000 server. v2 Table 5 also gives buffer hit rates for Switch 52%, NLLB 46% and Arctic 28%. v3 states no hit-rate numbers."
+   },
+   {
+    "id": "ProMoE: Fast MoE-based LLM Serving using Proactive Caching",
+    "verdict": "confirmed",
+    "reason": "All hardware, models, speedups and predictor accuracies match v3.",
+    "evidence": "RTX 4090 24GB, i9-14900K, 128GB DRAM, 'PCIe 4.0, providing a unidirectional bandwidth of 32 GB/s'. DS-1, DS-2 and QW-1 are run in FP16; QW-2 (57.4B) and Mixtral in INT4. Batch size defaults to 1 and is varied from 1 to 4. The abstract gives 2.20x (up to 3.21x) and 2.07x (up to 5.02x). For llama.cpp decode: '1.49x (up to 1.79x) and 1.09x (up to 1.17x)' vs static/LRU, and for Mixt 'the LO baseline ... even surpasses ProMoE in the decode stage'. The predictor is a two-layer MLP, about 2M params, about 200 microseconds on the CPU. Accuracies: learned 84.7%, token-based 58.3%, skip-based on QW-2 66.9%. Stride lowers accuracy by 5%. Chunks are 3 per expert."
+   },
+   {
+    "id": "AdapMoE: Adaptive Sensitivity-based Expert Gating and Management for Efficient MoE Inference",
+    "verdict": "confirmed",
+    "reason": "Numbers and mechanism match. The venue should also name ICCAD 2024 (the DOI 10.1145/3676536.3676741 is the ICCAD '24 paper). No PCIe or batch size is stated.",
+    "evidence": "Table 2 (Mixtral-8x7b 4bit, 4090, 128 cached experts): baseline 0.392 s, +prefetch 0.322 (1.22x), +gating 0.313 (1.25x), all 0.288 (1.36x). The baseline is 'our modified version of Mixtral-offloading'. The abstract gives 25% fewer activated experts, 1.35x, 'without accuracy degradation'. Prefetch covers 'the next two/three layers', with an auxiliary predictive layer for the first layer using the previous token's last-layer activation. Sec 6.5: 'achieving rates around 90%' (Fig. 9b). Platforms: 8x7b on 4090 and A6000; 8x22b on A6000."
+   },
+   {
+    "id": "HOBBIT: A Mixed Precision Expert Offloading System for Fast MoE Inference",
+    "verdict": "confirmed",
+    "reason": "All stated numbers and design details match v2.",
+    "evidence": "'implement HOBBIT on top of Llama.cpp with 8,000 additional lines of C++/C code'. 'we set T1 = 0.6 and T2 = 0.9 for the Mixtral-8x7B model ... 67% in high precision, 30% in low precision, and 3% to skip'. Prediction: 'top-1 expert prediction accuracy for the next layer is very high, averaging 96% ... next two or three layers ... around 90%'. Hardware: 4090 24GB, 256GB host, PCIe 4.0 32GB/s; Jetson AGX Orin; batch size 1. Speedups: 3.21x/3.29x vs MoE-Offloading, 2.30x/3.92x vs MoE-Infinity (4090); 3.64x/9.93x vs MoE-Infinity and 13.0x/18.9x vs Llama.cpp (Orin)."
+   },
+   {
+    "id": "Fiddler: CPU-GPU Orchestration for Fast Inference of Mixture-of-Experts Models",
+    "verdict": "confirmed",
+    "reason": "ICLR 2025 (v3 header), authors and hardware are correct. 1.26x, 1.43x ITL and 11.57x appear in v3. Note: 'over 3 tokens per second on a single GPU with 24GB' is from the v1 abstract and is not in v3.",
+    "evidence": "v3: 'Fiddler outperforms the best baseline, llama.cpp ... 1.26 times faster on average'. App. F: 'In terms of ITL, Fiddler shows an average of 1.43 times speedup ... among all baselines'. Beam search is '11.57 times better performance than llama.cpp'. Hardware: Quadro RTX 6000 + Xeon Gold 6126 on Gen3 x16; RTX 6000 Ada + Xeon Platinum 8480+ on Gen4 x16. Activation copy is under 1% of latency. v1 abstract: 'generate over 3 tokens per second on a single GPU with 24GB memory'."
+   },
+   {
+    "id": "MoE-Lightning: High-Throughput MoE Inference on Memory-constrained GPUs",
+    "verdict": "confirmed",
+    "reason": "All claims are supported, including CPU attention for micro-batch j+2, the 2x weight buffer, and the remark that one or two prompts favour static placement.",
+    "evidence": "Abstract: 'up to 10.3x higher throughput ... Mixtral 8x7B on a single T4 GPU (16GB)'. Table 4 Synthetic Reasoning S2 (L4): MoE-Lightning(p) 105.29 vs FlexGen 50.138. Ablation table: N=504, micro-batch 36. Algorithm 1 contains CPUAttn(i, j+2). App. A.1: 'weight buffer with a size of 2 x' the CPU-resident layer weights. Sec 3: 'users may only have one or two prompts ... more beneficial to have a static weights placement'."
+   },
+   {
+    "id": "ExpertFlow: Optimized Expert Activation and Token Allocation for Efficient Mixture-of-Experts Inference",
+    "verdict": "partly",
+    "reason": "The v1 numbers check out, with three corrections. (1) The Mixtral baseline is not unspecified: the Fig. 8 legend names Cache-MoE, and v2 says 'outperform Cache-MoE by up to 1.99x (Mixtral-8)'. (2) Mixtral was run at (cache size, batch) of (1|3, 4|8|16), and 1.96x/1.99x are the CS=3, BS=16 points. The 'batch size of 16' in the setup is the predictor training batch. (3) v2 (2 Apr 2026) is published at DAC '26.",
+    "evidence": "v1 abstract: 'up to 93.72% GPU memory savings and enhances inference speed by 2 to 10 times'. v1 intro: 'expert cache hit ratio of up to 91.96%, improving the hit ratio by an average of 27.65% over the LRU'. Setup: A40 48GB and Xeon Gold 6338. Table 1 (Switch only) Ours ranges from 73.55% (Switch-128, BS 8, XSUM) to 87.01% (Switch-32, BS 32, XSUM). Text: 'a 1.96x speedup on WMT16 and 1.99x on XSUM'. The v2 header reads 'DAC '26, July 26-29, 2026, Long Beach'."
+   },
+   {
+    "id": "Fate: Fast Edge Inference of Mixture-of-Experts Models via Cross-Layer Gate (v1 title: Accurate Expert Predictions in MoE Inference via Cross-Layer Gate)",
+    "verdict": "partly",
+    "reason": "Hardware, models and the 4.1x/2.2x, 3.7x/2.2x, 14 tok/s, 30%, 97.15%, 78.79/83.99/76.94% and 99.08% figures are all stated. Two corrections. (1) 'Quantization up to 3.7x' is wrong: 3.7x is the full LoD+Prefetch+Cache+Quantization stack vs Load-on-Demand. (2) 76.94% is position 3, an earlier input more than one MoE block before i+1, not a later position.",
+    "evidence": "Ablation: 'achieving an average speedup of 30% from prefetching alone'. The quantization strategy '...achieves the most significant improvement, delivering up to a 3.7x decoding speedup compared to Load on Demand'. Table 1 decoding prefetch accuracy: pos1 83.99%, pos2 78.79%, pos3 76.94%. 'we select [pos 2], achieving a prefetch accuracy of 78.79%'. 'confidence scores exceed the 75th percentile, achieving ... 97.15%'. 'cached all experts in layers 0-3 ... 99.08%'. Hardware: 3090 + i9-9900X on PCIe 3.0 x16 (16GB/s); 1080Ti on PCIe 1.0 x16 (4GB/s)."
+   },
+   {
+    "id": "Pre-Attention Expert Prediction and Prefetching for Mixture-of-Experts Large Language Models",
+    "verdict": "confirmed",
+    "reason": "All numbers are stated, and no end-to-end system result is reported. Caveat: the 93.03/94.69/97.62% exact-match, top-1 and over-provisioning figures come from Table 4, captioned 'Prediction accuracy of the first layer'. The paper claims other layers are similar or better.",
+    "evidence": "Table 1: self-attention 0.7385-1.1279 ms on V100/A100-40/A100-80. Prediction takes 0.15 ms, '0.818-1.257ms of available time', and memory-to-GPU is '0.7-1.6ms per expert' (6 experts take 4.0-9.5 ms). The estimate is '(1 - 0.9303) x 9.5 = 0.66 ms/token compared to Fate's ... 2.01 ms/token'. Table 4 Arch 1: exact 93.03/94.69/97.62, over-provisioning 98.65/98.81/99.05, top-1 98.85/99.55/98.95. Training and eval used a TITAN RTX 24GB. Sec 7.2 leaves end-to-end integration as future work."
+   },
+   {
+    "id": "Speculating Experts Accelerates Inference for Mixture-of-Experts",
+    "verdict": "confirmed",
+    "reason": "Numbers match. Clarification: the 5-8% figure is for GPT-OSS-120B on an A100 80GB (PCIe 4.0) and Qwen3-235B-A22B on a GH200, which uses NVLink-C2C rather than PCIe. Neither is Qwen3-30B-A3B. Mispredicted experts are executed rather than refetched.",
+    "evidence": "Setup table: A6000 48GB PCIe 4.0 (Qwen3-30B-A3B, GLM); A100 80GB PCIe 4.0 (GPT-OSS-120B); GH200 96GB NVLink C2C (Qwen3-235B-A22B). Batch 1, prompts {1024..65536}, 32 tokens generated. 'For Qwen3-30B-A3B, prefetching yields a 9-14% reduction in TPOT'; 'A100 and GH200 ... limited to 5-8%, compared to 12-14% on the A6000'. Table 1 averages: Qwen3 0.817 / Router-PF 0.641 / Est-PF 0.750 / Hybrid-PF 0.766; GSM8k 0.950 -> 0.576; GPT-OSS-120B 0.849 -> Router-PF 0.857. Recall@k is about 90% beyond the early layers. Estimators: Qwen3 about 90%, GPT-OSS-120B 83%, GPT-OSS-20B 88%. Runs on YALIS."
+   },
+   {
+    "id": "SpecMD: A Comprehensive Study On Speculative Expert Prefetching",
+    "verdict": "partly",
+    "reason": "The numbers are correct, but the bandwidth is not modeled. The paper uses the device-native measured host-to-device bandwidth of about 5 GB/s; only the cache capacity is software-limited. The claim that 'bandwidth is modeled, not real PCIe' is therefore wrong.",
+    "evidence": "Setup: 'single A100 GPU with 80GB VRAM. We software-limit our GPU cache to 1%, 5%, or 25% ... We opted to use device native bandwidth, which on our device measures on average 5 GB/s'. Abstract: 'up to 85x over LRU ... over 88% hit rates with up to 34.7% TTFT reduction on OLMoE at only 5% or 0.6GB'. Body: '2.6-8.6x versus LRU' at 5%. Table 2 Eliseev '23 rows: OLMoE 10.7%, Mixtral 17.8%. Overfetch is 1.5x. Mixtral experts are 336MB. Fig. 6: 'top-k 1.0x achieves highest prediction accuracy'."
+   },
+   {
+    "id": "DuoServe-MoE: Dual-Phase Expert Prefetch and Cache Scheduling for Efficient MoE LLM Inference",
+    "verdict": "partly",
+    "reason": "Accurate for v1 (9 Sep 2025), but the URL now resolves to v2 (9 Apr 2026). v2 is retitled 'DuoServe-MoE: Dual-Phase Expert Prefetch and Caching for LLM Inference QoS Assurance', adds Qwen3-30B-A3B, DeepSeekMoE-16B and a MoE-Infinity baseline, and reports TTFT up to 5.34x and end-to-end latency up to 7.55x. Its accuracy table now compares against MIF and uses 'At Least Half'.",
+    "evidence": "v1 abstract: '4-bit Mixtral-8x7B and 8x22B ... end-to-end latency by 1.42 to 7.54 times ... peak memory usage at only 15 percent'. v1 text: TTFT '1.78x to 3.8x', throughput '1.78x to 7.04x'. Hardware: A5000 + 3945WX and A6000 + 5955WX, PCIe 4.0, AWQ, seven-layer MLP, mismatches 're-fetched from the CPU'. Accuracy: Top-2 66.85/60.23/56.21/54.16%; at least one 95.45/92.31/90.45/90.31%. v2 abstract: TTFT up to 5.34x, E2E up to 7.55x; Qwen3-30B-A3B top-k 56.12/55.33%."
+   },
+   {
+    "id": "SP-MoE: Speculative Decoding and Prefetching for Accelerating MoE-based Model Inference",
+    "verdict": "confirmed",
+    "reason": "Authors, hardware, batch size, speedups and accuracy all match.",
+    "evidence": "Abstract: '1.07x-3.5x TPOT speedup'. Table 2: RTX 3090, RTX 4090 and A100 40GB, all 'PCIe 4.0 x 16'. 'SP-MoE also adopts batch size = 1'. 'reduces TPOT by 34% compared to Mixtral-Offloading', '19% reduction over MoE-Infinity', '12% reduction compared to AdapMoE'. 'DeepSeek-Lite achieving 88.94% top-1 expert prediction accuracy on average across layers, and Mixtral and Phi-3.5-MoE ... approximately 88%'."
+   },
+   {
+    "id": "MoE-SpeQ: Speculative Quantized Decoding with Proactive Expert Prefetching and Offloading for Mixture-of-Experts",
+    "verdict": "partly",
+    "reason": "Accurate for v1 (18 Nov 2025), but the URL now resolves to v3 (22 Oct 2026). v3 is retitled 'Specter: Fast MoE Inference via Quantization-Enabled Multi-Step Speculative Offloading' and has 8 authors. Its abstract reports a 1.50x average (up to 1.88x) TPOT speedup under single-request inference, not 2.34x. The 96.25-99.85% figures are Table 3 cache hit rates of the Speculative policy at 32/16/6 slots.",
+    "evidence": "v1: 'MoE-SpeQ achieves at most 2.34x speedup'. Hardware: A100 40GB, Xeon Silver 4310, PCIe 4.0 x16, GPTQ INT4 draft. 'from 536.7 ms (Mixtral-Offloading-SC) down to 163.1 ms, a 3.3x speedup'; Qwen '74.1 ms/token'. '90.9% total fidelity ... 44.1% Hard Matches and ... 46.8% Soft Matches'. Table 3 Speculative hit rate: 99.85 (Low), 98.62 (Medium), 96.25 (High). Current abstract: 'average 1.50x (up to 1.88x) speedup in TPOT over the state-of-the-art system'."
+   },
+   {
+    "id": "FloE: On-the-Fly MoE Inference on Memory-constrained GPU",
+    "verdict": "confirmed",
+    "reason": "Accepted at ICML 2025 (icml.cc poster 44378). All numbers match, including the label swap in the figure caption.",
+    "evidence": "Abstract: '9.3x compression of parameters per expert in Mixtral-8x7B ... GPU with only 11GB VRAM ... 48.7x inference speedup compared to DeepSpeed-MII on a single GeForce RTX 3090 ... 4.4%-7.6% average performance degradation'. Eval: 'FloE achieves 91% of Mixtral-GPU's speed (95% at most), delivering 48.7x, 2.60x and 3.14x speedups over DeepSpeed-MII, Mixtral-Offloading and Fiddler'. Inter-expert predictor 'average precision of 0.88'; intra 'average recall of 0.95'. The Fig. 4 caption labels them the other way round."
+   },
+   {
+    "id": "DAOP: Data-Aware Offloading and Predictive Pre-Calculation for Efficient MoE Inference",
+    "verdict": "confirmed",
+    "reason": "Numbers match. The venue should also name DATE 2025 (the paper carries a DATE Lyon 2025 copyright line).",
+    "evidence": "Setup: i9-10980XE + RTX A6000, PCIe 4.0, batch size one. 'outperforms Fiddler by 40.4%, achieving ... 4.52 tokens per second for Mixtral 8x7B and 8.21 ... Phi-3.5' at 46.9% ECR, and '3.23 tokens/s ... 5.03 tokens/s' at 25%. Abstract: 'up to 8.20x and offloading techniques by 1.35x'. Table VI Mixtral GSM8K: 58.91 (official) -> 33.51 (25% ECR). Fig. 5: 'Avg. Accuracy: 84.11%' one layer ahead in decode. 'for 0 <= i < 4, we use the original gate function'."
+   },
+   {
+    "id": "HybriMoE: Hybrid CPU-GPU Scheduling and Cache Management for Efficient MoE Inference",
+    "verdict": "confirmed",
+    "reason": "Published at DAC 2025 (62nd DAC, pp. 1-7) by Zhong, Sun, Liang, Wang, Huang and Meng Li. Numbers match, and PCIe and batch size are not stated.",
+    "evidence": "Built 'on top of the kTransformers framework and llama.cpp kernels'. Hardware: RTX A6000 and Xeon Gold 5220R limited to 10 cores. Speedups: '1.33x in the prefill stage and 1.70x in the decode stage'. 'llama.cpp demonstrates relatively strong performance in this stage' (decode). Hit rates: 'At 25% cache capacity, MRS outperforms LRU by 6% to 8%, with Mixtral improving from 30.2% to 36.2%, DeepSeek from 47.7% to 52.7%, and Qwen2 from 45.0% to 52.8%'. Prefetch covers the next three layers by reusing their gates."
+   },
+   {
+    "id": "KTransformers: Unleashing the Full Potential of CPU/GPU Hybrid Inference for MoE Models",
+    "verdict": "confirmed",
+    "reason": "The MADSys page confirms the title, SOSP 2025, the DOI and the abstract numbers. The abstract names no specific hardware.",
+    "evidence": "DOI 10.1145/3731569.3764843, 31st SOSP (Oct 2025), authors Hongtao Chen ... Mingxing Zhang. Abstract: '4.62-19.74x prefilling speedups and 1.25-4.09x decoding speedups'. Expert Deferral raises CPU utilization 'from typically below 75% to almost 100%' and 'yields up to 1.45x additional throughput' with 'an average model accuracy drop of no more than 0.5%'. It uses AMX kernels."
+   },
+   {
+    "id": "SeqMoE: Toward Full-Load Performance via Predictive and Graph-Compatible MoE Offloading",
+    "verdict": "confirmed",
+    "reason": "All numbers and runtime details match v1 (11 Sep 2026). Each model was run on exactly one platform.",
+    "evidence": "'At 45% cache capacity (40% for QW36), SeqMoE achieves 84.82%, 75.69%, 79.20%, and 76.65% of FullLoad'; average 80.22% vs FreeToken 51.50% and at most 28.03% for the others. Hit rate 96.97% vs '88.50% for LRU, the strongest baseline'. Predictor time 3.46%; memory 120/228/112/223 MB. 'top k+3 experts yields recalls of 90.90%, 88.39%, 90.76%, and 85.81%', and Seq-8 drops 3.58 points. Two predictors are triggered at L/2 and L, with 8 recursive steps. Runtime details: cudaHostAllocMapped, a custom kernel on the main stream, cudaMemcpyAsync on a dedicated copy stream, tags, a fixed base address with an expert_id->slot lookup, and batch size one. Platforms: QW3 on 4090 (PCIe4), QW36 on 5090 (PCIe5), GPT and DSV4 on RTX PRO 6000 Blackwell (PCIe5)."
+   },
+   {
+    "id": "fMoE: Fine-Grained Expert Offloading for Large Mixture-of-Experts Serving (v2: Taming Latency-Memory Trade-Off in MoE-Based LLM Serving via Fine-Grained Expert Offloading)",
+    "verdict": "partly",
+    "reason": "The claimed numbers are v1 (7 Feb 2025) and are verified. The URL now resolves to v2 (4 Oct 2025), which renames the system FineMoE and is published at EuroSys '26. v2 reports +39% hit rate (not +36%) and average TPOT reductions of 46/38/27/22% vs DeepSpeed/Mixtral-Offloading/ProMoE/MoE-Infinity (v1: 70/61/55/48%).",
+    "evidence": "v1: 'reduces inference latency by 47% and improves expert hit rate by 36%'. Testbed: six RTX 3090s, 'PCIe 4.0 with 32GB/s', Threadripper PRO 3955WX. Built 'using MoE-Infinity codebase'. 'reduces the average TPOT by 70%, 61%, 55%, 48%'; 'improves the average expert hit rate by 147%, 11%, 34%, and 63%'. 'set the prefetch distance d to 3'; 'Whenever an expert miss occurs, fMoE pauses'. v2 abstract: '47% and improves expert hit rate by 39%'; header: EUROSYS '26."
+   },
+   {
+    "id": "DoMoE: Domain-Aware Semantic Expert Prediction for Efficient MoE Inference Under Expert Offloading",
+    "verdict": "partly",
+    "reason": "Venue, hardware and the 1.32x/1.22x figures vs FMoE are correct. Corrections: (1) Table 2 baseline hit ratios span 36-66% (MoE-Infinity 36-50%, FMoE 44-66%), not 49-72%; 64-72% is DoMoE's own range. (2) The 1.22x hit-ratio gain is vs FMoE; vs MoE-Infinity, DoMoE's hit ratio is about 1.4-1.7x. (3) Throughput spans 0.60-2.32 tok/s. (4) Qwen3-30B-A3B is also evaluated.",
+    "evidence": "IJCAI-26 proceedings header; authors Yao Mu ... Dongxiao Yu. 'server equipped with an NVIDIA L40 GPU, an Intel Xeon'. DoMoE is implemented on MoE-Infinity, and FMoE is reimplemented on the MoE-Infinity codebase. Table 2, Mixtral throughput / hit ratio: MoE-Infinity 0.65/0.79/0.60 and 46/48/43%; FMoE 0.92/1.10/0.85 and 62/59/52%; DoMoE 1.24/1.43/1.21 and 69/72/66%. Qwen3-30B-A3B: MoE-Infinity 39/43/36%."
+   },
+   {
+    "id": "EdgeMoE: Empowering Sparse Large Language Models on Mobile Devices (v1: Fast On-Device Inference of MoE-based Large Language Models)",
+    "verdict": "confirmed",
+    "reason": "Numbers match the current v2 (7 Mar 2025). The v2 PDF carries an IEEE Transactions on Mobile Computing header, so the venue/year is incomplete. Authors: Rongjie Yi et al.",
+    "evidence": "'In Jetson TX2, EdgeMoE demonstrates a speedup ranging from 2.64x to 3.03x compared to IO-EXP'. Ablation (ST-base-8, TX2): quantization 0.789s -> 0.392s, then 'Preloading and pipeline further reduce the latency to 0.305s'. 'P(E3 = 5|E1 = 3, E2 = 1) = 87.1%'. The preload thread is 'bound to the small cores of the CPU'. Devices include the Xiaomi 14 (MiniCPM MoE 8x2B) and Raspberry Pi 4B; GPTSAN is used."
+   },
+   {
+    "id": "SiDA: Sparsity-Inspired Data-Aware Serving for Efficient and Scalable Large Mixture-of-Experts Models",
+    "verdict": "confirmed",
+    "reason": "MLSys 2024 (7th MLSys) is confirmed. Numbers match, including the inconsistent latency framing.",
+    "evidence": "Abstract: 'up to 3.93x throughput increasing, up to 72% latency reduction'. Intro: 'reduces the latency down to 28%'; body: 'to 25%'. 'SiDA-MoE achieves 2.60x, 3.93x more throughput on SST2'. Batch size is 1 for latency. Hardware: A100 80GB + Xeon 8358. The predictor is a 2-layer LSTM with sparse attention. FIFO is used. Table 5 'Top-3 Hash Hits Rate': Switch-base-8 99.00/97.41/91.74%, Switch-base-128 98.78/98.65/90.49%."
+   },
+   {
+    "id": "BuddyMoE: Exploiting Expert Redundancy to Accelerate Memory-Constrained Mixture-of-Experts Inference",
+    "verdict": "confirmed",
+    "reason": "Numbers match. Minor: the paper does describe a prefetch pipeline (Fig. 3: the CPU uses the attention output to predict and prefetch block i+1 experts) but gives no accuracy figure, so 'no own predictor described' is slightly off.",
+    "evidence": "'single-node system equipped with an NVIDIA A100 GPU (PCIe interface) and an Intel Xeon Platinum 8457C'; 'We implement BuddyMoE within the llama.cpp framework, utilizing its CUDA backend'. Table 4 (c=0.375): Original 24.78 t/s; BuddyMoE 27.33 t/s, '10.3%'. Table 2 (c=0.75): Original ARC avg 0.735 / 34.23 t/s; BuddyMoE (0.95, 16, 3) 0.695 / 36.75 t/s. TAE gating is used, and the model is DeepSeek-V2-Lite."
+   },
+   {
+    "id": "Mixture of Cache-Conditional Experts for Efficient Mobile Device Inference",
+    "verdict": "confirmed",
+    "reason": "TMLR (June 2025) is in the v2 header. The authors, mechanism and 2x claim match.",
+    "evidence": "'Published in Transactions on Machine Learning Research (TMLR), June 2025'. Abstract: 'language modeling, MMLU, and GSM8K benchmarks ... on-device results demonstrating 2x speedups on mobile hardware'. The Cache-Prior method 'manipulates the router logits ... to increase the probability of selecting experts already present in cache'."
+   },
+   {
+    "id": "Not All Models Suit Expert Offloading: On Local Routing Consistency of Mixture-of-Expert Models",
+    "verdict": "confirmed",
+    "reason": "v4 (28 Feb 2026) is marked 'Published as a conference paper at ICLR 2026', with the SRP/SCH metrics, 20 models, shared-expert finding and roughly 2x cache size. Note: 'MoE in every layer and no shared experts are most consistent' is from the v1 abstract. v4 instead stresses a strong trade-off between local routing consistency and local load balance.",
+    "evidence": "v4 abstract: 'Segment Routing Best Performance (SRP) ... Segment Cache Best Hit Rate (SCH) ... We analyze 20 MoE LLMs ... shared experts that decrease expert combination space can lead to low local routing consistency ... cache sizes approximately twice the active experts'. The v1 abstract page has 'every layer and do not use shared experts exhibit the highest local routing consistency'."
+   },
+   {
+    "id": "PROBE: Co-Balancing Computation and Communication in MoE Inference via Real-Time Predictive Prefetching",
+    "verdict": "confirmed",
+    "reason": "All claims are supported. Authors (missing in the list): Qianchao Zhu, Xucheng Ye, Yuliang Liu, Haodong Ouyang, Chengru Song, et al.",
+    "evidence": "'8xNVIDIA Hopper-141GB node interconnected via 900 GB/s NVSwitch', NVSHMEM. Abstract: 'reduces prefill latency by up to 1.32x and improves decoding throughput by up to 1.26x'. The text says 1.32x is vs SGLang and 1.26x is vs DeepSeek-EPLB. A residual MLP is zero-initialized on a frozen router with online distillation. 'Untrained baseline suffers from feature drift with only around 70%-80% accuracy ... elevating the Top-K Accuracy to 87%-94%'. Models: Qwen3-MoE-235B (128 experts, top-8) and GPT-OSS-120B (128 experts, top-4)."
+   },
+   {
+    "id": "Read-ME: Refactorizing LLMs as Router-Decoupled Mixture of Experts with System Co-Design",
+    "verdict": "confirmed",
+    "reason": "NeurIPS 2024 and the abstract numbers match.",
+    "evidence": "'38th Conference on Neural Information Processing Systems (NeurIPS 2024)'. Abstract: 'improvements of up to 10.1% on MMLU, and improving mean end-to-end latency up to 6.1%'. The pre-gating router is decoupled from the backbone, with Belady-inspired caching. Authors: Ruisi Cai, Yeonju Ro, Geon-Woo Kim, Peihao Wang, Babak Ehteshami Bejnordi, Aditya Akella, Zhangyang Wang."
+   },
+   {
+    "id": "Accelerating Mixture-of-Expert Inference with Adaptive Expert Split Mechanism (MoEpic)",
+    "verdict": "confirmed",
+    "reason": "Title, authors and the abstract mechanism and numbers match v1. The abstract states neither hardware nor prediction accuracy (the body uses an 8x RTX A6000 server and also mentions 3090/A100).",
+    "evidence": "Abstract: 'each expert is vertically divided into two segments: top and bottom. MoEpic caches the top segment of hot experts ... predicts and prefetches the activated experts for the next layer ... divide-and-conquer algorithm based on fixed-point iteration ... save about half of the GPU cost, while lowering the inference latency by about 37.51%-65.73%'."
+   },
+   {
+    "id": "PreScope: Unleashing the Power of Prefetching for Resource-Constrained MoE Inference",
+    "verdict": "partly",
+    "reason": "Accurate for v1 (28 Sep 2025), but the URL now resolves to v2 (16 Apr 2026), retitled 'LayerScope: Predictive Cross-Layer Scheduling for Efficient Multi-Batch MoE Inference on Legacy Servers' with 9 authors. Also, the 'hot Top-4' accuracy is a lenient metric: a prediction counts as correct if the predicted Top-4 falls within the true Top-6.",
+    "evidence": "v1: V100 (PCIe3 x16) and A100 (PCIe4 x16), Xeon Gold 6230R, 'batch sizes ranging from 4 to 64'. Results: 'throughput by 141% over Klotski and 70.8% over HybriMoE, while cutting decoding latency by 74.6% and 42.1%'. 'Three independent CUDA streams'; PCA features. Table 3 Top4: DeepSeek 94%, Mixtral 99%, Qwen3 97%, Moonlight 99%. 'a prediction is considered correct if the Top-4 falls within the true Top-6'. 'never drops below 80% for any model or layer'."
+   }
+  ],
+  "missed": [
+   "Several arXiv URLs now resolve to revised versions whose title or headline numbers differ from those cited. DuoServe-MoE v2 (Apr 2026) is retitled, adds Qwen3-30B-A3B and a MoE-Infinity baseline, and reports TTFT up to 5.34x and E2E up to 7.55x. 2511.14102 v3 (Oct 2026) is now 'Specter' with a 1.50x avg / 1.88x max TPOT speedup, not 2.34x. 2509.23638 v2 (Apr 2026) is now 'LayerScope'. fMoE v2 is 'FineMoE' at EuroSys '26, with +39% hit rate and TPOT reductions of 46/38/27/22%. ExpertFlow v2 is DAC '26. Cite versioned URLs (e.g. arxiv.org/abs/XXXX.XXXXXv1) or update the numbers.",
+   "Speculating Experts: the 5-8% TPOT gains on A100/GH200 come from GPT-OSS-120B (A100, PCIe 4.0) and Qwen3-235B-A22B (GH200, NVLink-C2C), not Qwen3-30B-A3B. The only Qwen3-30B-A3B result is 9-14% on the A6000.",
+   "SpecMD did not model bandwidth. It used the A100 host's device-native measured bandwidth of about 5 GB/s, so the relevance caveat 'bandwidth is modeled, not real PCIe' is wrong.",
+   "Fate's 3.7x decode speedup is the full stack (prefetch+cache+quantization) vs Load-on-Demand, not quantization alone. Prefetch alone averages about 30%.",
+   "DoMoE's baseline hit ratios are 36-66%, and its 1.22x hit-ratio gain is relative to FMoE, not MoE-Infinity (vs MoE-Infinity it is roughly 1.4-1.7x). It also evaluates Qwen3-30B-A3B.",
+   "Pre-Attention Prediction's headline 93.03/94.69/97.62% exact-match figures are first-layer accuracies (Table 4). The authors assert other layers are similar or better but show no per-layer table in the text.",
+   "PreScope/LayerScope's 94-99% 'hot Top-4' accuracy counts a hit when the predicted Top-4 lies within the true Top-6, so it is not comparable to exact top-k accuracies elsewhere in the list.",
+   "Venue omissions: AdapMoE is ICCAD 2024, DAOP is DATE 2025, and EdgeMoE v2 carries an IEEE Transactions on Mobile Computing header.",
+   "Fiddler's 'over 3 tokens/s on a 24GB GPU' appears only in v1; the v3 (ICLR) text drops it.",
+   "In 'Not All Models Suit Expert Offloading', the 'MoE in every layer and no shared experts are most consistent' finding is from v1. The v4/ICLR version foregrounds a trade-off between local routing consistency and local load balance instead.",
+   "BuddyMoE does describe a next-block prefetch pipeline (CPU predicts from the attention output, Fig. 3) but reports no prediction accuracy."
+  ]
+ }
+}

@@ -1,0 +1,143 @@
+{
+ "note": "EXP-0004 documentation recheck: two readers confirmed the doc_check.json fixes and swept research/ for consistency with the data and for stale pre-EXP-0004 text. All findings were applied before the commit.",
+ "results": [
+  {
+   "key": "applied",
+   "findings": [
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "The default cap pins layers 0 to 15 (address order, first fit), which carry",
+     "problem": "This is wrong about what gets pinned, and so about where the 49% comes from. pin_host_experts does first fit over individual tensors, not whole layers. The RAM/4 cap (31.11 GiB / 4 = 7964 MiB) fits layers 0 to 15 (7522 MiB) plus layer 16's down and gate tensors (176 + 144 MiB = 7842 MiB). Only layer 16's up tensor is left out. The 49% is the share of that whole pinned set. Layers 0 to 15 alone carry 47.8%. The same wording, newly written, appears in ROADMAP.md (\"default 7842 MiB pins layers 0 to 15 and covers about 49% of the warm upload bytes\") and in STATE.md step 2 (\"The default pins layers 0 to 15 (address order, first fit), about 49% of the warm upload bytes\").",
+     "evidence": "Read the GGUF header (pure-Python parser, read only). Expert tensors are separate ranges with 1 to 38 MiB gaps between them, so none merge. Per layer: 464 MiB, except layer 1 at 562 MiB and layers 34, 38 and 39 at 498 MiB. Cumulative size through layer 15 is 7522 MiB; adding blk.16 down (176) and gate (144) gives 7842, which matches log_2048-pinned_long.txt \"registered 7842.20 MiB\". The trace agrees: in C:/nsys/exp0004/2048-pinned_long.sqlite, tokens 387-1022, layer 16's copies are 576 KiB pinned x1673, 704 KiB pinned x1673 and 576 KiB pageable x1673, so 69% of its bytes are pinned. Layers 0-15 are 47.84% of expert upload bytes and the whole pinned set is 49.33%. The same per-tensor rule explains the 15266 MiB cap exactly: 14946 (layers 0-31) + 176 + 144 = 15266. So layer 32's up tensor stays pageable as well, about 0.8% more traffic. Layers 33-39 alone are 17.5%.",
+     "fix": "The default cap pins layers 0 to 15 and the gate and down tensors of layer 16 (address order, first fit per tensor), which carry about 49% of the warm upload bytes (layers 0 to 15 alone 48%) for 42% of the expert bytes, ... Make the same change in ROADMAP.md R11 and STATE.md step 2. Optionally add that at 15266 MiB the same rule leaves layer 32's up tensor and layers 33 to 39 pageable, about 18% of the warm upload bytes."
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "pages in. Yet no pinned copy ever waited on a fault (0 slow pinned copies in",
+     "problem": "The number is wrong. One pinned expert copy is slow, in 2048-pinned_t2. The fix behind this text (doc_check finding 3) checked only three of the five pinned captures. The review had already said one pinned copy was slow. Sign 4 repeats the claim: \"No pinned copy ever waited on a fault.\" (line 242).",
+     "evidence": "timeline_2048-pinned_t2.json summary.expert_copy_rates has \"pinned/slow\": n = 1, next to \"pinned/fast\": n = 20151. A read-only query of C:/nsys/exp0004/2048-pinned_t2.sqlite finds it: a 589,824 B pinned copy whose host call took 5169 us (0.11 GB/s), in decode token 66, which is inside the analysed window. The other four pinned captures have 0 below 1.5 GB/s. Across all five captures that is 1 slow copy out of 296,533 pinned expert copies. review.json pagefault C4: \"only 1 of ~250k was slow\". The trace cannot say whether this one copy waited on a fault.",
+     "fix": "Yet only 1 of about 296,500 pinned expert copies in the five pinned captures was slow (576 KiB in 5.2 ms, 2048 MiB pinned rep 2, decode token 66; prefill included); when those pages become resident is not measured. In sign 4, replace \"No pinned copy ever waited on a fault.\" with \"Only 1 of about 296,500 pinned copies was slow.\""
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "overlap ceiling; the wider literature reports 5 to 34% (SOURCES.md).",
+     "problem": "The sentence mixes two units. The \"8 to 15%\" just before it is a share of token time. The 5 to 34% is Eliseev-Mazur's gain in tokens per second (ratios of their Table 2). As a share of token time, +34% is about 25%. ROADMAP.md R13 has the same mix: \"the two closest studies measure 8 to 15% of token time from prefetch alone, the wider literature 5 to 34% (SOURCES.md)\".",
+     "evidence": "SOURCES.md, Eliseev and Mazur row: \"+5% A100, +11% RTX 3060, +19% RTX 3080 Mobile, +34% T4 (ratios of their Table 2)\". literature.json gives the tokens/s figures: T4 2.092 against 1.567 = 1.335x, so 1 - 1/1.335 = 25% of token time. The other wide-literature gains are also speedups: AdapMoE 1.22x (18% of time), Fate about +30% (about 23%).",
+     "fix": "...overlap ceiling; the wider literature reports +5 to +34% tokens per second (about 5 to 25% of token time) (SOURCES.md). Make the same change in ROADMAP.md R13: \"the wider literature +5 to +34% tokens per second (5 to 25% of token time)\"."
+    },
+    {
+     "file": "research/BENCHMARKS.md",
+     "quote": "- **Record the prefill time** as a coldness check: 13.4 to 13.8 s cold for the",
+     "problem": "The cold reference covers only pageable runs. A cold run with 42% pinned prefills in 9.3 to 9.9 s and makes about 3600 prefill slow copies, not 6480. Under this check a cold pinned arm would look partly warm. STATE.md step 1 says the same (\"coldness check (cold is 13.4 to 13.8 s and about 6480)\"), and its step 3 runs pinned arms at 7842 and 15000 MiB. ROADMAP.md R10 also says \"prefill slow copies (about 6480 when cold)\".",
+     "evidence": "Prompt eval times in log_*pinned*.txt: 1024 pinned t1/t2/u 9325 / 9332 / 9360 ms; 2048 pinned t1/t2/u/long 9767 / 9755 / 9946 / 9523 ms. All of these runs were cold: review.json synthesis says \"Pinned runs start the same whatever ran before (32.80 vs 32.84 slow/token)\". Read-only count of prefill expert copies below 1.5 GB/s (before the first logits read-back): 3638 (2048-pinned_t1), 3708 (1024-pinned_t1), 3574 (2048-pinned_long), against 6484 (2048-pageable_t1).",
+     "fix": "- **Record the prefill time** as a coldness check: cold is 13.4 to 13.8 s for the 46-token prompt with pageable experts and 9.3 to 9.9 s with 42% pinned; 3.7 to 7.3 s means an earlier run left the model partly cached. In STATE.md step 1, write \"(cold pageable is 13.4 to 13.8 s and about 6480; cold with 42% pinned 9.3 to 9.9 s and about 3600; record a cold reference for each pinned size)\", and qualify ROADMAP.md R10's \"about 6480 when cold\" as pageable."
+    },
+    {
+     "file": "research/BENCHMARKS.md",
+     "quote": "- Tokens 1 and 2 include graph capture and are excluded; every 256th token",
+     "problem": "This is the error doc_check finding 8 fixed in EXP-0004.md, surviving here. Token 1 does no graph capture; it runs eagerly. Only token 2 captures. Capture also is not why the two tokens are slow: most of their time is page-fault idle.",
+     "evidence": "Read-only API counts in C:/nsys/exp0004/2048-pageable_t1.sqlite. Token 1 (448.9 ms): 1646 cudaLaunchKernel, with no cudaStreamBeginCapture and no cudaGraphLaunch. Token 2 (692.6 ms): 41 cudaStreamBeginCapture / EndCapture / GraphInstantiate plus 41 cudaGraphLaunch. Token 3: 41 cudaGraphLaunch only. doc_check finding 8 gives slow-copy idle of 320.1 and 604.8 ms in those two tokens. EXP-0004.md now reads \"token 1 runs eagerly and token 2 captures the graphs, but most of their time is page-fault idle\".",
+     "fix": "- Tokens 1 and 2 are excluded (token 1 runs eagerly, token 2 captures the graphs, and both are mostly page-fault idle); every 256th token re-captures and runs most graphs eagerly."
+    },
+    {
+     "file": "research/ROADMAP.md",
+     "quote": "order is already a fair miss-frequency order at layer granularity; what is left",
+     "problem": "The data do not support this at the WDDM cap. The layers that address order leaves pageable there (33 to 39) are average, not the least missed: 17.5% of warm traffic for 17.9% of expert bytes. Choosing the pageable layers by miss frequency, with no expert-level work, would leave about 13 to 14% of traffic pageable instead of about 18%. So a gain remains at layer granularity, not only within layers.",
+     "evidence": "Per-layer expert upload bytes from C:/nsys/exp0004/2048-pageable_long.sqlite, tokens 387-1022 (633 tokens with 41 graphs, read only). Layers 33-39 carry 17.48%; with layer 32's up tensor, which first fit also leaves pageable, 18.3%. The 3494 MiB left pageable at 15266 MiB, filled with the layers lowest in traffic per MiB (14, 15, 18, 19, 20, 21, 26, 35), carries 14.0% while using 3712 MiB; at exactly 3494 MiB it is about 13.5%. Layer sizes come from the GGUF header.",
+     "fix": "So address order roughly tracks miss frequency in the lowest layers, but not at the tail: at the cap, choosing the pageable layers by miss frequency would leave about 13 to 14% of warm traffic pageable instead of about 18%, and ordering experts within layers can add to that. Both need per-(layer, expert) miss counts from EXP-0001's traces through the simulator."
+    },
+    {
+     "file": "research/KNOWLEDGE_BASE.md",
+     "quote": "| overlap upload with compute, perfect next-layer prediction | **-9.4 ms** (17%); -10.4 with unlimited lookahead | copy stream plus prediction; at 70-90% recall still 8.8 to 9.1 |",
+     "problem": "The table mixes windows. Finding 10 declares its base as tokens 387 to 1022, and -9.4 is on that base. The recall figures 8.8 to 9.1 come from tokens 771 to 898, where the perfect-prediction bound is 9.28, and are not labelled. On the stated base they are 8.9 to 9.2. EXP-0004.md labels them \"[computed on 771 to 898]\". OPEN_QUESTIONS.md Q7 repeats the mix: \"perfect next-layer prediction could hide at most 9.4 ms per token (17%), and 70 to 90% recall still 8.8 to 9.1 ms\".",
+     "evidence": "Ran the reviewer's recall.py (perlayer.py model, read only) on C:/nsys/exp0004/2048-pageable_long.sqlite with args 387 1023 12.8. At measured rates, recall 1.0 / 0.9 / 0.8 / 0.7 gives 9.36 / 9.21 / 9.06 / 8.91 ms. review.json gives 9.28 / 9.12 / 8.97 / 8.81 for 771-898.",
+     "fix": "KNOWLEDGE_BASE.md: \"at 70-90% recall still 8.9 to 9.2\" (or keep 8.8 to 9.1 and add \"on tokens 771 to 898\"). In OPEN_QUESTIONS.md Q7: \"and 70 to 90% recall still 8.9 to 9.2 ms\"."
+    }
+   ],
+   "checked": "I checked all 54 findings in doc_check.json against git diff HEAD -- research/ and the untracked EXP-0004.md. All 54 fixes are applied. I also grepped every file for the pre-fix wordings (+53% against 56.2, \"2.3 to 2.7\", \"10 to 30%\", \"27.2\", \"466 MB\", \"not lower bounds on one\", \"fault on first use\", \"agreed on everything\", unqualified 55-66% and 86%, \"9 to 17%\", \"they all run with\", \"LM head (2.1\", \"within 0.3 ms\" and others): none survive, except the finding 8 error in BENCHMARKS.md B7, reported above. No non-ASCII characters in any research/*.md.\n\nI checked the newly written text against the data. These hold:\n- 34.6 ms and +63% (56.23 / 34.55), 33.9 and 34.4 (review.json C11).\n- 27.1 x 8.5 / 12.8 = 18.0; overlap_bound gives 18.11 at 12.8 GB/s.\n- 9.0 at the pinned rate (8.97 on 387-1022); 9.4 / 17%, 10.4, 2118 us, 3.3 layers, 654 us, 74%.\n- About 25.6 (34.6 - 8.97, or 21.4 + 3.4 + 0.8 on 771-898); 26% after pinning.\n- About 38 to 39 ms (interpolation on 387-1022 gives about 38.3); about 17% for layers 33-39 (17.5%).\n- 1.7 ms in one of 12 eager tokens (token 467 pinned is +1.68; the others +0.16 to +0.32 against the 387-1022 mean).\n- 80 syncs per token: the API sequence of one 2048-pageable_t1 token shows 2 per MoE layer, plus pairs around small stream-14 input copies at token start and two layers.\n- 70 to 96% (HOBBIT 96% is training-free; DuoServe 54-67% is a trained MLP); ProMoE 128 GB and HOBBIT 256 GB, from literature.json; 1.09 to 1.17x and 9 to 14%.\n- 482 MB (provenance.txt, 481,711,449 B); 353 to 369 log lines; 43.5 to 44.6% and 49.3 / 50.5% pinned shares; the 2048 MiB B2 rows 41.2 to 47.1 ms.\n- Overlap is 0 ns over whole captures, prefill included, in all 15 sqlite files (recomputed).\n- 42 splits, a 515 MiB LM head, and 30 Gated DeltaNet / 10 full-attention layers (GGUF header).\n\nNot reported because they fall within the docs' own rounding:\n- The summary's \\\"about 35 ms (+63%)\\\" next to the body's 34.6.\n- The doc's own inputs give 34.5 rather than 34.6.\n\nAll captures were opened mode=ro. No llama.cpp binaries, nsys or GPU were used, and no repository file was edited. Scratch scripts are in C:\\\\Users\\\\steve\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--code-llama-cpp-fork\\\\b559e18f-32b4-455c-93ad-ac06e1162883\\\\scratchpad: gguf_layers.py, perlayer_bytes.py, syncs.py, tok12.py, whole_ovl.py, pinned_slow.py, pinned_slow2.py, prefill_slow.py."
+  },
+  {
+   "key": "consistency",
+   "findings": [
+    {
+     "file": "research/SOURCES.md",
+     "quote": "| PCIe DMA / async transfers | Only indirectly: pinning is the prerequisite for a genuinely asynchronous copy, but no overlap measurement was made. Q6 |",
+     "problem": "This line was written before EXP-0004 and is now out of date. EXP-0004 measured the overlap, and Q6 is settled.",
+     "evidence": "EXP-0004.md: \"Overlap is 0 ns in every token of all 15 captures\". OPEN_QUESTIONS.md lists Q6 under Settled questions (\"No. 0 ns of overlap in every token of 15 traced runs\"). KNOWLEDGE_BASE.md Finding 4 says the same.",
+     "fix": "| PCIe DMA / async transfers | Measured by EXP-0004 (B7): copies run at 12.8 GB/s pinned and 8.2 to 13 GB/s pageable, and they never overlap compute (one stream, two host waits per MoE layer). Q6 is settled; a copy stream is ROADMAP R13 |"
+    },
+    {
+     "file": "research/SOURCES.md",
+     "quote": "| Overlapping CPU exec, GPU compute, transfers | **Not measured.** #30966 is the upstream angle. Q6 |",
+     "problem": "This is out of date and contradicts EXP-0004. The overlap of compute and transfers was measured and found to be zero.",
+     "evidence": "EXP-0004.md H1 was falsified: 0 ns of overlap in every token of 15 traced runs, prefill included. OPEN_QUESTIONS.md lists Q6 as settled (\"No.\"). KNOWLEDGE_BASE.md Findings 4 and 10.",
+     "fix": "| Overlapping CPU exec, GPU compute, transfers | **Measured, none** (EXP-0004): 0 ns of copy/compute overlap in every token; overlap could hide at most 9.4 ms of a warm 56.2 ms token (Finding 10). #30966 is the upstream angle; ROADMAP R13 |"
+    },
+    {
+     "file": "research/ARCHITECTURE.md",
+     "quote": "`cudaMemcpyAsync` from pageable memory is neither asynchronous nor full speed: it",
+     "problem": "This sentence was written before EXP-0004, and it continues \"goes through a driver staging buffer\". It blames the staging buffer for the slow pageable copies. EXP-0004 found that a pageable DMA runs at full speed unless the host is staging the next copy at the same time. KNOWLEDGE_BASE.md Finding 4 now says the opposite of this sentence.",
+     "evidence": "KNOWLEDGE_BASE.md Finding 4: pageable copies run at 12.9 to 13.1 GB/s when the host is not staging the next copy, against 12.8 GB/s pinned. It also says \"a pageable copy is not slow because of the staging copy as such but because the host's staging of the next copy slows the current DMA by about 37%\". EXP-0004.md \"DMA rates\" gives 8.2 GB/s contended against 12.9 to 13.1 GB/s uncontended. The memory pathway diagram in this file (\"pageable 13 GB/s alone, 8.2 contended\") agrees with EXP-0004, so this sentence contradicts its own file.",
+     "fix": "`cudaMemcpyAsync` from pageable memory is not asynchronous: it goes through a driver staging buffer and blocks the host. Its DMA runs at full speed (12.9 to 13.1 GB/s) unless the host is staging the next pageable copy at the same time, when it drops to 8.2 GB/s (EXP-0004; KNOWLEDGE_BASE.md Finding 4)."
+    },
+    {
+     "file": "research/experiments/EXP-0000.md",
+     "quote": "is bandwidth-bound on the copy, which is why bytes convert near-linearly into",
+     "problem": "The new \"Corrected by EXP-0004\" note below this line fixes the rate and the 14 GB/s figure. It leaves \"Generation is bandwidth-bound on the copy\" standing without qualification. EXP-0004 partly refutes that claim: a short fresh process is dominated by page faults, and the copy is the largest part only once warm. Even then it runs below the link rate.",
+     "evidence": "EXP-0004.md: \"H2 holds only once warm\". In a short fresh process, 91.7 of 139.6 ms per token at 2048 MiB pageable is page-fault idle (55 to 66% of the mean token at 586 to 2048 MiB). Warm, the DMA is 27.1 of 56.2 ms (47 to 56%), at 8.2 to 13 GB/s. KNOWLEDGE_BASE.md renamed Finding 4 from \"generation is bandwidth-bound on the host-to-device copy\" for this reason.",
+     "fix": "Add to the correction note: \"Nor is generation simply bandwidth-bound on the copy: in a short fresh process most of a token is page-fault idle (91.7 of 139.6 ms at 2048 MiB), and only once warm is the DMA the largest part (27.1 of 56.2 ms).\""
+    },
+    {
+     "file": "research/OPEN_QUESTIONS.md",
+     "quote": "slow copies per token (3.9 on average over tokens 387 to 1022), in bursts, worth",
+     "problem": "Wrong number by rounding. The mean over tokens 387 to 1022 is 3.85 to two decimals, which rounds to 3.8. The doc_check fix that brought in 3.9 seems to have rounded the per-window means rather than the exact count.",
+     "evidence": "timeline_2048-pageable_long.json: the sum of n_expert_copy_slow over tokens 387 to 1022 is 2448, over 636 tokens, = 3.849. Checked read-only with a scratch script.",
+     "fix": "slow copies per token (3.8 on average over tokens 387 to 1022), in bursts, worth"
+    },
+    {
+     "file": "research/KNOWLEDGE_BASE.md",
+     "quote": "copy stream plus prediction; at 70-90% recall still 8.8 to 9.1",
+     "problem": "The window is not stated. The 8.8 to 9.1 ms recall figure was computed only on tokens 771 to 898, against the 9.3 ms bound there. Here it sits next to the 9.4 ms (17%) bound of tokens 387 to 1022, which Finding 10 names as its base. That makes recall look like it costs 0.3 to 0.6 ms, when on its own window it costs 0.2 to 0.5. OPEN_QUESTIONS.md Q7 makes the same mix: \"at most 9.4 ms per token (17%), and 70 to 90% recall still 8.8 to 9.1 ms\".",
+     "evidence": "EXP-0004.md labels this figure \"at 70 to 90% recall it is still 8.8 to 9.1 ms [computed on 771 to 898]\". The review synthesis (C11a) computed it on 2048-pageable_long tokens 771 to 898. overlap_bound_2048-pageable_long.txt has no recall run for 387 to 1022.",
+     "fix": "KNOWLEDGE_BASE.md: \"copy stream plus prediction; at 70-90% recall still 8.8 to 9.1 (of 9.3, on tokens 771-898)\". OPEN_QUESTIONS.md Q7: \"...at most 9.4 ms per token (17%); on tokens 771 to 898, where the bound is 9.3, 70 to 90% recall still hides 8.8 to 9.1 ms (KNOWLEDGE_BASE.md Finding 10).\""
+    },
+    {
+     "file": "research/BENCHMARKS.md",
+     "quote": "- Tokens 1 and 2 include graph capture and are excluded; every 256th token",
+     "problem": "This says both tokens include graph capture and implies that is why they are excluded. Token 1 runs eagerly; only token 2 captures. Most of both tokens' time is page-fault idle, not capture. doc_check fixed the same wording in EXP-0004.md but not here.",
+     "evidence": "EXP-0004.md Method: \"Decode tokens 1 and 2 are excluded (449 and 693 ms at 2048 MiB: token 1 runs eagerly and token 2 captures the graphs, but most of their time is page-fault idle, 320 and 605 ms)\". The doc_check.json record finding on the same point says capture costs about 11 ms.",
+     "fix": "- Tokens 1 and 2 are excluded: token 1 runs eagerly and token 2 captures the graphs, and both are mostly page-fault idle (320 and 605 of 449 and 693 ms at 2048 MiB). Every 256th token"
+    },
+    {
+     "file": "research/ENVIRONMENT.md",
+     "quote": "`a4699400e` through a merge the user performed outside these sessions, so check",
+     "problem": "Out of date, and it contradicts the Repository table in the same file. The sentence (\"The base has since moved to `a4699400e`...\") describes the base before EXP-0004. The current base is `63b4b303b`, through the merge `5df437a57`.",
+     "evidence": "ENVIRONMENT.md line 112: \"Upstream base | `63b4b303b` through merge `5df437a57`, 2026-10-26 (was `a4699400e`, ...)\". STATE.md says the same, and EXP-0004.md \"Correctness and regression\" records the B1 rebase check on `5df437a57`.",
+     "fix": "The base has since moved twice through merges the user performed outside these sessions (to `a4699400e`, then to `63b4b303b` via `5df437a57`), so check the base rather than assuming it."
+    },
+    {
+     "file": "research/SOURCES.md",
+     "quote": "Checked 2026-10-24 to avoid duplicating existing work. States not re-verified.",
+     "problem": "Contradicts the edited \"Caveat on currency\" in the same file. That caveat says EXP-0004 re-checked these states on 2026-10-31, and the table itself now carries re-checked states.",
+     "evidence": "SOURCES.md lines 10-11: \"**EXP-0004 re-checked them on 2026-10-31** through the GitHub web pages... states that changed are marked.\" In the same table, #30848 is \"Closed unmerged on 2026-10-27\" and #21067 \"Still an open draft on 2026-10-31\".",
+     "fix": "Checked 2026-10-24 to avoid duplicating existing work; states re-checked on 2026-10-31 (EXP-0004), changes marked."
+    },
+    {
+     "file": "research/SOURCES.md",
+     "quote": "A literature pass on expert-activation prediction would be worth an iteration;",
+     "problem": "Out of date. EXP-0004's literature pass, recorded in this file's External literature section, already covers next-layer expert prediction. It has a prediction-accuracy column and a summary (70 to 96% depending on the metric).",
+     "evidence": "SOURCES.md \"External literature\" opens \"First consulted in EXP-0004 (2026-10-31)\". Its table has the column \"next-layer prediction accuracy\" (Eliseev-Mazur, ProMoE 84.7%, AdapMoE about 90%, HOBBIT 96%, Fate 78.79%, PROBE 70-80%, ...). literature.json holds the second reader's checks.",
+     "fix": "EXP-0004's survey above covers next-layer prediction accuracy (70 to 96% depending on the metric). What remains is measuring selection-based predictors on this model's traces, recorded as OPEN_QUESTIONS.md Q7."
+    },
+    {
+     "file": "research/KNOWLEDGE_BASE.md",
+     "quote": "as what they are: the rate is near-constant across a 2.6x range of bytes, which is why",
+     "problem": "Wrong number for the table it describes. The 2.6x was carried over from the `78a8ae1` section-7 table (586.2 / 224.8 MiB). The table directly above is the `d854d98b` one, where the range is 568.7 / 227.6 = 2.5x. This sentence was reworded in the EXP-0004 rewrite.",
+     "evidence": "KNOWLEDGE_BASE.md Finding 4 effective-rate table: MiB per token from 227.6 (2048) to 568.7 (384), so 2.50x. moe-bench/RESULTS.md line 239 gets 2.6x from the older table (586.2 to 224.8).",
+     "fix": "as what they are: the rate is near-constant across a 2.5x range of bytes, which is why"
+    }
+   ],
+   "checked": "I read every *.md under research/ in full: STATE, EXPERIMENTS, KNOWLEDGE_BASE, ARCHITECTURE, BENCHMARKS, ENVIRONMENT, FAILED_APPROACHES, OPEN_QUESTIONS, ROADMAP, SOURCES, README, and experiments/EXP-0000 to EXP-0004. I also read the git diffs of the modified files. A grep for non-ASCII found none in any of them.\n\nI recomputed the figures read-only from the timeline_*.json files (C:\\Python313\\python -I, script at C:\\Users\\steve\\AppData\\Local\\Temp\\claude\\C--code-llama-cpp-fork\\b559e18f-32b4-455c-93ad-ac06e1162883\\scratchpad\\sweep\\w.py) and checked them against decomposition.md, long_runs_windows.json, overlap_bound_2048-pageable_long.txt, review.json (synthesis) and doc_check.json (54 findings, 20+16+18). No llama.cpp binary, nsys or GPU was used.\n\nThese hold everywhere they appear:\n- Warm 2048 MiB pageable token, tokens 387-1022: 56.228 = 12.823 + 27.147 + 0.118 + 16.139, quoted as 12.8 + 27.1 + 0.1 + 16.1. Pinned 46.6 and 586 MiB 77.7 rows also match. DMA 47-56%, compute 16-28%, idle 25-29%.\n- Overlap bound: 9.36/56.25 = 17%, and 9.28/52.13 = 18% only where labelled 771-898. Unlimited lookahead 10.4; at 12.8 GB/s 8.97, about 26% of the pinned token.\n- Full pinning: about 34.5-34.6 (+63%) on 387-1022, and 33.9 (+53-54%, given as 34 / +53%) only where labelled 771-898. \"About 35\" in STATE, ROADMAP and KB is consistent.\n- WDDM cap: about 38 to 39 everywhere; -17 to -18 ms is -30 to -32%.\n- Cold/warm ratio: 139.6/56.2 = 2.48, 164.3/77.7 = 2.11, 97.5/46.6 = 2.09, giving 2.1-2.5x; 139.6/52.1 = 2.68, the \"up to 2.7x\".\n- B2 gap: 10 to 36% (41.2-47.1 ms) in BENCHMARKS, KB, OPEN_QUESTIONS, ROADMAP and EXP-0004.\n- Cold pinning split: 86.3% at 2048 MiB, 78.5% at 1024 MiB. Warm 9.6 = 5.4 DMA + 2.8 faults + 1.5 staging.\n- Page-fault share: 54.9%, 57.5% and 65.7% pageable (586/1024/2048); 49.1% and 56.8% pinned.\n- Sync counts: 109.0 per token at 1024/2048 MiB and 114.0 at 256/586 MiB; 80 from the layers.\n- Copy rates: 12.8 pinned; 8.2 contended and 12.9-13.1 uncontended pageable.\n- Pinned byte share: 43.5-44.6% cold, 49-50% warm. Fault ratios 59.7% and 61.1%. Late faults 2.16-4.98 per window.\n\nNo document still calls Finding 4's rate \"not a lower bound\". Every \"compute overlaps the copies\" phrase appears only as the old, refuted claim (KB Finding 4, FAILED_APPROACHES, ROADMAP intro, the EXP-0004 hypothesis). EXP-0001 to 0003 mention Q6 as open only as historical records, so I did not flag them.\n\nmoe-bench/RESULTS.md, outside research/, still says \"about 14 GB/s usable\" and \"bandwidth-bound on the host-to-device copy\" with no correction note. It was out of scope, so it is not listed as a finding."
+  }
+ ]
+}

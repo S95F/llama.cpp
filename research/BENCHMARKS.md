@@ -20,7 +20,10 @@ Throughput is **corroboration only**. It must be reported with its control rows
 RAM at the time, because this machine's 31.11 GiB does not comfortably hold an
 18.32 GiB expert working set. See KNOWLEDGE_BASE.md "Measurement discipline".
 
-Derived quantities (effective GB/s) are lower bounds, never bus measurements.
+Derived quantities (uploaded bytes over token time) are effective rates, **not
+link rates, and only loose lower bounds on the copy rate**: nothing overlaps, so
+the time includes compute, page faults, staging and syncs (EXP-0004). Copy rates
+come from B7.
 
 ## B1 - Deterministic cache telemetry
 
@@ -115,6 +118,11 @@ Single process only. Record free RAM.
 **Noise floor of that session: +3.7% to -3.9%**, read off the three control rows,
 which B1 proves are byte-identical. The sub-crossover gains sit far outside it
 but carry at least that uncertainty.
+
+**Calibration caveat, from EXP-0004.** A warm 2048 MiB token in a traced
+1024-token CLI run takes 52 to 56 ms, 10 to 36% more than the B2 rows at 2048 MiB
+imply (41.2 to 47.1 ms); at 586 MiB the two agree (74.0 to 77.7 against 75 to
+79). Not yet reconciled (OPEN_QUESTIONS.md Q12), so do not mix B2 and B7 timings.
 
 ### Reference, base `78a8ae1`, about 18 GiB free
 
@@ -231,6 +239,55 @@ Therefore:
 Full LFU at 256 and 384 MiB is the worked counter-example: its mean beats the
 branch at 256 by 0.63 points while three of the four traces go the other way.
 
+## B7 - Per-token CUDA timeline
+
+From EXP-0004. Answers **where the time goes**, not how fast: compute, DMA,
+read-back and GPU idle per generated token, with each idle interval attributed
+to what the host thread was doing.
+
+```sh
+GGML_CUDA_REGISTER_HOST=$pin nsys profile --trace=cuda-sw,nvtx --sample=none \
+    --cpuctxsw=none --cuda-memory-usage=false --cuda-graph-trace=graph:host-only \
+    --gpu-metrics-devices=none --export=sqlite --output="$CAP/$tag" \
+    ./build/bin/llama-completion -m "$MODEL" -ngl 99 -ncmoe 40 --moe-cache-mib "$mib" \
+    -c 2048 -n 1024 -f moe-bench/prompt.txt --temp 0 --seed 1 -t 8 \
+    --no-warmup -no-cnv -lv 4 < /dev/null
+python research/results/experiments/EXP-0004/analyze_timeline.py "$CAP/$tag.sqlite" \
+    --out timeline.json --log-out log.txt
+```
+
+`bench_timeline.sh` (128 tokens, six arms, ABA) and `long_runs.sh` (1024 tokens,
+with Windows paging counters) in `research/results/experiments/EXP-0004/` are the
+reference harnesses. nsys is at
+`C:\Program Files\NVIDIA Corporation\Nsight Systems 2025.6.3\target-windows-x64\nsys.exe`.
+
+Rules learned in EXP-0004:
+
+- **Quote a warm window** (tokens 387 to 1022 of a 1024-token run) for steady
+  state. The first 128 tokens of a fresh process are dominated by page faults.
+- **Record the prefill time** as a coldness check. Cold, the 46-token prompt
+  prefills in 13.4 to 13.8 s with pageable experts (about 6480 slow copies) and
+  9.3 to 9.9 s with 42% pinned (about 3600); 3.7 to 7.3 s pageable means an
+  earlier run left the model partly cached. Record a cold reference for each
+  pinned size.
+- **Tracing costs +0.6 to +2.2% per token** in the 128-token runs (unmeasured
+  in the warm regime), host-side; it lands in GPU idle.
+- Tokens 1 and 2 are excluded: token 1 runs eagerly and token 2 captures the
+  graphs, and both are mostly page-fault idle (320 and 605 of 449 and 693 ms at
+  2048 MiB). Every 256th token re-captures and runs most graphs eagerly.
+- `graph:host-only` gives graph spans, not the kernels inside them.
+
+### Reference, base `5df437a57`, warm (tokens 387 to 1022)
+
+| arm | ms/token | compute | DMA | read-back | idle |
+|---|---:|---:|---:|---:|---:|
+| 2048 MiB pageable | 56.2 | 12.8 | 27.1 | 0.1 | 16.1 |
+| 2048 MiB pinned 42% | 46.6 | 12.8 | 21.8 | 0.1 | 11.9 |
+| 586 MiB pageable | 77.7 | 12.8 | 43.5 | 0.1 | 21.3 |
+
+One traced rep each, 17.5 to 18.2 GiB free. Cold 128-token figures are in
+EXP-0004.md.
+
 ## Raw results
 
 `research/results/baseline/` and `research/results/experiments/`. JSON or CSV,
@@ -243,6 +300,12 @@ Committed so far:
   per-trace simulator output (`sim_validate_*.json`, `sim_sweep_*.json`), the
   routing statistics (`trace_stats.txt`), and the two scripts that produced and
   reduced them (`collect.sh`, `aggregate.py`).
+- `research/results/experiments/EXP-0002/` and `EXP-0003/` - simulator screens
+  and B1 hardware counters.
+- `research/results/experiments/EXP-0004/` - per-token timelines
+  (`timeline_*.json`), the app logs, the decomposition, paging counters, the
+  analysis scripts and the review record. The nsys captures themselves (30 files, 482 MB)
+  stay outside git; `provenance.txt` has their sha256.
 
 **Gap: nothing from the pre-`research/` work was preserved.**
 `moe-bench/.gitignore` excludes `out/` and `*.csv`, so the `78a8ae1` reference

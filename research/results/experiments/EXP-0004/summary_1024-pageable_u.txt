@@ -1,0 +1,3 @@
+0.39.027.845 I common_perf_print: prompt eval time =   13525.47 ms /    46 tokens (  294.03 ms per token,     3.40 tokens per second)
+0.39.027.847 I common_perf_print:        eval time =   20149.33 ms /   127 runs   (  158.66 ms per token,     6.30 tokens per second)
+0.39.036.950 I llama_moe_cache: ubatch <= 8: hits = 16327, misses = 24321, hit rate = 40.17%, uploaded = 44650.95 MiB

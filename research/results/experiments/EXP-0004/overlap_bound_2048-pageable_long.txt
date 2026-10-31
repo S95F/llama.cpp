@@ -1,0 +1,38 @@
+C:/nsys/exp0004/2048-pageable_long.sqlite logits bytes 993280 decode steps 1023
+tokens used 128 skipped (graph count != 41) 0
+ms/token 52.13  graph-span compute 12.83  upload union 26.28
+token bound min(C,U) = 12.83 ms ; per-layer 1-ahead sum min(u_il, span S(il-1)) = 9.28 ms ; same-split sum min(u_il, span S(il)) = 9.95
+layers with zero uploads per token: 3.51 of 40
+split span us: p10 250 median 278 p90 287 max 2895
+upload per layer us: p10 192 median 588 p90 1371 max 2336 mean 657
+first split (layer0 attn) 178 us ; S(0..38) mean 270 us ; S(39) incl LM head 2108 us
+fraction of (token,layer) with upload > preceding split span: 0.725
+mean upload us by layer: 1409 1759 1211 1076 947 768 681 617 533 570 686 722 570 508 408 487 531 533 511 438 349 489 552 672 504 494 410 471 580 539 520 512 735 699 908 491 517 501 559 808
+mean span us of S(il): 280 293 253 266 281 281 252 266 280 280 251 265 281 280 251 266 280 281 251 265 280 281 252 265 280 280 251 265 281 281 251 265 280 281 256 266 280 281 259 2108
+sum of inter-split gaps ms/token 38.52
+ideal pipelined compute+upload (no host idle), lookahead 1: 29.82 ms ; serial C+U = 39.10 ; hidden 9.28
+ideal pipelined compute+upload (no host idle), lookahead 2: 29.03 ms ; serial C+U = 39.10 ; hidden 10.07
+ideal pipelined compute+upload (no host idle), lookahead 3: 28.85 ms ; serial C+U = 39.10 ; hidden 10.26
+ideal pipelined compute+upload (no host idle), lookahead 40: 28.71 ms ; serial C+U = 39.10 ; hidden 10.39
+at 12.8 GB/s: upload 17.48 ms/token ; token bound min(C,U) 12.83 ; 1-ahead per-layer bound 8.86
+  ideal pipelined lookahead 1: 21.44 ms ; serial 30.30 ; hidden 8.86
+  ideal pipelined lookahead 40: 20.41 ms ; serial 30.30 ; hidden 9.89
+C:/nsys/exp0004/2048-pageable_long.sqlite logits bytes 993280 decode steps 1023
+tokens used 633 skipped (graph count != 41) 3
+ms/token 56.25  graph-span compute 12.82  upload union 27.14
+token bound min(C,U) = 12.82 ms ; per-layer 1-ahead sum min(u_il, span S(il-1)) = 9.36 ms ; same-split sum min(u_il, span S(il)) = 10.09
+layers with zero uploads per token: 3.26 of 40
+split span us: p10 249 median 278 p90 287 max 3022
+upload per layer us: p10 194 median 654 p90 1380 max 2350 mean 679
+first split (layer0 attn) 179 us ; S(0..38) mean 270 us ; S(39) incl LM head 2118 us
+fraction of (token,layer) with upload > preceding split span: 0.740
+mean upload us by layer: 1366 1681 1178 1043 953 811 730 612 532 564 710 744 604 531 438 492 588 539 516 487 376 517 585 674 525 531 434 524 639 579 559 573 741 706 901 503 573 556 645 881
+mean span us of S(il): 280 293 251 266 281 281 251 266 280 280 250 266 281 281 250 265 280 281 250 265 280 280 250 265 280 281 250 265 281 281 250 265 280 281 255 265 280 280 258 2118
+sum of inter-split gaps ms/token 42.63
+ideal pipelined compute+upload (no host idle), lookahead 1: 30.61 ms ; serial C+U = 39.97 ; hidden 9.36
+ideal pipelined compute+upload (no host idle), lookahead 2: 29.88 ms ; serial C+U = 39.97 ; hidden 10.09
+ideal pipelined compute+upload (no host idle), lookahead 3: 29.71 ms ; serial C+U = 39.97 ; hidden 10.25
+ideal pipelined compute+upload (no host idle), lookahead 40: 29.57 ms ; serial C+U = 39.97 ; hidden 10.40
+at 12.8 GB/s: upload 18.11 ms/token ; token bound min(C,U) 12.82 ; 1-ahead per-layer bound 8.97
+  ideal pipelined lookahead 1: 21.96 ms ; serial 30.93 ; hidden 8.97
+  ideal pipelined lookahead 40: 20.97 ms ; serial 30.93 ; hidden 9.96

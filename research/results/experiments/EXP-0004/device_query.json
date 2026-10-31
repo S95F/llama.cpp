@@ -1,0 +1,17 @@
+{
+ "asyncEngineCount": 1,
+ "concurrentKernels": 1,
+ "tccDriver": 0,
+ "pciBusId": 1,
+ "pageableMemoryAccess": 0,
+ "canUseHostPointerForRegisteredMem": 0,
+ "hostRegisterSupported": 1,
+ "hostRegisterReadOnlySupported": 1,
+ "computeCapabilityMajor": 8,
+ "computeCapabilityMinor": 9,
+ "multiProcessorCount": 34,
+ "memoryClockRate": 9001000,
+ "globalMemoryBusWidth": 128,
+ "runtimeVersion": 12060,
+ "driverVersion": 13050
+}

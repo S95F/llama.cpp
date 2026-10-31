@@ -244,6 +244,12 @@ pinning change targets. (The figure is derived, not a bus measurement: compute
 overlaps the copies, so it is a lower bound on the true rate. The 384 MiB row is
 lowest because at that budget one group gets no cache and takes the bypass path.)
 
+**Correction (EXP-0004, 2026-10-31).** Compute does not overlap the copies: a
+CUDA timeline shows 0 ns of overlap in every generated token. The figures above
+are uploaded bytes over whole-token time, a loose lower bound only; the copies
+themselves run at 12.8 GB/s pinned and 8.2 to 13 GB/s pageable, and the ~14 GB/s
+link figure was never measured. See research/KNOWLEDGE_BASE.md Findings 4 and 9.
+
 It is capped at a quarter of system RAM by default because pinned pages compete
 with the OS; `LLAMA_MOE_PIN_MIB` overrides the cap and any range the driver
 refuses simply stays pageable. Sweeping the cap at a 1024 MiB cache, where the
@@ -512,7 +518,8 @@ The three largest caches agree closely with section 7. The two smallest are
 lower, which is the same host memory pressure: those are the configurations that
 read the most bytes through mmap. The conclusion is unchanged - the pageable path
 delivers a fraction of the roughly 14 GB/s the link can carry, and generation
-stays bandwidth-bound on the host-to-device copy.
+stays bandwidth-bound on the host-to-device copy. (Corrected by EXP-0004: see the
+note under section 7's table and research/KNOWLEDGE_BASE.md Finding 4.)
 
 ### Correctness
 

@@ -9,10 +9,11 @@ breaks every binary.
 | | |
 |---|---|
 | GPU | NVIDIA GeForce RTX 4060 Ti, 8188 MiB, compute capability 8.9 |
-| Driver | 621.01 |
-| Link | PCIe 4.0 x8, `current` = `max` for both gen and width, about 14 GB/s usable |
+| Driver | 621.01, **WDDM** (CUDA driver API 13.5); `HwSchMode` not set in the registry, so GPU scheduling is at the OS default |
+| Link | PCIe 4.0 x8, `current` = `max` for both gen and width; 15.75 GB/s raw, **pinned copies measured at 12.8 GB/s** (EXP-0004) |
+| Copy engines | **1** (`asyncEngineCount`), `concurrentKernels = 1`, `pageableMemoryAccess = 0` (`device_query.json`, EXP-0004) |
 | CPU | AMD Ryzen 7 9700X, 8 cores / 16 threads |
-| RAM | 31.11 GiB total; **14 GiB free at session start** |
+| RAM | 31.11 GiB total; 14 GiB free at the 2026-10-25 session start, 16.45 to 18.24 GiB during EXP-0004 |
 | OS | Windows 11 Pro 10.0.26300 |
 
 Queried with:
@@ -30,6 +31,12 @@ nvidia-smi --query-gpu=name,memory.total,driver_version,pcie.link.gen.current,pc
 | CUDA used by `build/` | **12.6**, at `C:\Users\steve\cuda126` |
 | CUDA on the system `PATH` | **13.2**, at `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.2` |
 | Build type | Release, `GGML_CUDA=ON` |
+| Profiler | Nsight Systems 2025.6.3, `C:\Program Files\NVIDIA Corporation\Nsight Systems 2025.6.3\target-windows-x64\nsys.exe` (not on `PATH`) |
+
+nsys logs `driver 13.5 not supported, using 13.2 libraries` as a diagnostic on
+this driver. EXP-0004 checked that the traces are still complete (exact event
+counts, every expert byte accounted for), so it is harmless here, but re-check
+completeness after a driver change.
 
 Neither `cmake` nor `ninja` is on `PATH`. The paths are in
 `build/CMakeCache.txt`:
@@ -102,7 +109,7 @@ Other models on disk, none MoE, available if a dense control is needed:
 |---|---|
 | Working dir | `C:\code\llama.cpp-fork` |
 | Branch | `moe-gpu-optimize`, tracking `origin/moe-gpu-optimize` |
-| Upstream base | `a4699400e` as of 2026-10-26 (was `d854d98b`, and `78a8ae1` before that) |
+| Upstream base | `63b4b303b` through merge `5df437a57`, 2026-10-26 (was `a4699400e`, `d854d98b`, and `78a8ae1` before that) |
 | `origin` | `https://github.com/S95F/llama.cpp.git` (the fork) |
 | `upstream` | `https://github.com/ggml-org/llama.cpp.git` |
 
@@ -119,17 +126,27 @@ Recorded explicitly so no document implies these were tested.
   and the firmware exposes no narrower setting that has been tried. The
   constrained-bandwidth axis is approximated by changing cache size, which
   changes bytes moved rather than link speed.
-- **No bus-level counter.** PCIe throughput is derived from uploaded bytes over
-  time, never measured on the bus, so every GB/s figure here is a lower bound.
-  `nvidia-smi dmon` pcie columns were not used.
+- **No bus-level counter.** Since EXP-0004 copy rates are measured per copy from
+  CUPTI timestamps (B7), not derived from token time, but nothing measures the
+  bus itself. `nvidia-smi dmon` pcie columns were not used.
 - **Host RAM is smaller than the working set.** 31.11 GiB total against 18.32 GiB
   of expert weights plus a desktop session, so mmap page-cache misses contaminate
-  any timing taken with little RAM free. This also makes the pinning result
-  permanently confounded on this machine (KNOWLEDGE_BASE.md, Finding 4).
+  any timing taken with little RAM free. EXP-0004 measured them: a decode fault
+  reads 64 KiB synchronously in about 175 us, and a fresh 128-token pageable run
+  at 586 to 2048 MiB spends 55 to 66% of its mean token on them
+  (KNOWLEDGE_BASE.md, Finding 9).
+- **The OS keeps part of the model cached between processes after a pinned run**
+  (the next pageable run prefilled in 3.7 to 7.3 s instead of 13.4 to 13.8 s;
+  after a pageable run the next one started cold), so the page-cache state a run
+  starts in depends on what ran before. **Flushing it needs an admin tool** (the
+  standby list), which these sessions do not run; a cold arm needs the user.
+- **Pinned memory is capped near half of RAM** by WDDM's budget. The branch pins
+  at most RAM/4 by default (7842 MiB here, 42% of the experts);
+  `LLAMA_MOE_PIN_MIB` raises it, and 15266 MiB (81%) is the most ever registered.
 - **Fetching `upstream` may fail in a sandboxed session** (`git fetch upstream`
   exited 53, no network, on 2026-10-25). When it does, "no new upstream commits"
-  means "none known locally", not "none exist". The base has since moved to
-  `a4699400e` through a merge the user performed outside these sessions, so check
-  the base rather than assuming it.
+  means "none known locally", not "none exist". The base has since moved twice
+  through merges the user performed outside these sessions (to `a4699400e`, then
+  to `63b4b303b` via `5df437a57`), so check the base rather than assuming it.
 - **Only one MoE model.** No second MoE architecture, expert count, or
   quantization has been tested.

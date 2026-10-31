@@ -1,0 +1,460 @@
+{
+ "note": "EXP-0004 documentation check: three readers compared every EXP-0004 figure written into research/ against the raw results and review.json. All findings were applied before the commit.",
+ "slices": {
+  "record": "research/experiments/EXP-0004.md",
+  "kb": "KNOWLEDGE_BASE, ARCHITECTURE, BENCHMARKS, ENVIRONMENT",
+  "plan": "STATE, ROADMAP, OPEN_QUESTIONS, EXPERIMENTS, FAILED_APPROACHES, SOURCES, EXP-0000"
+ },
+ "results": [
+  {
+   "key": "record",
+   "findings": [
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "Perfect overlap could hide at most **9.3 ms of that (18%)**; pinning all experts could reach about **34 ms (+53%)**",
+     "problem": "In the summary, \"that\" is the 56.2 ms warm token (tokens 387-1022). But 18% and +53% are measured against the 52.1 ms best window (771-898). Against 56.2 ms the figures are different. Section \"Bounds on the levers\" uses 52.1 explicitly, so the summary contradicts the body. Next step 1 (\"56.2 -> about 38 ms\") has the same mix: 38 ms (+37%) was projected from the 52.1 ms window.",
+     "evidence": "overlap_bound_2048-pageable_long.txt, tokens 387-1022 run: \"ms/token 56.25 ... per-layer 1-ahead ... = 9.36 ms\", so 9.36/56.25 = 16.6%. The 771-898 run gives 9.28 of 52.13 = 17.8%. review.json arithmetic C11: \"from the tokens 387-1022 baseline of 56.2 ms, ~34.6 ms (+63%)\". The +53% is 52.13/34.07, the 771-898 window (C11(b) uses that window's DMA, 26.31).",
+     "fix": "Perfect overlap could hide at most **9.4 ms of that (17%)**; pinning all experts could reach about **34 to 35 ms (+63%)**. Or keep 9.3 / 18% / +53% and say they are measured against the 52.1 ms best window (tokens 771-898).",
+     "severity": "wrong"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "since nothing overlaps it is not a lower bound on the link either.",
+     "problem": "This is false as logic. The DMA time per token is always shorter than the token, so bytes / token time is always at most bytes / DMA time. That makes Finding 4's figure a valid lower bound on the copy rate whether or not anything overlaps. It is a loose bound, not an invalid one. The synthesis makes no such claim.",
+     "evidence": "decomposition.md, 2048 pageable: 225.0 MiB/token over 139.6 ms is about 1.7 GB/s effective, against 8.97 GB/s while copying. The measured DMA rates (8.2 to 13 GB/s) are all above 3.4 to 5.5 GB/s. review.json synthesis C7 says only \"KNOWLEDGE_BASE.md:138 divides bytes by whole-token time, and C1 shows no overlap.\"",
+     "fix": "It is an effective rate, not a link rate. It is still a lower bound on the copy rate, but a loose one: nothing overlaps, and the token also holds compute, faults, staging and syncs.",
+     "severity": "wrong"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "pinned pages fault on first use like any other.",
+     "problem": "The data contradict this. No pinned copy ever stalls the host on a fault, in decode or in prefill. The synthesis says only that registration does not fault the pages in, and that residency under memory pressure is untested. The clause also contradicts the record's own sign 4, \"Pinning removes its share\".",
+     "evidence": "In timeline_2048-pinned_t1.json, timeline_1024-pinned_t1.json and timeline_2048-pinned_long.json (summary.expert_copy_rates), every pinned copy is in \"pinned/fast\": 20152, 30744 and 177000 copies, with no pinned/slow class. A read-only whole-capture query of the same three sqlite files, prefill included, finds 0 of 23,686 / 34,298 / 180,565 pinned expert copies below 1.5 GB/s. review.json pagefault C4: \"only 1 of ~250k was slow\". Implications reviewer: \"The pinned layers 0-15 had 0 slow copies\". Synthesis #11: \"pages are not faulted in at registration. Residency of a larger pinned set under memory pressure is untested.\"",
+     "fix": "Registering 7842 MiB took about 3 ms, so registration does not fault the pages in. Still, no pinned copy ever waits on a fault (0 slow pinned copies in any pinned capture). When those pages become resident is not measured.",
+     "severity": "wrong"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "128-token CLI generation is 2.3 to 2.7x slower per token than the same",
+     "problem": "The claim is stated for every configuration but holds only at 2048 MiB pageable. The 2.3 low end is 118.8/52.1, and 118.8 ms is the first window of the 1024-token run. That run started partly warm, so it is not a 128-token fresh generation. In the other arms the ratio is about 2.1 to 2.2x.",
+     "evidence": "Short runs (decomposition.md) against warm windows (tokens 387-1022 / 771-898 from timeline_*_long.json): 2048 pageable 139.6/56.2 = 2.48x and /52.1 = 2.68x. 586 pageable 164.3/77.7 = 2.11x and /74.0 = 2.22x. 2048 pinned 97.5/46.6 = 2.09x and /44.5 = 2.19x. Synthesis Next 0 gives \"up to 2.3-2.7x (118.8-139.6 vs 52-56 ms)\" for 2048 MiB only.",
+     "fix": "A 128-token CLI generation is 2.1 to 2.7x slower per token than the same configuration once warm: 2.5x at 2048 MiB pageable against tokens 387-1022, and 2.1x at 586 MiB and at 2048 MiB pinned.",
+     "severity": "wrong"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "Warm 2048 MiB here (52 to 56 ms, traced) is **10 to 30% slower than the B2",
+     "problem": "The range does not follow from its own endpoints. 56.2 ms against 41.2 ms is 36% slower per token. The synthesis carries the same 10-30% figure. The arithmetic reviewer gave 15-36%, against 41.2-45.2 ms only.",
+     "evidence": "BENCHMARKS.md B2 2048 MiB branch rows: 21.24 tok/s = 47.1 ms and 24.25 tok/s = 41.2 ms. 52.1/47.1 = +10.6%; 56.2/41.2 = +36.4%. In throughput terms that is 9.7 to 26.6% lower tok/s. review.json arithmetic new finding: \"15-36% slower per token\".",
+     "fix": "is **10 to 36% slower per token** (10 to 27% lower tok/s) than the B2 llama-bench references at 2048 MiB (41.2 to 47.1 ms on older bases).",
+     "severity": "wrong"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "**In a short fresh process, over half of every token (55 to 66%) is the GPU",
+     "problem": "The range leaves out the 1024 MiB pinned arm, where slow-copy idle is under half of the token, and the 256 MiB arm. The figures are also means, not \"every token\".",
+     "evidence": "decomposition.md, slow copies / ms per token: 586 pageable 90.3/164.3 = 55.0%; 1024 pageable 89.9/156.5 = 57.4%; 2048 pageable 91.7/139.6 = 65.7%; 2048 pinned 55.4/97.5 = 56.8%; 1024 pinned 55.0/112.0 = 49.1%; 256 pageable 53.6/144.2 = 37.2%.",
+     "fix": "In a short fresh process, 55 to 66% of the mean token in the pageable arms at 586 to 2048 MiB (49 to 57% in the pinned arms) is the GPU waiting for the host to fault expert pages in from disk.",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "At 586 MiB about 19% of the reads fall in partly faulted copies that run at 1.5 to 4 GB/s and so count as fast.",
+     "problem": "This puts all of the 19% in partly faulted copies. The synthesis says \"mostly\", and the reviewer could not explain part of it. The quote joins the text across a line break.",
+     "evidence": "review_checks/disk.py: 586 decode disk 5.67 GiB against slow-copy 4.57 GiB, so 19% falls outside slow copies. Synthesis C4(b): \"about 19% of reads are outside slow copies, mostly in partly faulted 1.5-4 GB/s copies\". The pagefault reviewer's excess-time model explains 5.26 of 5.41 GiB. About 0.5 GiB falls in a 41-45 s burst that \"I could not identify\".",
+     "fix": "At 586 MiB about 19% of the decode reads fall outside slow copies. Most of it is in partly faulted copies that run at 1.5 to 4 GB/s and so count as fast; the rest is unexplained.",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "Decode tokens 1 and 2 (449 and 693 ms at 2048 MiB, graph capture) are excluded,",
+     "problem": "The wording makes graph capture the reason these tokens are slow. Capture costs about 11 ms. Most of their time is page-fault idle.",
+     "evidence": "analyze_timeline.py --skip 0, run on a scratch copy of C:/nsys/exp0004/2048-pageable_t1.sqlite. Token 1: 448.9 ms, 0 graphs and 1646 eager kernels, 195 slow copies, 320.1 ms slow-copy idle. Token 2: 692.6 ms, cudaStreamBeginCapture 1.4 ms + cudaGraphInstantiate 9.5 ms, 366 slow copies, 604.8 ms slow-copy idle.",
+     "fix": "Decode tokens 1 and 2 are excluded (449 and 693 ms at 2048 MiB). Token 1 runs eagerly and token 2 captures the graphs, but most of their time is slow-copy idle, 320 and 605 ms.",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "**Cold, 86% of the gain is fault avoidance.",
+     "problem": "86% is the 2048 MiB row only. The cold 1024 MiB row in the same table gives 78%.",
+     "evidence": "Pinning table: 2048 MiB 36.3/42.1 = 86%; 1024 MiB 35.0/44.6 = 78% (decomposition.md: 89.9-55.0 over 156.5-112.0).",
+     "fix": "Cold, 78 to 86% of the gain is fault avoidance (86% at 2048 MiB, 78% at 1024 MiB).",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "shifting by it changes any figure by at most 0.11 ms.",
+     "problem": "The clock-offset sensitivity was checked only for the 2048 MiB pageable idle buckets, not for every figure.",
+     "evidence": "review.json measurement new findings: \"Shifting all GPU timestamps across that range changes the 2048-pageable buckets by at most 0.06 (slow), 0.06 (fast), 0.11 (sync) and 0.08 (no_api) ms/token.\" Synthesis C3 says the same for 2048 pageable.",
+     "fix": "shifting by it changes the 2048 MiB pageable idle buckets by at most 0.11 ms per token.",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "python research/results/experiments/EXP-0004/overlap_bound.py C:/nsys/exp0004/2048-pageable_long.sqlite 387 1023 12.8",
+     "problem": "The listed command reproduces only the tokens 387-1022 run. The overlap bullet quotes 9.3 ms (18% of 52.1), median upload 588 us and S(39) 2108 us from a second, unlisted run over tokens 771-898. \"3.3 to 3.5 layers\" and \"73 to 74%\" mix the two runs.",
+     "evidence": "overlap_bound_2048-pageable_long.txt holds two runs. 771-898: 52.13 ms, 9.28 / 10.39 ms, median upload 588 us, S(39) 2108 us, fraction 0.725, 3.51 layers. 387-1022: 56.25 ms, 9.36 / 10.40 ms, median upload 654 us, S(39) 2118 us, fraction 0.740, 3.26 layers. overlap_bound.py treats hi as exclusive, so the first run needs args 771 899.",
+     "fix": "List both commands (`... 771 899 12.8` and `... 387 1023 12.8`). In the bullet, use one window throughout: either 771-898 (9.3 ms = 18% of 52.1, median upload 588 us, 72.5%, 3.5 layers) or 387-1022 (9.4 ms = 17% of 56.2, median upload 654 us, S(39) 2118 us, 74%, 3.3 layers).",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "45 to 50% of the uploaded bytes come from pinned memory, so 50 to 55% of traffic can still fault.",
+     "problem": "The sentence is set against the cold short-run fault ratios (59.7% / 61.1%). In those runs the pinned share is below 45%, so the pageable share is 55-57%, not 50-55%. The 49-50% figure belongs to the warm long-run windows. The quote joins the text across a line break.",
+     "evidence": "timeline_*.json h2d_by_src_kind (pinned bytes / all H2D bytes): 1024-pinned_t1/t2 tokens 3-126 43.5%; 2048-pinned_t1/t2 44.6%; 2048-pinned_long 387-1022 49.3%, 771-898 50.5%. review.json arithmetic: \"43.5% / 44.7% in the 1024 / 2048 short runs\".",
+     "fix": "In the cold short runs 43.5 to 44.6% of the uploaded bytes come from pinned memory (49 to 50% in the warm long-run windows), so 55 to 57% of cold traffic can still fault.",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "That is **109 `cudaStreamSynchronize` per token** (114 at 256 and 586 MiB).",
+     "problem": "The per-layer sequence just described (two syncs per MoE layer) gives 80 syncs per token, not 109. The other 29 come from syncs around small per-token input copies and the logits read-back.",
+     "evidence": "code_reading.json: \"twice per MoE layer (80 per token, plus a few input-copy syncs at token start and the final logits sync)\". The API sequence of one 2048-pageable_t1 token shows 2 syncs per MoE layer, plus sync pairs around H2D copies of 4 B to 8 KiB at token start and at some layers. timeline JSONs: 109.0 syncs per token (114.0 at 256/586).",
+     "fix": "That is 2 syncs per MoE layer, 80 per token. With the syncs around small per-token input copies and the logits read-back, the total is 109 per token (114 at 256 and 586 MiB).",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "Two claims were refuted and eight corrected.",
+     "problem": "This counts C5 twice: 2 + 8 + 3 confirmed = 13 claims, but the review covered twelve.",
+     "evidence": "review.json synthesis: CONFIRMED C1, C3, C9; REFUTED C10; PARTLY C2, C4, C5 (\"the second sentence is REFUTED\"), C6, C7, C8, C11, C12.",
+     "fix": "One claim was refuted (C10), eight were corrected (one of them, C5, partly refuted), and three were confirmed with wording fixes.",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "a 2048 MiB token is **56.2 ms = 12.8 compute + 27.2 DMA + 0.1 read-back + 16.1",
+     "problem": "The DMA figure for tokens 387-1022 rounds to 27.1. 27.2 comes from double rounding (27.147 -> 27.15 -> 27.2). It recurs in the H1 max() line (\"max(12.8, 27.2)\") and in the warm table row.",
+     "evidence": "Tokens 387-1022 of timeline_2048-pageable_long.json: h2d 27.147 ms/token. overlap_bound_2048-pageable_long.txt: \"upload union 27.14\".",
+     "fix": "56.2 ms = 12.8 compute + 27.1 DMA + 0.1 read-back + 16.1 idle (the parts sum to 56.1 by rounding). Use 27.1 in the H1 line and in the warm table.",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "Over the decode window aligned to the trace (first to",
+     "problem": "The disk-bytes table does not say which runs it uses. The rows are the three 1024-token runs; typeperf ran only in long_runs.sh. Signs 1 and 3 nearby use the short runs, and the 2048 pageable long run started partly warm.",
+     "evidence": "review_checks/disk.py reads C:/nsys/exp0004/<arm>_long.sqlite and paging_<arm>_long.csv. Its output reproduces 6.18/6.29, 4.82/5.00 and 4.57/5.67 GiB.",
+     "fix": "Over the decode window of the three 1024-token runs, aligned to the trace (first to last logits read-back), ...",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "are about half to four fifths of this bound.",
+     "problem": "\"This bound\" is ambiguous: the sentence before it names both the 18% (pageable) and the 26% (pinned) bound. The figure also differs from review.json's 40-75%. Against 26%, the literature gains are only about 30-55%.",
+     "evidence": "review.json synthesis #5: \"Literature gains ... are about 40-75% of this bound.\" literature.json: ProMoE 1.09x (up to 1.17x), i.e. 8.3-14.5% TPOT; Speculating Experts 9-14%. Against 18%: 46-81%. Against 26%: 32-56%.",
+     "fix": "are about 45 to 80% of the 18% pageable bound (about 30 to 55% of the 26% bound after pinning).",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "adds no per-token log lines (353",
+     "problem": "353 is the line count of only some runs. The logs have 353 to 369 lines.",
+     "evidence": "wc -l log_*.txt: traced 128-token runs 353-356, 1024-token runs 357-360, untraced runs 366-369.",
+     "fix": "(353 to 369 lines per run; the 1024-token runs have 357 to 360, so nothing scales with the token count)",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "The 30 capture files (466 MB, `C:\\nsys\\exp0004`) are too large for git;",
+     "problem": "466 MB is not the size of the 30 capture files. It matches the on-disk total of the whole directory, which also holds the log and txt files.",
+     "evidence": "The provenance.txt byte column sums to 481,711,449 B = 481.7 MB = 459.4 MiB over 30 files. `ls` of C:/nsys/exp0004 totals 476945 KiB = 465.8 MiB, including nsys_*.txt, lv4.txt, long_console.txt and smoke.sqlite.",
+     "fix": "The 30 capture files (482 MB, `C:\\nsys\\exp0004`) are too large for git;",
+     "severity": "minor"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "| Free RAM | 16.45 GiB at the start, 17.46 to 18.24 GiB before the long runs |",
+     "problem": "18.24 GiB was recorded before the B1 rebase check, not before a long run.",
+     "evidence": "info.txt: before 2048-pageable_long 17.46, 2048-pinned_long 17.64, 586-pageable_long 18.15; \"== B1 2048 MiB rebase check, free RAM 18.24 GiB\".",
+     "fix": "| Free RAM | 16.45 GiB at the start, 17.46 to 18.15 GiB before the long runs (18.24 before the B1 check) |",
+     "severity": "minor"
+    }
+   ],
+   "checked": "I checked every number in research/experiments/EXP-0004.md. No non-ASCII characters. Sources: decomposition.md/.csv, info.txt, b1_2048_rebase_check.txt, provenance.txt, long_runs_windows.json, overlap_bound_2048-pageable_long.txt, the app logs (eval and prompt times, registration timestamps, line counts) and review.json (draft claims, all four reviews, synthesis). I recomputed every short-run and long-run window figure from the per-token timeline_*.json files with a scratch script: tokens 3-126, 387-1022, 771-898, 899-1022, the per-rep 256 MiB values, pinned byte shares and no-API idle. I ran review_checks/disk.py and cont2.py read-only on the captures: disk bytes, Pages Input, whole-run disk reads, and contended vs free DMA rates by size class. I also ran my own read-only sqlite queries: whole-capture compute/H2D overlap in all 15 captures (0 ns, prefill included); slow-copy counts by source kind (0 slow pinned copies in three pinned captures); the API sequence of one token (sync accounting); and analyze_timeline.py with --skip 0 on a scratch copy, for decode tokens 1-2. Checked against the source tree: the cited lines (llama-moe-cache.cpp ~701, llama-mmap.cpp 611-627 and 837, llama-impl.cpp:22, no prefetch caller in llama-moe-cache.cpp), git commit times, binary mtimes, the B2 rows in BENCHMARKS.md, Finding 4 and its -9% row in KNOWLEDGE_BASE.md at HEAD, literature.json and code_reading.json. Everything else matched the data or the synthesis, including: the short-run decomposition table, the window table, the warm 387-1022 table except a 27.15 -> 27.2 rounding, the pinning-gain table, the tracing overhead table, the disk table values, the contention split (21.7 of 26.3 ms), the trace-completeness arithmetic, the B1 values, run order and prefill times."
+  },
+  {
+   "key": "kb",
+   "findings": [
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "**not link rates and not lower bounds on one**",
+     "problem": "This is false. Bytes over whole-token time can only be lower than bytes over the time the copies actually took. So the effective rate is a lower bound on the copy rate: a loose one, but still a bound. The new text rejects the bound, not just the old reason given for it.",
+     "evidence": "decomposition.md, 2048-pageable: 225 MiB/token over 139.6 ms is about 1.7 GB/s effective, against 8.97 GB/s measured GPU-side while copying. The 5.27 GB/s effective rate at 2048 MiB is below every measured copy rate (8.2 to 13.1 GB/s; cont2.py output). One code_reading.json verifier ('graph' reader, missed[4]) says: \"They are still lower bounds on the link rate, but for that reason, not because compute overlaps the copies.\"",
+     "fix": "The denominator includes compute, page faults, staging and syncs, so these are **not link rates, only loose lower bounds on the copy rate** (measured at 8.2 to 13.1 GB/s in B7).",
+     "severity": "wrong"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\BENCHMARKS.md",
+     "quote": "link rates and not bounds on one**: nothing overlaps, so the time includes",
+     "problem": "This is the same error as in KNOWLEDGE_BASE.md Finding 4. Because the token time includes the copy time, uploaded bytes over token time is a lower bound on the copy rate.",
+     "evidence": "Effective rates are 3.4 to 5.5 GB/s (RESULTS.md section 12) and about 1.7 GB/s in the cold 2048 MiB runs. The measured per-copy rates are 8.2 to 13.1 GB/s (cont2.py on C:/nsys/exp0004/2048-pageable_*.sqlite) and 12.8 GB/s pinned (decomposition.md). code_reading.json, graph verifier missed[4]: \"They are still lower bounds on the link rate\".",
+     "fix": "Derived quantities (uploaded bytes over token time) are effective rates, **not link rates, and only loose lower bounds on the copy rate**: nothing overlaps, so the time includes compute, page faults, staging and syncs (EXP-0004). Copy rates come from B7.",
+     "severity": "wrong"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "**EXP-0004 split the gain at 42% pinned** (level 1, one long rep per arm):",
+     "problem": "The replication count is attributed to the wrong rows. The two cold rows come from the 128-token runs, which have two traced reps per arm. Only the warm row is one 1024-token rep per arm.",
+     "evidence": "The cold figures 42.1 = 36.3 + 3.7 + 2.0 and 44.6 = 35.0 + 5.6 + 3.8 are means of timeline_<arm>_t1 and _t2 (decomposition.md; win.py). review.json synthesis C8: \"Cold (fresh short runs, two reps each, both arms cold) ... Warm (tokens 387-1022): -9.6 ... One long rep per arm.\"",
+     "fix": "**EXP-0004 split the gain at 42% pinned** (level 1; cold rows: two 128-token reps per arm; warm row: one 1024-token rep per arm):",
+     "severity": "wrong"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\BENCHMARKS.md",
+     "quote": "1024-token CLI run takes 52 to 56 ms, 10 to 30% more than the B2 rows at 2048 MiB",
+     "problem": "Arithmetic error. 52 to 56 ms against 41.2 to 47.1 ms is 10 to 36% more, not 10 to 30%. review.json new finding 9 has the same slip. KNOWLEDGE_BASE.md Measurement discipline repeats it: \"disagree at 2048 MiB** by 10 to 30%\".",
+     "evidence": "52.1/47.1 = 1.106 and 56.2/41.2 = 1.364 (B2 2048 MiB branch rows: 21.24 tok/s = 47.1 ms and 24.25 tok/s = 41.2 ms; warm windows 52.13 and 56.23 ms from win.py). Expressed the other way round, B2 is 10 to 27% faster.",
+     "fix": "...takes 52 to 56 ms, 10 to 36% more than the B2 rows at 2048 MiB imply (41.2 to 47.1 ms)... Make the same change in KNOWLEDGE_BASE.md: \"disagree at 2048 MiB by 10 to 36% (traced CLI slower)\".",
+     "severity": "wrong"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "EXP-0004: a 128-token CLI generation is 2.3 to 2.7x slower per token than the",
+     "problem": "The ratio is attributed to the wrong windows and runs. 2.3 to 2.7x is 118.8/52.1 and 139.6/52.1. Here 52.1 is tokens 771-898, the best window, which the review says not to quote as steady state. 118.8 is tokens 3-130 of a partly warm 1024-token run, not a 128-token CLI generation. Against the 387-1022 window that the bullet's own rule prescribes, the 128-token runs are 2.1 to 2.5x slower. Finding 9 says the same thing (\"a short CLI generation is 2.3 to 2.7x slower per token than the same configuration once warm\").",
+     "evidence": "Cold 128-token means (decomposition.md) against tokens 387-1022 (win.py): 2048 pageable 139.6/56.2 = 2.48x, 2048 pinned 97.5/46.6 = 2.09x, 586 pageable 164.3/77.7 = 2.11x. review.json C5: 2048-pageable_long followed a pinned run (prefill 7.29 s). C6: 771-898 is the fastest window, and 387-1022 is preferred.",
+     "fix": "EXP-0004: a cold 128-token CLI generation is 2.1 to 2.5x slower per token than tokens 387-1022 of a 1024-token run of the same configuration (up to 2.7x against the best window, 771-898). Make the same change in Finding 9.",
+     "severity": "overstated"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "Cold, **86% of the gain is avoided page faults**",
+     "problem": "86% holds only for the 2048 MiB row. The 1024 MiB cold row in the same table gives 78%.",
+     "evidence": "From the table directly above: 36.3/42.1 = 86% at 2048 MiB and 35.0/44.6 = 78% at 1024 MiB (decomposition.md means of t1/t2). review.json C8 gives 86% for 2048 only.",
+     "fix": "Cold, **78 to 86% of the gain is avoided page faults** (86% at 2048 MiB, 78% at 1024)",
+     "severity": "overstated"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\ENVIRONMENT.md",
+     "quote": "over half of every token on them (KNOWLEDGE_BASE.md, Finding 9).",
+     "problem": "This is not true of every fresh 128-token run. It holds for the pageable arms at 586 to 2048 MiB and for 2048 MiB pinned, but not at 1024 MiB pinned or at 256 MiB.",
+     "evidence": "decomposition.md, slow-copy idle over ms/token: 2048 pageable 91.7/139.6 = 66%, 1024 pageable 89.9/156.5 = 57%, 2048 pinned 55.4/97.5 = 57%, 586 pageable 90.3/164.3 = 55%, 1024 pinned 55.0/112.0 = 49%, 256 pageable 53.6/144.2 = 37%. EXP-0004.md itself restricts the claim to 55 to 66%.",
+     "fix": "...and a fresh 128-token pageable run at 586 to 2048 MiB spends 55 to 66% of each token on them (49% at 1024 MiB with 42% pinned) (KNOWLEDGE_BASE.md, Finding 9).",
+     "severity": "overstated"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\ENVIRONMENT.md",
+     "quote": "- **The OS keeps part of the model cached between processes**, more after a",
+     "problem": "\"More after a pinned run\" implies that some caching was observed after pageable runs too. None was. Pageable runs that followed pageable runs prefilled cold and are the cold reference. The bullet also contradicts KNOWLEDGE_BASE.md Finding 9, which limits the effect to runs after a pinned run.",
+     "evidence": "Prefill times in log_*.txt: runs after a pinned run (256_t2 7.02 s, 256_u 7.06 s, 2048-pageable_long 7.29 s, 586-pageable_long 3.71 s) against every other pageable run (13.41 to 13.78 s). review.json C5: \"Every pageable run that followed a pinned run ... prefilled in 3.7-7.3 s instead of 13.4-13.8 s.\"",
+     "fix": "- **The OS keeps part of the model cached between processes after a pinned run** (the next pageable run prefilled in 3.7 to 7.3 s instead of 13.4 to 13.8 s); after a pageable run the next run started cold. So the page-cache state a run starts in depends on what ran before.",
+     "severity": "overstated"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\ARCHITECTURE.md",
+     "quote": "Level 2, from the code. Three readers and six adversarial verifiers agreed on",
+     "problem": "\"agreed on everything below\" overstates the record. The verifiers gave 'partly' verdicts and refuted parts of the readers' claims. Several statements below come from a single verifier's 'missed' note. Others are level 1 trace measurements or device_query.json values, which are not from code reading at all.",
+     "evidence": "code_reading.json: both 'sched' verifiers rejected the readers' cause for n_copies=1. A 'cuda' verifier refuted 'the only work' in C4 (that is where the gate/up-while-down window comes from). The 'graph' verifiers refuted the ids ggml_cont and the S(39) router. The WAR hazard on the shared slot pool comes from 'missed' notes. The section also cites trace figures (41 graph launches, 37 of 41 eager, 65 to 86 us, 114 against 109 syncs, about 2 ms idle) and asyncEngineCount from device_query.json.",
+     "fix": "Level 2, from the code, as corrected by the verifiers' verdicts in `research/results/experiments/EXP-0004/code_reading.json`. Figures given as measured are level 1, from the EXP-0004 trace and `device_query.json`.",
+     "severity": "overstated"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "- **Tracing with Nsight Systems costs +0.6 to +2.2% per token**, host-side, so it",
+     "problem": "The bullet does not say where the overhead was measured. It was measured only in the 128-token ABA runs, in 5 of 6 arms. It was never measured in the warm 1024-token runs that the Finding 9 warm rows and the B7 reference table come from. BENCHMARKS.md B7 repeats the claim (\"**Tracing costs +0.6 to +2.2% per token**, host-side; it lands in GPU idle.\").",
+     "evidence": "review.json C10: \"+0.6% to +2.2% slower in 5 of 6 arms ... The 256 MiB arm ... is not usable ... No untraced 1024-token runs were made, so overhead in the warm regime is unmeasured.\" The ratios check out against decomposition.csv (app eval traced vs untraced): 1024 pageable +2.2%, 1024 pinned +0.6%.",
+     "fix": "- **Tracing with Nsight Systems costs +0.6 to +2.2% per token in the 128-token runs** (5 of 6 arms; unmeasured in the warm 1024-token runs), host-side, so it lands in GPU idle... Make the same qualification in BENCHMARKS.md B7.",
+     "severity": "overstated"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "14% on Qwen3-30B-A3B) are about half to four fifths of this ceiling.",
+     "problem": "This does not match the review synthesis, which takes precedence and says about 40 to 75%. The doc's 50 to 80% is computed on a different basis (fraction of TPOT reduction) without saying so.",
+     "evidence": "review.json synthesis, new finding 5: \"Literature gains (ProMoE 1.09-1.17x, Speculating Experts 9-14%, ...) are about 40-75% of this bound.\" The ceiling 9.3 of 52.1 ms is a 1.217x speedup. ProMoE's +9 to +17% is 41 to 78% of +21.7%. On a time-reduction basis it is 8.3 to 14.5% of 17.8%, which gives 46 to 82%.",
+     "fix": "...are about 40 to 75% of this ceiling (as speedups). Or state the basis: \"about half to four fifths of its 18% TPOT reduction\".",
+     "severity": "minor"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "**Overlap's ceiling is not compute's 12.8 ms**: the LM head (2.1 ms) runs after",
+     "problem": "The 2.1 ms is the span of the whole split S(39), not the LM head alone. S(39) also holds layer 39's routed and shared experts, the residual and the output norm.",
+     "evidence": "overlap_bound_2048-pageable_long.txt: \"S(0..38) mean 270 us ; S(39) incl LM head 2108 us\".",
+     "fix": "**Overlap's ceiling is not compute's 12.8 ms**: split S(39), which ends in the LM head, takes 2.1 ms and runs after the token's last upload, ...",
+     "severity": "minor"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "(Warm rows also carry 0.1 ms of logits read-back.)",
+     "problem": "The cold rows carry the 0.1 ms read-back too. Without it they do not sum: 12.9 + 26.3 + 100.3 = 139.5, not 139.6.",
+     "evidence": "decomposition.csv: d2h_ms is 0.12 in every 128-token row. review.json C3: \"139.6 ms = compute 12.9 + DMA 26.3 + D2H 0.1 + GPU idle 100.3\".",
+     "fix": "(Every row also carries 0.1 ms of logits read-back.)",
+     "severity": "minor"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\KNOWLEDGE_BASE.md",
+     "quote": "next graph: 109 `cudaStreamSynchronize` per token. ARCHITECTURE.md \"One generated",
+     "problem": "109 applies only to the 1024 and 2048 MiB captures. Five of the 15 runs (256 and 586 MiB) make 114 per token. ARCHITECTURE.md states 114 against 109, so the two files disagree.",
+     "evidence": "decomposition.csv sync_calls_token: 109.0 for 1024 and 2048 MiB, 114.0 for 256 and 586 MiB. review.json C1: \"109 syncs/token, 114 at 256/586 MiB\".",
+     "fix": "...next graph: 109 `cudaStreamSynchronize` per token at 1024 and 2048 MiB (114 at 256 and 586 MiB, where one layer runs its MoE on the CPU).",
+     "severity": "minor"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\ARCHITECTURE.md",
+     "quote": "the 41 graphs eagerly, with compute within 0.3 ms of a graph token. Graphs cut",
+     "problem": "One of the 12 eager tokens is 1.7 ms above a graph token, so \"within 0.3 ms\" does not hold for all of them. The review's 12.95 to 13.14 ms range misses this token too.",
+     "evidence": "timeline_2048-pinned_long.json, token 467 (n_kernel 1517, 4 graph launches): compute 14.51 ms against a 12.83 ms graph-token mean for tokens 387-1022. The other 11 eager tokens across the three long runs are +0.16 to +0.32 ms.",
+     "fix": "...runs 37 of the 41 graphs eagerly, with compute 0.2 to 0.3 ms above a graph token in 11 of 12 such tokens (1.7 ms above in one, token 467 of the 2048 MiB pinned run).",
+     "severity": "minor"
+    },
+    {
+     "file": "C:\\code\\llama.cpp-fork\\research\\BENCHMARKS.md",
+     "quote": "analysis scripts and the review record. The nsys captures themselves (466 MB)",
+     "problem": "The size does not match the capture files in either unit. 466 appears to be the total for the C:\\nsys\\exp0004 directory in MiB, which also includes the nsys console logs. EXP-0004.md has the same figure.",
+     "evidence": "provenance.txt lists 30 files (15 .nsys-rep and 15 .sqlite) totalling 481,711,449 bytes, which is 481.7 MB or 459.4 MiB (142.6 MB rep + 339.1 MB sqlite).",
+     "fix": "The nsys captures themselves (30 files, 482 MB) stay outside git; `provenance.txt` has their sha256.",
+     "severity": "minor"
+    }
+   ],
+   "checked": "I read the EXP-0004 diffs of KNOWLEDGE_BASE.md (Finding 4, Findings 9 and 10, the new Architectural facts and Measurement discipline bullets), ARCHITECTURE.md (the two assigned sections), BENCHMARKS.md (the B7 section, the B2 calibration caveat, the derived-quantities line and the raw-results line) and ENVIRONMENT.md. I checked every EXP-0004 number in them against the sources: review.json (all four parts), decomposition.md/.csv, long_runs_windows.json, info.txt, provenance.txt, device_query.json, code_reading.json, literature.json, overlap_bound_2048-pageable_long.txt, the bench_timeline.sh and long_runs.sh harnesses, the analyze_timeline.py arguments and units, and the prefill, eval and pin lines in every log_*.txt. I re-ran review_checks/win.py, which reproduces every warm-window figure and the pin-gain split. I ran review_checks/cont2.py read-only on four sqlite captures, which reproduces the 8.2 and 12.9 to 13.1 GB/s rates and the 21.7 of 26.3 ms. I queried the sqlite files for tokens 1 and 2 (eager, then capture), for the eager-token compute (which found token 467 at 14.51 ms) and for the nsys driver diagnostic. I also checked the B2 rows and RESULTS.md section 7, the git dates of 63b4b303b and 5df437a57, the llama-mmap.cpp prefetch and llama_prefetch_rows callers, the llama-moe-cache.cpp pin-cap comment, OPEN_QUESTIONS Q12, and the HwSchMode registry value (unset, as the doc states). The following check out: compute 12.7 to 12.9 ms; every Finding 9 and B7 table row; DMA, compute and idle shares; 118.8 down to 52.1 to 59.7 ms; prefill 3.7 to 7.3 s against 13.4 to 13.8 s; 6.18/6.29 GiB and r 0.999; 175 us per 64 KiB; 12.8 GB/s and 81% of 15.75; 37% contention; the cold and warm pin-gain components; 9.3, 10.4, 8.8 to 9.1 and 8.9 ms; 3.3 to 3.5 zero-upload layers; 72.5%; 65 to 86 us; 114/109 and about 2 ms at 256/586; device_query values; 7842 MiB (42%); 16.45 to 18.24 and 17.5 to 18.2 GiB free; tracing +0.6 to +2.2%; and the B2 586 MiB agreement. No non-ASCII characters were found in any of the four files."
+  },
+  {
+   "key": "plan",
+   "findings": [
+    {
+     "file": "research/OPEN_QUESTIONS.md",
+     "quote": "Once warm, a 2048 MiB pageable token still makes 2 to 4\nslow copies per token, in bursts, worth 3.8 to 9.1 ms of GPU idle.",
+     "problem": "The slow-copy count is wrong for the window that the 3.8 to 9.1 ms range comes from. The 9.1 ms window has 5.0 slow copies per token, not 4 or fewer.",
+     "evidence": "long_runs_windows.json, 2048-pageable, windows 387/515/643/771: slow_copies_token 4.98 / 4.75 / 4.25 / 2.16, idle_slow_copy_ms 9.06 / 8.18 / 7.29 / 3.81. timeline_2048-pageable_long.json tokens 899-1022: 3.09 per token, 5.29 ms. Over tokens 387-1022: 3.85 per token, 6.73 ms.",
+     "fix": "Once warm, a 2048 MiB pageable token still makes 2 to 5 slow copies per token (3.9 on average over tokens 387-1022), in bursts, worth 3.8 to 9.1 ms of GPU idle (6.7 on average).",
+     "severity": "wrong"
+    },
+    {
+     "file": "research/experiments/EXP-0004.md",
+     "quote": "Perfect overlap could hide at most **9.3 ms of that (18%)**; pinning all\nexperts could reach about **34 ms (+53%)**",
+     "problem": "Both percentages come from the 771-898 window (52.1 ms/token), but \"of that\" points at the 56.2 ms token over tokens 387-1022. My files repeat the 18% next to 56.2, so they share this window mix.",
+     "evidence": "overlap_bound_2048-pageable_long.txt, first block (128 tokens, 771-898): ms/token 52.13, hidden 9.28, so 18%. Second block (633 tokens, 387-1022): ms/token 56.25, hidden 9.36, so 16.6%. 52.1/34 = 1.53 (+53%), but 56.2/34 = 1.65 (+65%).",
+     "fix": "Perfect overlap could hide at most **9.4 ms of that (17%)**; pinning all experts could reach about **34 ms (+65% over 56.2; +53% over the best window's 52.1)**",
+     "severity": "wrong"
+    },
+    {
+     "file": "research/EXPERIMENTS.md",
+     "quote": "warm 2048 MiB token 56.2 ms = 12.8 compute + 27.2 DMA + 16.1 idle; cold short runs 55-66% page-fault waits; overlap bound 9.3 ms/token (18%)",
+     "problem": "The 18% belongs to the 52.1 ms window (771-898), not to the 56.2 ms token in the same cell.",
+     "evidence": "overlap_bound_2048-pageable_long.txt: 9.28 of 52.13 ms (771-898) = 18%; 9.36 of 56.25 ms (387-1022) = 16.6%.",
+     "fix": "overlap bound 9.4 ms/token (17% of 56.2; 9.3 ms, 18%, in the best window 771-898)",
+     "severity": "minor"
+    },
+    {
+     "file": "research/STATE.md",
+     "quote": "- **Bounds** (Finding 10): overlap can hide at most 9.3 ms (18%); pinning every",
+     "problem": "The bullet right before this one defines the warm token as 56.2 ms (tokens 387-1022), but the 18% is relative to 52.1 ms (tokens 771-898).",
+     "evidence": "overlap_bound_2048-pageable_long.txt: 9.28/52.13 = 18% (771-898); 9.36/56.25 = 16.6% (387-1022).",
+     "fix": "- **Bounds** (Finding 10): overlap can hide at most about 9.3 ms (17% of 56.2; 18% of the best window's 52.1); pinning every",
+     "severity": "minor"
+    },
+    {
+     "file": "research/EXPERIMENTS.md",
+     "quote": "cold short runs 55-66% page-fault waits",
+     "problem": "The 55-66% range holds only for the pageable 586, 1024 and 2048 MiB arms. The 1024 MiB pinned arm is 49%, and the 256 MiB arm is 37%.",
+     "evidence": "decomposition.md, slow-copy idle / ms per token: 586 pg 90.3/164.3 = 55.0%; 1024 pg 89.9/156.5 = 57.4%; 2048 pg 91.7/139.6 = 65.7%; 1024 pinned 55.0/112.0 = 49.1%; 2048 pinned 55.4/97.5 = 56.8%; 256 pg 53.6/144.2 = 37.2%.",
+     "fix": "cold short pageable runs (586 to 2048 MiB) 55-66% page-fault waits (49-57% with 42% pinned)",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/FAILED_APPROACHES.md",
+     "quote": "A 128-token CLI generation spends 55 to 66% of every token\nwaiting on hard page faults of the mmap'd expert pages",
+     "problem": "This states the range for every 128-token generation, but it holds only for the pageable 586 to 2048 MiB arms.",
+     "evidence": "decomposition.md: pageable 586/1024/2048 = 55.0/57.4/65.7%; pinned 1024/2048 = 49.1/56.8%; 256 MiB = 37.2%.",
+     "fix": "A pageable 128-token CLI generation (586 to 2048 MiB) spends 55 to 66% of every token waiting on hard page faults of the mmap'd expert pages (49 to 57% with 42% pinned)",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/ROADMAP.md",
+     "quote": "a 128-token run is 2.3 to 2.7x slower per token than warm",
+     "problem": "The low end of the range uses the first window of the partly warm long run (118.8 ms), which is not a 128-token fresh run. Both ends divide by the best window (52.1), not by the preferred warm window (56.2). The range also covers only 2048 MiB pageable. The review said \"up to\".",
+     "evidence": "decomposition.md vs timeline *_long.json tokens 387-1022: 2048 pg 139.6/56.2 = 2.48x; 2048 pinned 97.5/46.6 = 2.09x; 586 pg 164.3/77.7 = 2.11x. Against 771-898: 2.68x / 2.19x / 2.22x. 118.8/52.1 = 2.28x is the source of 2.3. review.json synthesis, next step 0: \"up to 2.3-2.7x (118.8-139.6 vs 52-56 ms)\".",
+     "fix": "a 128-token run is 2.1 to 2.5x slower per token than warm over tokens 387-1022 (2.5x at 2048 MiB pageable; up to 2.7x against the best window)",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/OPEN_QUESTIONS.md",
+     "quote": "a\n128-token one is 2.3 to 2.7x slower per token than warm.",
+     "problem": "Same as ROADMAP R10. The range is computed against the best window and uses the long run's partly warm first window. Across arms over tokens 387-1022 the ratio is 2.1 to 2.5x.",
+     "evidence": "139.6/56.2 = 2.48 (2048 pg), 97.5/46.6 = 2.09 (2048 pinned), 164.3/77.7 = 2.11 (586 pg); decomposition.md and timeline *_long.json.",
+     "fix": "a 128-token one is 2.1 to 2.5x slower per token than warm (tokens 387-1022; up to 2.7x against the best window).",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/FAILED_APPROACHES.md",
+     "quote": "The\nshort run is 2.3 to 2.7x slower than warm",
+     "problem": "Same window and arm mix as in ROADMAP R10 and Q12.",
+     "evidence": "139.6/56.2 = 2.48, 97.5/46.6 = 2.09, 164.3/77.7 = 2.11; 2.3 = 118.8/52.1 uses the partly warm long run's first window.",
+     "fix": "The short run is 2.1 to 2.5x slower than warm over tokens 387-1022 (2.5x at 2048 MiB pageable)",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/ROADMAP.md",
+     "quote": "levers, and their bounds are measured (KNOWLEDGE_BASE.md Finding 10).",
+     "problem": "This states a level 4 projection as a measurement. Finding 10 and EXP-0004.md say the inputs are level 1 and the bounds are arithmetic (level 4).",
+     "evidence": "KNOWLEDGE_BASE.md Finding 10: \"Level 1 for the per-layer times these rest on, level 4 for the projections\"; EXP-0004.md: \"level 1 inputs, the bound itself is arithmetic\". review.json C11(b) calls 38 ms \"the optimistic projection\".",
+     "fix": "levers, and their bounds are computed from measured per-layer times (KNOWLEDGE_BASE.md Finding 10).",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/STATE.md",
+     "quote": "-18 ms per token warm at 2048 MiB (56.2 -> about 38), the largest measured lever",
+     "problem": "The -18 ms at the cap is a level 4 projection, not a measured lever.",
+     "evidence": "review.json synthesis C11(b): \"At that cap, in layer order, the optimistic projection is ~38 ms\"; KNOWLEDGE_BASE.md Finding 10: level 4 for the projections.",
+     "fix": "-18 ms per token warm at 2048 MiB (56.2 -> about 38, a projection), the largest bounded lever",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/ROADMAP.md",
+     "quote": "the literature measures 9 to 17% from prefetch alone (SOURCES.md)",
+     "problem": "This contradicts the SOURCES.md synthesis it cites. That synthesis puts prefetch-alone gains at single digits to about 30% (Eliseev-Mazur +5 to +34%, AdapMoE 1.22x, Fate about +30%). The 9-17% covers only ProMoE and Speculating Experts.",
+     "evidence": "literature.json synthesis section 3; SOURCES.md: \"the measured value of prefetch alone is single digits to about 30%\".",
+     "fix": "the two closest studies (ProMoE inside llama.cpp, 1.09 to 1.17x; Speculating Experts on Qwen3-30B-A3B, 9 to 14%) measure 9 to 17% from prefetch alone; the wider literature 5 to 34% (SOURCES.md)",
+     "severity": "minor"
+    },
+    {
+     "file": "research/SOURCES.md",
+     "quote": "Their measured prefetch gains (8 to 15% of token time) are about half to four fifths of the 18%",
+     "problem": "\"Their\" refers to all the papers, but the same paragraph opens by saying prefetch alone measures \"single digits to about 30%\". The 8-15% covers only ProMoE and Speculating Experts.",
+     "evidence": "ProMoE 1.09-1.17x = 8.3-14.5% of token time; Speculating Experts 9-14% TPOT (literature.json); AdapMoE 1.22x, Fate about 30%, Eliseev-Mazur 5-34% lie outside it. EXP-0004.md and Finding 10 name ProMoE and Speculating Experts explicitly.",
+     "fix": "The two closest measurements (ProMoE inside llama.cpp, Speculating Experts on Qwen3-30B-A3B: 8 to 15% of token time) are about half to four fifths of the 18%",
+     "severity": "minor"
+    },
+    {
+     "file": "research/SOURCES.md",
+     "quote": "because they all run with host\nRAM far larger than the model.",
+     "problem": "This states an unsupported generalisation as fact. literature.json records host RAM for only two of the papers.",
+     "evidence": "literature.json claimed_result: ProMoE \"128GB DRAM\", HOBBIT \"256GB host\"; no host RAM recorded for the others (for example Eliseev-Mazur on a Colab T4, AdapMoE, Fate, Speculating Experts).",
+     "fix": "probably because those that report their host run with RAM far larger than the model (ProMoE 128 GB, HOBBIT 256 GB).",
+     "severity": "overstated"
+    },
+    {
+     "file": "research/SOURCES.md",
+     "quote": "Training-free next-layer prediction is 70 to 90%\naccurate depending on the metric",
+     "problem": "The range leaves out training-free results in the same table and in literature.json. The HOBBIT figure has been checked as correct by the second reader.",
+     "evidence": "literature.json synthesis section 2 (training-free list): HOBBIT 96% top-1 next layer (verdict confirmed), DAOP 84.11%, AdapMoE about 90%, Fate 78.79%, Speculating Experts about 90%, PROBE frozen router 70-80%.",
+     "fix": "Training-free next-layer prediction is 70 to 96% accurate depending on the metric (about 70 to 90% for top-k on many-expert models)",
+     "severity": "minor"
+    },
+    {
+     "file": "research/STATE.md",
+     "quote": "two draft claims refuted, eight corrected",
+     "problem": "The count adds up to 13 for a 12-claim review. C5 is counted both as refuted and as corrected. EXP-0004.md (Method, \"Two claims were refuted and eight corrected\") has the same count.",
+     "evidence": "review.json synthesis: CONFIRMED C1, C3, C9; PARTLY C2, C4, C5, C6, C7, C8, C11, C12 (8); REFUTED C10. C5 is \"PARTLY; the second sentence is REFUTED\".",
+     "fix": "one draft claim refuted (C10) and the second sentence of another (C5), eight corrected in all, three confirmed",
+     "severity": "minor"
+    },
+    {
+     "file": "research/EXPERIMENTS.md",
+     "quote": "R4 (separate pinning from page residency) and R5 (`--load-mode none`) depend only\non EXP-0000, not on the simulator.",
+     "problem": "This line was not updated, and the edited ROADMAP now contradicts it. R5 is to run as an arm of R11, which sits on R10 and EXP-0004. R4 is now motivated by EXP-0004's split of the pinning gain. The new graph does not show R5 under R11.",
+     "evidence": "ROADMAP.md R5 Cost: \"Run it as an arm of R11\"; R11 text: \"R5 (`--load-mode none`) belongs in the same experiment as a comparison arm\"; R4 Motivated by: \"EXP-0004 split it at 42% pinned\".",
+     "fix": "R4 (separate pinning from page residency) depends on EXP-0000 and EXP-0004's split, not on the simulator; R5 (`--load-mode none`) runs as an arm of R11 on R10's baseline.",
+     "severity": "minor"
+    },
+    {
+     "file": "research/EXPERIMENTS.md",
+     "quote": "warm 2048 MiB token 56.2 ms = 12.8 compute + 27.2 DMA + 16.1 idle",
+     "problem": "The equation does not add up: the terms sum to 56.1. It leaves out the 0.1 ms read-back that STATE.md and EXP-0004.md include.",
+     "evidence": "timeline_2048-pageable_long.json tokens 387-1022: compute 12.82, DMA 27.15, d2h 0.12, idle 16.14, total 56.23.",
+     "fix": "warm 2048 MiB token 56.2 ms = 12.8 compute + 27.2 DMA + 0.1 read-back + 16.1 idle",
+     "severity": "minor"
+    }
+   ],
+   "checked": "I read EXP-0004.md, the review.json synthesis (it takes precedence) and the four skeptics' verdicts, then each assigned file and its git diff. Numbers were recomputed from the raw results with a read-only CPU script (scratchpad verify5/win.py) over the timeline_*.json per-token rows: tokens 3-126 for all 12 short captures, and windows 3-130, 387-1022, 771-898, 899-1022 and 3-126 for the 3 long runs. These confirmed 56.2/46.6/77.7 warm, 12.8/27.2/0.1/16.1 at 2048, 41.6 and 21.5 slow copies per token in the partly warm long runs, 25.1 and 37.2 at 256 MiB, and 0 ns of overlap in all 15 timelines. I also checked decomposition.md, long_runs_windows.json (per-window slow copies and idle), and overlap_bound_2048-pageable_long.txt (two blocks: 9.28 of 52.13 for 771-898, 9.36 of 56.25 for 387-1022, 8.86/8.97 at 12.8 GB/s). Further checks: the app logs (prefill 3.7-7.3 s against 13.4-13.8 s, pinned 7842.20/10918.27 MiB, hit rates), b1_2048_rebase_check.txt (61.38%, 58033.62 MiB, 50092/31516), device_query.json (asyncEngineCount 1, pageableMemoryAccess 0, canUseHostPointerForRegisteredMem 0), and the typeperf CSVs (startup reads 3.3-4.3 GB/s). literature.json's synthesis and second-reader verdicts were checked against the SOURCES paragraph. In the code, pin_host_experts is address order, first fit, with a RAM/4 cap and the half-RAM comment at line 701; llama_prefetch and llama_prefetch_rows have no MoE-cache caller. git log confirmed the merge time, the dabb2b026 n_sample change and the binary and source mtimes. BENCHMARKS B2 (41.2-47.1 ms at 2048) and moe-bench/RESULTS.md (15266 MiB, +88%) were checked too. All eight files are pure ASCII. Every other EXP-0004 figure in the assigned sections matches the raw data or the synthesis: 91.7/139.6, 175 us per 64 KiB, 0.37 GB/s, 8.2/12.9-13.1/12.8 GB/s, 42.1 = 36.3 + 3.7 + 2.0, 9.6 = 5.4 + 2.8 + 1.5, 34/38 ms, 2.6-3.4 ms, 65-86 us, 194.7/181.7, 6480, 1.5-3 GiB, 8.9 and 26%, 8.8-9.1, and 6.7/3.9 warm slow idle. I did not run any binary, nsys or GPU code."
+  }
+ ]
+}

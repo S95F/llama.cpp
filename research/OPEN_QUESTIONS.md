@@ -1,7 +1,65 @@
 # OPEN QUESTIONS
 
 Unresolved questions, missing evidence, and what it would take to settle each.
-Ordered by value, not by age.
+Ordered by value, not by age. Q11 to Q14 are new from EXP-0004.
+
+## Q11 - Are the faults left in a warm run first touches or re-faults?
+
+**New, from EXP-0004.** Once warm, a 2048 MiB pageable token still makes 2 to 5
+slow copies per token (3.8 on average over tokens 387 to 1022), in bursts, worth
+3.8 to 9.1 ms of GPU idle per 128-token window (6.7 on average). They could be
+the last first touches of rarely used experts, or pages the OS dropped from the
+page cache under memory pressure and has to read again. The trace does not say
+which expert each copy carried. The 256 MiB arm suggests re-faults, at least there: its partly
+warm second rep faulted **more** than its cold first rep (37.2 against 25.1 per
+token), and 1636 copy positions were slow in the second rep only.
+
+**To settle:** log the expert id and layer of every copy alongside its host time
+(the cache already knows both; `LLAMA_MOE_CACHE_TRACE` is the precedent), then
+count how many slow copies hit an expert already copied earlier in the run.
+
+**Why it matters:** first touches are a startup cost that pinning, prefetch or a
+persistent process removes; re-faults are a residency problem that only pinning
+(R11) or more free RAM removes. It decides between R11 and R12 for warm runs.
+
+## Q12 - What does a persistent process look like, and why does B2 disagree?
+
+**New, from EXP-0004.** Every EXP-0004 run was a fresh CLI process, and a
+cold 128-token one is 2.1 to 2.5x slower per token than warm. A server keeps the
+process, but nothing here has measured whether its page cache then stays warm
+between requests. Separately, warm 2048 MiB here (52 to 56 ms, traced) is 10 to
+36% slower per token than the B2 `llama-bench` references (41.2 to 47.1 ms), while at 586
+MiB the two agree.
+
+**To settle:** ROADMAP R10 - two generations in one process, and an untraced
+run plus `llama-bench` at the same configuration and token window.
+
+**Why it matters:** every timing from R11 on is quoted against this baseline.
+
+## Q13 - Can a second stream overlap a copy with a kernel on this card?
+
+**New, from EXP-0004.** The RTX 4060 Ti reports one copy engine and runs under
+WDDM, where the driver batches submissions. One copy engine still allows a
+host-to-device copy beside a kernel in principle; whether WDDM delivers it is
+unmeasured.
+
+**To settle:** a standalone microbenchmark, a pinned copy on one stream and a
+kernel on another, with the timeline. No llama.cpp code.
+
+**Why it matters:** it is gate 1 of ROADMAP R13. If it fails, the 9.4 ms bound of
+Finding 10 is unreachable on this host whatever the predictor.
+
+## Q14 - Why does pageable DMA slow to 8.2 GB/s while the host stages?
+
+**New, from EXP-0004.** Pageable copies run at 12.9 to 13.1 GB/s when the host is
+not staging the next pageable copy and 8.2 GB/s when it is, in every copy-size
+class. Host memory bandwidth and the driver's staging path are the candidates.
+
+**To settle:** ROADMAP R15, a microbenchmark of pageable and pinned DMA with and
+without a concurrent host `memcpy`.
+
+**Why it matters:** modestly. About 8 ms per token at 2048 MiB pageable today,
+but pinning removes most of it.
 
 ## Q10 - Should the distance term also run above the crossover?
 
@@ -58,11 +116,15 @@ against 18.68% at 256 MiB. Both structural facts this project has found - routin
 skew and the cyclic sweep - are now exploited, so the next step needs a new
 source of information. Q7 is the only candidate with one.
 
-## Q3 - Is the pinning gain real once page residency is controlled for?
+## Q3 - Is the pinning gain real once page residency is controlled for? SETTLED IN PART
 
-Finding 4's +88% is the sum of two effects and **cannot be separated on this
-host** (31.11 GiB RAM against an 18.32 GiB expert working set; 14 GiB free at
-last check).
+Finding 4's +88% is the sum of two effects. **EXP-0004 split them on this host**
+at 42% pinned, from the timeline: in cold 128-token runs pinning saves 42.1 ms
+per token at 2048 MiB, 86% of it avoided page faults; warm, the 9.6 ms saved is
+5.4 DMA rate (the removal of staging contention), 2.8 faults and 1.5 staging.
+So pinning pays without faults too, **on this host's memory system**. What still
+needs a host with more RAM is whether that DMA-rate part survives where the page
+cache never misses and memory is less contended.
 
 **To settle:** ROADMAP R4, which needs **a smaller MoE model** whose expert
 working set fits comfortably in RAM - something in the 4 to 8 GiB range. The only
@@ -72,7 +134,8 @@ MoE model on disk is the 20.82 GiB one; the other three models are dense.
 project and would also serve Q4.
 
 **Why it matters:** it decides whether the pinning commit is worth proposing
-upstream at all. Right now its headline number is not defensible.
+upstream at all. Its +88% headline is still not defensible as a general number,
+but the warm split now gives it a mechanism that is not page faults.
 
 ## Q4 - Does the frequency victim help a model with different routing?
 
@@ -93,32 +156,21 @@ tensor types and shapes, which the harness already supports.
 Named in the project directive, **never investigated here**: no measurement, no
 code, no literature pass.
 
-On this hardware the prior is poor. Finding 4 measures the pageable copy path at
-3.4 to 5.5 GB/s against ~14 GB/s of link, and a zero-copy MoE matmul would read
-expert weights over the same link at matmul access patterns rather than as one
-large sequential DMA. Reading each weight exactly once with no reuse is the best
-case, which is what a 0% hit rate already does, but at worse granularity.
+On this hardware the prior is poor. EXP-0004 measured the copies themselves at
+12.8 GB/s pinned and 8.2 to 13 GB/s pageable, and a zero-copy MoE matmul would
+read expert weights over the same link at matmul access patterns rather than as
+one large sequential DMA. Reading each weight exactly once with no reuse is the
+best case, which is what a 0% hit rate already does, but at worse granularity.
+It also needs mapped pinned memory: the device reports
+`pageableMemoryAccess = 0` and `canUseHostPointerForRegisteredMem = 0`, so the
+WDDM pinning cap would bound it too. Its one advantage is that it overlaps by
+construction, which EXP-0004 shows the copy path does not.
 
 **Confidence: level 4** - this is reasoning, not evidence.
 
 **To settle cheaply:** a microbenchmark of a single MoE matmul reading its experts
 from host memory versus from VRAM, which needs no integration. Worth one
 iteration before dismissing it.
-
-## Q6 - Is the host-to-device copy actually overlapped with compute?
-
-Finding 4 notes that compute overlaps the copies, which is why the derived GB/s
-is a lower bound - but **the overlap was never measured**. If it is poor, there
-may be a win in the scheduling rather than in the bytes.
-
-**To settle:** CUDA stream timeline for one generation step, or the cheap version
-first: compare measured time per token against
-`max(compute_time, bytes/measured_bandwidth)` and see which bound is active.
-
-**Why it matters:** this is the one remaining way the bandwidth-bound conclusion
-of Finding 4 could be incomplete. If transfers are serialized with compute, the
-fix is overlap, not fewer bytes, and that would reprioritize the whole roadmap.
-**This is the highest-value question that needs no new hardware.**
 
 ## Q7 - Can expert activation be predicted better than by frequency?
 
@@ -142,8 +194,12 @@ overlap is **31.4 to 38.7%** at a lag of 1 token, slightly above the old 31 to
 rejection stands and the untried predictors above are unaffected.
 
 **Why it matters:** a predictor that beats frequency would attack the Belady gap
-(Q2) from a different direction. The cost of asking is low enough that it should
-ride along with EXP-0001.
+(Q2) from a different direction, and since EXP-0004 it is also the predictor a
+copy stream needs (ROADMAP R13). Its value there is bounded: perfect next-layer
+prediction could hide at most 9.4 ms per token (17%), and 70 to 90% recall still
+8.9 to 9.2 ms (KNOWLEDGE_BASE.md Finding 10). The traces hold selections, not
+hidden states, so they can test selection-based predictors only; the
+literature's router-on-current-hidden-state predictor needs a new dump.
 
 ## Q8 - What does the prefill actually cost end to end?
 
@@ -163,7 +219,10 @@ file at startup.
 **To settle:** ROADMAP R5. One existing flag, no code.
 
 **Caution:** pinning 18.3 GiB of 31.11 GiB with 14 GiB free may drive the host
-into swap. Check free RAM first and be ready to abort.
+into swap. Windows also charges pinned pages to a budget of about half the RAM,
+and 15266 MiB is the most ever registered here, so the full pinned buffer may
+simply fail to allocate (level 4). Check free RAM first and be ready to abort.
+Run it as an arm of ROADMAP R11.
 
 **Why it matters:** if it matches capped in-place pinning, the pinning commit has
 no upstream value.
@@ -181,3 +240,4 @@ Kept so they are not reopened without new evidence.
 | Sample the LRU end or uniformly? | Uniformly: 14.2% vs 1.1% at 256 MiB | Finding 3, level 1 |
 | Does the cache change generated output? | No, byte-identical in every configuration | Correctness invariant, level 1 |
 | **Q1** - do the simulated rankings hold on `d854d98b`? | **Yes.** Simulator exact to hit and fill counts on all four traces; every figure within +0.45 points; no ranking changed; crossover unmoved | EXP-0001, level 1 |
+| **Q6** - is the host-to-device copy overlapped with compute? | **No.** 0 ns of overlap in every token of 15 traced runs; one stream and two host waits per MoE layer. A warm 2048 MiB token is 12.8 compute + 27.1 DMA + 0.1 read-back + 16.1 host waits; overlap could hide at most 9.4 ms of it | EXP-0004, level 1 (level 2 for the mechanism); Findings 4, 9, 10 |

@@ -148,7 +148,7 @@ hide that - which is why the four-prompt trace set exists.
 
 ## Measurement failures
 
-Both produced confident nonsense before being caught. They are the reason
+Each produced confident nonsense before being caught. They are the reason
 KNOWLEDGE_BASE.md's "Measurement discipline" section exists.
 
 ### Two benchmark processes at once
@@ -182,6 +182,41 @@ difference.
 
 **Guard:** `llama-completion -v` is for **telemetry and traces** (exact counters);
 `llama-bench` is for **timing**. Never the other way round.
+
+### Reading uploaded bytes over token time as a link rate
+
+Found by EXP-0004, after three iterations. Finding 4 divided the uploaded bytes
+per token by the time per token, got 3.4 to 5.5 GB/s, and read that as the rate
+of the copy path - "the pageable path wastes most of the link" - on the premise
+that "compute overlaps the copies". Nothing overlaps (0 ns in every token of 15
+traced runs), and the time per token includes compute, page faults, staging and
+syncs. The figure is a lower bound on the copy rate, but so loose that it said
+nothing about the link: measured on a timeline, the copies run at 8.2 to 13 GB/s
+pageable and 12.8 GB/s pinned.
+
+**How it presents:** a plausible rate that is near-constant across cache sizes,
+which looks like a bandwidth limit and is really a fixed ratio of time to bytes.
+
+**Guard:** never derive a link rate from token time. Take copy rates from the
+copies themselves (BENCHMARKS.md B7), and check an overlap assumption before
+building on it.
+
+### Reading a short fresh-process run as steady state
+
+Found by EXP-0004. A pageable 128-token CLI generation (586 to 2048 MiB) spends
+55 to 66% of its mean token waiting on hard page faults of the mmap'd expert
+pages (49 to 57% with 42% pinned). They die away over about 400 tokens: in a
+1024-token run, 2048 MiB pageable goes from 118.8 to 52.1 to 59.7 ms per token.
+The short run is 2.1 to 2.5x slower than tokens 387 to 1022, and it also inherits whatever the
+previous process left in the page cache: pageable runs after a pinned run started
+partly warm (prefill 3.7 to 7.3 s instead of 13.4 to 13.8 s, up to 60% fewer
+faults).
+
+**How it presents:** two reps that agree well with each other (faults are
+deterministic) and disagree with anything run in a different order or for longer.
+
+**Guard:** quote a stated warm window for steady state, record the prefill time
+as a coldness check, and order runs by page-cache state as well as by arm.
 
 ---
 

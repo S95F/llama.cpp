@@ -146,12 +146,14 @@ B1 confirms on hardware to the hundredth of a MiB.
 
 ### Host expert page pinning (`c71dee331`)
 
-`cudaMemcpyAsync` from pageable memory is neither asynchronous nor full speed: it
-goes through a driver staging buffer. The commit page-aligns each host expert
-tensor's range (`llama_moe_cache_page_size()`, `GetSystemInfo` on Windows and
-`sysconf(_SC_PAGESIZE)` elsewhere) and registers it with the backend's host
-register hook, keeping the registered spans in `pinned_spans` to release in the
-destructor.
+`cudaMemcpyAsync` from pageable memory is not asynchronous: it goes through a
+driver staging buffer and blocks the host. Its DMA runs at full speed (12.9 to
+13.1 GB/s) unless the host is staging the next pageable copy at the same time,
+when it drops to 8.2 GB/s (EXP-0004; KNOWLEDGE_BASE.md Finding 4). The commit
+page-aligns each host expert tensor's range (`llama_moe_cache_page_size()`,
+`GetSystemInfo` on Windows and `sysconf(_SC_PAGESIZE)` elsewhere) and registers
+it with the backend's host register hook, keeping the registered spans in
+`pinned_spans` to release in the destructor.
 
 Opt-in via `GGML_CUDA_REGISTER_HOST=1`, capped at a quarter of system RAM because
 pinned pages compete with the OS, `LLAMA_MOE_PIN_MIB` overrides the cap, and any
@@ -182,23 +184,102 @@ grows from 1.0 to 1.8 slots per token. **Must not be resubmitted.**
 `scripts/compare-llama-bench.py` column. Was upstream PR #31121, closed on
 process grounds.
 
+## One generated token, in order (EXP-0004)
+
+Level 2, from the code: three readers' claims as corrected by six adversarial
+verifiers (`research/results/experiments/EXP-0004/code_reading.json`). Figures
+given as measured are level 1, from the EXP-0004 trace and `device_query.json`.
+
+**42 splits per generated token**, matching the `splits = 122 / 42` log line:
+one CPU split (the token-embedding `get_rows`, which CUDA never offloads), one
+CUDA split from layer 0's attention to its router and top-k, then 40 CUDA splits.
+Each of those 40 starts at a layer's slot-map lookup, because the lookup reads a
+host weight and the scheduler cuts a split there. Split `S(il)` holds the routed
+experts of layer `il`, its shared expert, the residual, then layer `il+1`'s
+attention or Gated DeltaNet and its router. `S(39)` ends with the output norm and
+the 515 MiB LM head instead. 30 of the 40 layers are Gated DeltaNet; 10 are full
+attention (`src/models/qwen35moe.cpp`).
+
+At every MoE layer:
+
+1. The host enters `S(il)` and copies its one host-weight input, the slot map.
+   There are no scheduler events (`n_copies = 1`, because there is one device and
+   `-ncmoe` adds tensor overrides), so it first calls `ggml_backend_synchronize`:
+   **the host waits until all of `S(il-1)` has run** (`ggml-backend.cpp`, about
+   line 1844).
+2. The copy callback reads the 8 selected ids back (32 bytes) and **synchronizes
+   again** (`llama-moe-cache.cpp`, about line 846). The GPU is idle from here.
+3. The host plans hits and fills in the SLRU.
+4. It issues one `cudaMemcpyAsync` per run of consecutive misses for each expert
+   tensor, in the order gate, up, down, then the slot map, **all on the one
+   compute stream**. From pageable memory each call is staged by the driver and
+   blocks the host.
+5. Only then does the scheduler launch `S(il)`, as a CUDA graph.
+
+So **uploads and compute are serialized twice over**: by stream order on the
+device, and by the two host waits per layer. Nothing can overlap today without
+code changes. `set_tensor_async` has no stream argument, the scheduler creates
+no events here, and the only other host-to-device path (`cudaStreamPerThread` in
+buffer `set_tensor`) synchronizes the host.
+
+`GGML_CUDA_REGISTER_HOST=1` changes no code path, stream or graph eligibility. It
+only makes the registered expert ranges pinned, capped by default at RAM/4. The
+slot map is never registered, so the last copy of every layer stays pageable.
+
+**What could legally overlap layer `il`'s upload without prediction:** the shared
+expert and its gate (they read only the FFN input; the routed+shared fused
+kernel cannot fire here, because the shared expert is Q8_0 and the routed experts
+are K-quants), the routed matmul over the hits if `MUL_MAT_ID` were split by
+readiness, and each missed expert's gate/up while its down tensor uploads. All of
+it is small, probably tens of microseconds per layer (level 4: EXP-0004 traced
+with `graph:host-only`, which gives no kernel times inside a graph). Everything
+from layer
+`il+1` depends on layer `il`'s routed output through the residual, so
+cross-layer overlap needs prediction. A copy stream would also have to order each
+fill after the last kernel that read the evicted slot: the slot pool is shared
+by every layer of a cache group.
+
+**Hardware limits on any future overlap** (`device_query.json`): the RTX 4060 Ti
+reports **one copy engine** (`asyncEngineCount = 1`), so a host-to-device upload
+could run beside a kernel but not beside the id read-back. Read-only host
+registration is supported. The card runs under WDDM.
+
+CUDA graphs **are** used: the trace shows 41 graph launches and zero individual
+kernel launches per generated token. Every 256th token re-captures and runs 37
+of the 41 graphs eagerly, with compute 0.2 to 0.3 ms above a graph token (1.7 ms
+in one of 12 cases). Graphs cut launch cost and do nothing about the per-layer
+host round trip, which EXP-0004 measured at 65 to 86 us per layer (2.6 to 3.4 ms
+per token): two syncs, the read-back, the plan, the pageable slot-map copy and
+the launch.
+
+**At 256 and 586 MiB one layer gets no cache slots** ("budget is too small for 1
+layers") and runs its MoE on the CPU, adding five syncs per token (114 against
+109) and about 2 ms of GPU idle.
+
+Measured costs of each stage, for the pathway below, are in KNOWLEDGE_BASE.md
+Findings 4 and 9.
+
 ## Memory pathways, end to end
 
 What one missed expert costs, and where each stage can be attacked:
 
 ```
 GGUF on disk (mmap)
-  -> host page cache          <- misses here if free RAM < 18.32 GiB (confounds timing)
-  -> pageable host pages      <- cudaHostRegister removes the next stage's staging copy
-  -> driver staging buffer    <- 3.4 to 5.5 GB/s measured, vs ~14 GB/s link
-  -> PCIe 4.0 x8
+  -> host page cache          <- a miss is a hard fault: ~175 us per 64 KiB, serial
+  -> pageable host pages      <- cudaHostRegister removes the next stage
+  -> driver staging buffer    <- the host stages copy n+1 while copy n is in flight
+  -> PCIe 4.0 x8              <- 12.8 GB/s pinned; pageable 13 GB/s alone, 8.2 contended
   -> cache bank in VRAM       <- the slot the replacement policy chose
-  -> MoE matmul
+  -> MoE matmul               <- only after every copy of the layer (one stream)
 ```
 
 The replacement policy attacks the *number* of traversals; pinning attacks the
-*rate* of one traversal. They are independent, which is why the pinning sweep is
-run at 1024 MiB where the policy is inert.
+*rate* of one traversal, and the page faults. They are independent, which is why
+the pinning sweep is run at 1024 MiB where the policy is inert. Overlap would
+attack neither and hide part of the traversal behind compute instead.
+
+The figures are from EXP-0004. The old "3.4 to 5.5 GB/s" on the staging line was
+uploaded bytes over whole-token time, not a rate of this stage.
 
 ## Prefill bypass
 

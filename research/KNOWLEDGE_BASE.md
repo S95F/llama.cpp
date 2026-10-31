@@ -14,6 +14,8 @@ quoted as a fact.
 
 Provenance: findings 1 to 6 consolidate `moe-bench/RESULTS.md`, which is the
 primary record and holds the full tables. Section numbers below refer to it.
+Findings 7 and 8 come from EXP-0002 and 0003, findings 9 and 10 and the rewrite
+of Finding 4 from EXP-0004.
 Measurements exist on two bases: `78a8ae1` (RESULTS.md sections 1-11) and
 `d854d98b` (section 12, the current base). Where they differ, the `d854d98b`
 figure is the one to use.
@@ -116,15 +118,36 @@ Three sub-results, all level 1:
 - **Counter aging is not optional.** Without it, a 1024-token four-topic session
   loses 6 to 9 points, and at 0.99 slots per token it is *worse* than upstream.
 
-## Finding 4: generation is bandwidth-bound on the host-to-device copy
+## Finding 4: uploads are serialized with compute, and each copy runs below the link rate
 
-**Level 1** for the rate figures; **level 4** for the attribution of the pinning
-gain, which is confounded on this machine. The pageable path wastes most of the
-link.
+**Level 1** (EXP-0004's CUDA timeline), **level 2** for the mechanism (the
+code). **Rewritten by EXP-0004.** The earlier version read the effective-rate
+table below as link rates and said compute overlaps the copies; **both were
+wrong.**
 
-Dividing the known per-token upload volume by measured time per token gives the
-effective rate of the pageable `cudaMemcpyAsync` path. On `d854d98b`, using
-measured rather than theoretical bytes (RESULTS.md section 12):
+**Nothing overlaps.** Copy/compute overlap is **0 ns in every token** of 15
+traced runs. Expert copies, CUDA graphs and kernels share one stream, and per MoE
+layer the host runs graph, sync, 32-byte router read-back, sync, expert copies,
+next graph. That is 80 syncs per token, 109 `cudaStreamSynchronize` in all with
+the input and logits syncs (114 at 256 and 586 MiB). ARCHITECTURE.md "One
+generated token, in order" has the code path.
+
+**Measured copy rates** (CUPTI, GPU side of each copy):
+
+| path | GB/s | note |
+|---|---:|---|
+| pinned | **12.8** | 81% of the 15.75 GB/s raw PCIe 4.0 x8 rate; returns to the host at once |
+| pageable, host not staging the next copy | 12.9 to 13.1 | |
+| pageable, host staging the next copy | **8.2** | 21.7 of 26.3 ms of DMA per token at 2048 MiB |
+| pageable, page not resident | 0.32 to 0.50 (host side) | a hard page fault, about 175 us per 64 KiB; Finding 9 |
+
+So a pageable copy is not slow because of the staging copy as such but because
+the host's staging of the next copy slows the current DMA by about 37%; whether
+through host memory bandwidth or the driver's path is untested. The "~14 GB/s
+usable" figure quoted in earlier documents was never measured.
+
+**Effective rate, uploaded bytes over whole-token time.** On `d854d98b`
+(RESULTS.md section 12):
 
 | cache MiB | MiB uploaded per token | tok/s | GB/s |
 |---:|---:|---:|---:|
@@ -135,15 +158,16 @@ measured rather than theoretical bytes (RESULTS.md section 12):
 | 1024 | 344.6 | 15.02 | 5.43 |
 | 2048 | 227.6 | 22.10 | 5.27 |
 
-So **3.4 to 5.5 GB/s against roughly 14 GB/s of usable PCIe 4.0 x8**. The rate is
-near-constant across a 2.6x range of transferred bytes, which is why cutting
-bytes converts almost linearly into tokens per second. These are derived lower
-bounds, not bus measurements: compute overlaps the copies.
+The denominator includes compute, page faults, staging and syncs, so these are
+**not link rates, only loose lower bounds on the copy rate**. They remain right
+as what they are: the rate is near-constant across a 2.5x range of bytes, which
+is why cutting bytes converts almost linearly into tokens per second. EXP-0004 confirms
+the shape - warm, DMA is the largest single part of a token (Finding 9).
 
 Registering the mmap'd expert pages with `cudaHostRegister` (`c71dee331`,
-opt-in, capped at RAM/4, `LLAMA_MOE_PIN_MIB` overrides) targets the driver
-staging copy. Sweep at a 1024 MiB cache where the eviction change is inert, on
-`78a8ae1` (RESULTS.md section 7):
+opt-in, capped at RAM/4, `LLAMA_MOE_PIN_MIB` overrides) makes them pinned. Sweep
+at a 1024 MiB cache where the eviction change is inert, on `78a8ae1`
+(RESULTS.md section 7):
 
 | pin cap | actually pinned | share of 18760 MiB | tok/s | vs pageable |
 |---|---:|---:|---:|---:|
@@ -155,11 +179,24 @@ staging copy. Sweep at a 1024 MiB cache where the eviction change is inert, on
 
 **Read the +88% as confounded.** Locking the pages both removes the staging copy
 and stops the mmap page-cache misses that this 31 GiB machine suffers against an
-18.32 GiB working set. Separating the two needs a host with enough RAM to keep
-the model cached without pinning, which this one does not have. Low coverage is
-mildly counterproductive: it spends RAM without covering enough to pay for
-itself. Spread here was +-25 to 45%, the widest of any measurement in the
-project.
+18.32 GiB working set. Low coverage is mildly counterproductive: it spends RAM
+without covering enough to pay for itself. Spread here was +-25 to 45%, the
+widest of any measurement in the project.
+
+**EXP-0004 split the gain at 42% pinned** (level 1; cold rows: means of two
+128-token reps per arm; warm row: one 1024-token rep per arm):
+
+| regime | pinning saves | page faults | DMA rate | staging |
+|---|---:|---:|---:|---:|
+| cold, 2048 MiB, 128-token runs | 42.1 ms/token | 36.3 | 3.7 | 2.0 |
+| cold, 1024 MiB | 44.6 | 35.0 | 5.6 | 3.8 |
+| warm, 2048 MiB, tokens 387-1022 | 9.6 | 2.8 | 5.4 | 1.5 |
+
+Cold, **78 to 86% of the gain is avoided page faults**; warm, most of it is the DMA
+rate, which is the removal of staging contention. What still needs a host with
+more RAM (OPEN_QUESTIONS.md Q3) is whether pinning pays when nothing faults.
+**Pinning is capped near half of RAM on Windows**: the driver charges pinned
+pages to a shared budget, so 15266 MiB (81%) is the most ever registered here.
 
 ## Finding 5: prompt processing is uncached by design
 
@@ -301,6 +338,74 @@ A large gap remains everywhere - Belady still gets 32.01% where the policy gets
 18.68% at 256 MiB. This is the headroom a profile-driven resident hot set
 (#30594) aims at.
 
+## Finding 9: a generated token is mostly the host waiting - on page faults when cold, on DMA once warm
+
+**Level 1.** EXP-0004, CUDA timelines of every generated token.
+
+GPU compute is **12.7 to 12.9 ms per token** in every configuration, whatever the
+cache size or pinning. Everything else is DMA and GPU idle while the host thread
+waits:
+
+| 2048 MiB cache | ms/token | compute | DMA | idle | of which page faults |
+|---|---:|---:|---:|---:|---:|
+| pageable, 128-token fresh process | 139.6 | 12.9 | 26.3 | 100.3 | 91.7 |
+| pinned 42%, 128-token fresh process | 97.5 | 12.9 | 22.6 | 62.0 | 55.4 |
+| pageable, warm (tokens 387-1022) | **56.2** | 12.8 | 27.1 | 16.1 | 6.7 |
+| pinned 42%, warm | **46.6** | 12.8 | 21.8 | 11.9 | 3.9 |
+| 586 MiB pageable, warm | **77.7** | 12.8 | 43.5 | 21.3 | 6.3 |
+
+(Every row also carries 0.1 ms of logits read-back.)
+
+**The slow copies are hard page faults on the mmap'd expert pages.** Their host
+rate is bimodal with the slow peak at about 175 us per 64 KiB cluster, read
+synchronously; their bytes match the disk reads during decode (6.18 against
+6.29 GiB at 2048 MiB pageable, per-second correlation 0.999); they fall at the
+same positions in repeated runs; and pinned runs fault in proportion to the bytes
+left pageable.
+
+**They behave like first touches and die away over about 400 tokens**: in the
+1024-token run, 2048 MiB pageable goes from 118.8 ms per token in tokens 3 to
+130 to 52.1 to 59.7 from token 387 on. So **a cold 128-token CLI generation is
+2.1 to 2.5x slower per token than tokens 387 to 1022 of the same
+configuration** (2.5x at 2048 MiB pageable, 2.1x at 586 MiB and with 42%
+pinned), and the decode of a short request is dominated by disk, not by PCIe.
+
+**Warm, DMA is the largest component (47 to 56%)**, compute 16 to 28%, idle 25 to
+29%. The faults never quite stop (2 to 5 per token late in a run, in bursts),
+and whether those are first touches or re-faults after the OS dropped a page is
+not known.
+
+**The OS keeps part of the model cached between processes** after a pinned run:
+pageable runs that followed one prefilled in 3.7 to 7.3 s instead of 13.4 to
+13.8 s. That is a measurement hazard (see "Measurement discipline").
+
+## Finding 10: bounds on the remaining levers, warm 2048 MiB
+
+**Level 1** for the per-layer times these rest on, **level 4** for the
+projections, which are arithmetic over them. EXP-0004. Base: tokens 387 to 1022
+(56.2 ms). On the best window (tokens 771 to 898, 52.1 ms) the overlap bound is
+9.3 ms (18%) and full pinning about 34 ms (+53%).
+
+| lever | bound on the gain | condition |
+|---|---:|---|
+| pin every expert | about **-22 ms** (56.2 -> about 34.6) | needs 18.3 GiB locked; **not possible on this host** |
+| pin up to the WDDM cap (about 15000 MiB) | about **-17 to -18 ms** (-> about 38 to 39) | possible now; address order leaves layers 33 to 39 (and layer 32's up tensor) pageable, about 18% of warm traffic |
+| overlap upload with compute, perfect next-layer prediction | **-9.4 ms** (17%); -10.4 with unlimited lookahead | copy stream plus prediction; at 70-90% recall still 8.9 to 9.2 |
+| the same, after full pinning | about -9 of about 35 (26%) | the levers compound toward about 25 ms |
+| per-layer host round trip (sync, read-back, plan, slot-map copy, launch) | **-2.6 to -3.4 ms** | 65 to 86 us per layer; about 10% of a pinned token |
+
+**Overlap's ceiling is not compute's 12.8 ms**: split `S(39)`, which ends in the
+LM head, takes 2.1 ms after the token's last upload, 3.3 to 3.5 of 40 layers per
+token upload nothing, and a typical layer computes for 270 us against a median
+upload of 588 to 654 us, so compute is the short side in about three layer
+visits of four. The two closest measurements of prefetch alone (ProMoE 1.09 to
+1.17x inside llama.cpp, Speculating Experts 9 to 14% on Qwen3-30B-A3B), 8 to 15%
+of token time, are about half to most of this ceiling.
+
+**So on this host the host's memory is the first lever and overlap the second**:
+faults and staging contention cost more than overlap could hide, and pinning
+also raises overlap's share.
+
 ---
 
 ## Architectural facts
@@ -319,6 +424,18 @@ Level 2 unless marked. Detail in ARCHITECTURE.md.
   dense weights, are what cannot fit in 8 GiB.
 - **`-ngl 99 -ncmoe 40` is the only configuration this model fits in** on 8 GiB:
   all experts in host memory, dense weights and attention on the GPU.
+- **Uploads are serialized with compute by construction** (EXP-0004): one
+  stream, and two host waits per MoE layer (the scheduler's sync before the
+  slot-map input, and the cache's sync after the 32-byte router read-back).
+  Overlap needs a second stream and, across layers, prediction.
+- **CUDA graphs are used** during generation: 41 graph launches per token. A
+  token every 256 re-captures and runs most graphs eagerly.
+- **The GPU has one copy engine** (`asyncEngineCount = 1`) and runs under WDDM.
+- **llama.cpp prefetches the whole model file at load** (`src/llama-mmap.cpp`,
+  about lines 611-627), more than the free RAM here, and **the MoE cache never
+  prefetches**: `llama_prefetch` and `llama_prefetch_rows` have no caller there.
+- **At 256 and 586 MiB one layer gets no cache slots** and runs its MoE on the
+  CPU, which costs about 2 ms per token of GPU idle (level 1).
 
 ## Measurement discipline
 
@@ -344,6 +461,23 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
   re-validated it on `d854d98b` on **all four traces**, to the integer hit and
   fill counts (prompt: 50092 / 31516 in both). Validation must be redone on any
   future rebase: the traces are base-specific even though the code is not.
+- **A short single-process run measures page faults, not steady state.**
+  EXP-0004: a cold 128-token CLI generation is 2.1 to 2.5x slower per token than
+  tokens 387 to 1022 of the same configuration. Quote warm windows for steady
+  state, and say which one.
+- **Page-cache state carries over between processes.** A pageable run after a
+  pinned run starts partly warm (prefill 3.7 to 7.3 s instead of 13.4 to 13.8 s,
+  and up to 60% fewer page faults). Record the prefill time with every timed run
+  as a coldness check, and order runs by cache state, not only by arm.
+- **Bytes over token time is not a link rate.** It folds compute, faults, staging
+  and syncs into one number; Finding 4 read it as a link rate for three
+  iterations. Measure copies on a timeline instead.
+- **Tracing with Nsight Systems costs +0.6 to +2.2% per token** in the 128-token
+  runs (unmeasured in the warm regime), host-side, so it lands in GPU idle and
+  leaves compute and DMA unaffected (EXP-0004).
+- **The B2 reference and a traced CLI run disagree at 2048 MiB**: the traced CLI
+  is 10 to 36% slower per token (they agree at 586). Unexplained; do not mix the
+  two without reconciling them.
 - **Compare policies paired per trace, and require the sign to agree on all four
   traces.** Level 1, from EXP-0001. The spread of one policy **between** traces
   is 4.2 to 7.3 points, which is larger than several of the differences being

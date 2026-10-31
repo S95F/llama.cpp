@@ -1,0 +1,10 @@
+commit  : 5df437a57
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+nsys    : NVIDIA Nsight Systems version 2025.6.3.541-256337736014v0
+arms    : 256-pageable 586-pageable 1024-pageable 2048-pageable 1024-pinned 2048-pinned
+started : 2026-10-31T20:50:31Z, free RAM 16.45 GiB
+finished: 2026-10-31T21:03:21Z, free RAM 17.53 GiB
+== traced 2048-pageable_long, free RAM 17.46 GiB
+== traced 2048-pinned_long, free RAM 17.64 GiB
+== traced 586-pageable_long, free RAM 18.15 GiB
+== B1 2048 MiB rebase check, free RAM 18.24 GiB

@@ -1,0 +1,4 @@
+0.04.438.254 I pin_host_experts: registered 7842.20 MiB of host experts as pinned memory (10918.27 MiB left pageable)
+0.27.216.229 I common_perf_print: prompt eval time =    9945.60 ms /    46 tokens (  216.21 ms per token,     4.63 tokens per second)
+0.27.216.231 I common_perf_print:        eval time =   12755.73 ms /   127 runs   (  100.44 ms per token,     9.96 tokens per second)
+0.27.227.064 I llama_moe_cache: ubatch <= 8: hits = 24875, misses = 15773, hit rate = 61.20%, uploaded = 29029.44 MiB
