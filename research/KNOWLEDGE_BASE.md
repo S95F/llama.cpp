@@ -17,10 +17,13 @@ primary record and holds the full tables. Section numbers below refer to it.
 Findings 7 and 8 come from EXP-0002 and 0003, findings 9 and 10 and the rewrite
 of Finding 4 from EXP-0004, Finding 11 and the rewritten correctness invariant
 from EXP-0005, Finding 12, Finding 11's online figures and three
-measurement-discipline entries from EXP-0006.
-Measurements exist on two bases: `78a8ae1` (RESULTS.md sections 1-11) and
-`d854d98b` (section 12, the current base). Where they differ, the `d854d98b`
-figure is the one to use.
+measurement-discipline entries from EXP-0006, and two more entries and a
+router check from the 2026-11-01 merge check
+(`research/results/baseline/rebase-2ca33f0d7/`).
+RESULTS.md measured on two bases: `78a8ae1` (sections 1-11) and `d854d98b`
+(section 12). Where they differ, the `d854d98b` figure is the one to use. The
+base has since moved to `a91eab67d` (merge `2ca33f0d7`), and the router check
+(Standing practice) has reproduced exactly on every move since `d854d98b`.
 
 ---
 
@@ -653,12 +656,13 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
   15% lower. Record free RAM with every throughput number.
 - **Do not time with `llama-completion -v`.** The per-token debug logging hides
   the effect. Use `llama-bench`.
-- **The simulator is trustworthy, and now validated on the current base.**
+- **The simulator is trustworthy, and validated on `d854d98b`.**
   `moe-bench/moe_sim.py` matched llama.cpp to the digit on `78a8ae1` (60.82% hit,
   58867.3 vs 58867.26 MiB uploaded, 2044.1 vs 2044.11 MiB VRAM). EXP-0001
   re-validated it on `d854d98b` on **all four traces**, to the integer hit and
-  fill counts (prompt: 50092 / 31516 in both). Validation must be redone on any
-  future rebase: the traces are base-specific even though the code is not.
+  fill counts (prompt: 50092 / 31516 in both). After any rebase run the router
+  check (Standing practice) and redo the validation if it fails: the traces are
+  base-specific even though the code is not.
 - **A short single-process run measures page faults, not steady state.**
   EXP-0004: a cold 128-token CLI generation is 2.1 to 2.5x slower per token than
   tokens 387 to 1022 of the same configuration. Quote warm windows for steady
@@ -709,6 +713,25 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
 - **Tracing with Nsight Systems costs +0.6 to +2.2% per token** in the 128-token
   runs (unmeasured in the warm regime), host-side, so it lands in GPU idle and
   leaves compute and DMA unaffected (EXP-0004).
+- **llama-bench's tg reps are not exchangeable** (2026-11-01 merge check). At
+  2048 MiB, fresh process, `-p 0 -n 64 -r 4`, every one of eight runs on two
+  builds stepped up the same way: rep 1 7.3 to 10.1 tok/s, reps 2 and 3 14.2
+  to 16.7, rep 4 20.6 to 21.0. `std::rand` is never seeded, so rep k decodes
+  the same tokens in every process. A `-r 4` mean therefore mixes reps up to
+  2.8x apart, for a reason not yet known (Q20), and depends on what ran
+  earlier in the process: 24.7 to 27.3 tok/s with pp512 first, which also
+  moves the rand stream, so the tokens differ too. Compare builds rep for rep,
+  keep the process history identical between arms, and keep the per-rep
+  samples (`-oe jsonl`).
+- **Check the GPU for other users before timing, not only the process list.**
+  A game started between the game check and the timed runs of the merge check.
+  pp512-then-tg64 runs at 2048 MiB gave tg64 7.2 to 8.6 tok/s with it
+  (`check.sh`, `-r 3`) against 24.7 to 27.3 without it (`bench_r2.sh`, `-r 4`),
+  and nothing in llama's output showed why; `nvidia-smi` showed 41% load and
+  121 W with no llama process running. The rep count also differs, which
+  changes the rep mix and the tokens decoded, so the game's own share of the
+  gap was not measured. Log the GPU's load and power before
+  every timed arm (`bench_r2.sh` and `bench_r3.sh` do).
 - **The B2 reference and a traced CLI run disagree at 2048 MiB**: the traced CLI
   is 10 to 36% slower per token (they agree at 586). Unexplained; do not mix the
   two without reconciling them.
@@ -733,7 +756,26 @@ both 1024 and 2048 MiB**, so that base did *not* move the router and no
 re-collection was needed. Two bases have now been checked this way, with
 opposite answers, which is why the check is worth its one run.
 
-## Resolved: the simulated tables now hold on the current base
+Done twice more, exact both times. After `5df437a57` (upstream `63b4b303b`,
+EXP-0004), a weak test: that merge changed no source this build compiles.
+After `2ca33f0d7` (upstream `a91eab67d`, 120 commits, 2026-10-31,
+`research/results/baseline/rebase-2ca33f0d7/`), a stronger one: the merge
+changed CUDA source this build compiles, among it #31188 (MUL_MAT_ID gate/up
+and GLU fused in MMQ, the large-batch path; not checked to fire for this
+model). There, all eight B1 rows matched the reference to the integer hit and
+miss counts: the shipping policy at 256 to 2048 MiB against EXP-0003, LRU at
+528 and 2048 against EXP-0002's `sample0` arm. B3 passed 11 of 11 with all 12
+outputs byte-identical to EXP-0006's pre-merge ones. The buffer sizes did not
+change. test-backend-ops passed 931 of 931 plain MUL_MAT_ID cases;
+`-o MUL_MAT_ID` matches that op name only, so #31188's fused cases, named
+MUL_MAT_VEC_FUSION, were run separately afterwards: 1376 of 1376, both new
+cases included (`test_backend_ops_mmvf.txt`). So that base did not move the
+router on the `prompt` trace either. Decode at 2048 MiB showed no change above
+about 1% at reps 2 to 4, after run 1 was dropped post hoc (3 against 4 runs;
+BENCHMARKS.md B2, "Across the merge"). The first timing attempt ran while a
+game used the GPU; it is kept but marked invalid (`NOTE_game.txt`).
+
+## Resolved: the simulated tables hold on `d854d98b`, and on every base since for the `prompt` trace (the router check; the other three traces assumed)
 
 **Level 1.** EXP-0001 settled this. Upstream's own commits between `78a8ae1` and
 `d854d98b` changed the router's top-8 at some positions: with

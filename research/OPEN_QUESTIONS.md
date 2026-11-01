@@ -2,7 +2,7 @@
 
 Unresolved questions, missing evidence, and what it would take to settle each.
 Ordered by value, not by age. Q11 to Q14 are new from EXP-0004, Q15 to Q17 from
-EXP-0005, Q18 and Q19 from EXP-0006.
+EXP-0005, Q18 and Q19 from EXP-0006, Q20 from the 2026-11-01 merge check.
 
 ## Q18 - Why does the pageable remainder of expert-level pinning fault more per byte?
 
@@ -52,6 +52,37 @@ range first (ROADMAP R19).
 **Why it matters:** up to 2.9 s before the first token at 15000 MiB, and the
 online profile's mid-run stall. If a prefetch moves it off the critical path,
 it is a small fix.
+
+## Q20 - Why do llama-bench's tg reps step up within a process?
+
+**New, from the 2026-11-01 merge check.** At 2048 MiB, pageable, fresh process,
+B2's `-p 0 -n 64 -r 4`, all eight runs on both builds had rep 1 slowest and
+rep 4 fastest: rep 1 7.33 to 10.05 tok/s, reps 2 and 3 14.17 to 16.69, rep 4
+20.55 to 21.02 (`results/baseline/rebase-2ca33f0d7/bench_r3.jsonl`).
+llama-bench never seeds `std::rand`, so rep k decodes the same tokens in every
+process, and its generation warm-up is one token. Rep 1 is slow even in a
+process launched right after one that decoded the same tokens. Candidates,
+level 4: first-touch faults that map pages already in RAM into the new
+process; per-rep token content (rep 4's tokens routing to fewer distinct or
+cheaper experts); the expert cache warming. The last is unlikely to be enough:
+the cache (one per context, so empty at each test's start) holds about 3.5
+tokens' worth of experts at 2048 MiB (B1's slots per token), and `bench_r2.sh`'s
+tg64 also began with an empty cache yet averaged 24.72 to 27.26 tok/s. Among
+what differed there: the pp512 test before it in the same process (which
+touched the experts its random tokens selected, plausibly most of them; level
+4, not checked) and the rand position.
+
+**To settle:** no code needed. `-r 8` in one process (a warm-up flattens; content
+repeats by rep index across processes), the same with `LLAMA_MOE_CACHE_TRACE` for
+fills per rep, `-p 0 -n 64,64` (bench_r2.sh's shape without pp512: does a
+tg-only first test remove the second's staircase? its tokens differ, since the
+rand stream runs on), and per-process page-fault counts.
+
+**Why it matters:** B2 means average over reps that, at 2048 MiB in a fresh
+process, differ up to 2.8x (other sizes untested), in proportions set by the rep
+count and by what ran earlier in the process. It may explain Q12, and why a
+fresh process now measures 14.1 to 15.9 tok/s per run at 2048 MiB against B2's
+21.24 to 24.25 references.
 
 ## Q15 - How much do the small-cache hardware rows depend on CPU-computed layers?
 

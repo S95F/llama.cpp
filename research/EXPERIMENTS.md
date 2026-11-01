@@ -63,9 +63,12 @@ on hardware, see OPEN_QUESTIONS.md Q3. R5 (`--load-mode none`) ran as an arm of
 EXP-0005.
 
 **Everything downstream of EXP-0001 inherits its traces.** If the branch is
-rebased again, the traces must be re-collected and the simulator re-validated
-before any simulated figure from R2 or R3 can be quoted - that is what EXP-0001
-had to do for EXP-0000's work.
+rebased again, run the B1 2048 MiB router check first (KNOWLEDGE_BASE.md,
+Standing practice). Only if it does not reproduce must the traces be
+re-collected and the simulator re-validated before any simulated figure from R2
+or R3 can be quoted - that is what EXP-0001 had to do for EXP-0000's work. The
+check decodes the `prompt` trace only. It reproduced on `a4699400e`,
+`5df437a57` and `2ca33f0d7`.
 
 ## Validity conditions
 

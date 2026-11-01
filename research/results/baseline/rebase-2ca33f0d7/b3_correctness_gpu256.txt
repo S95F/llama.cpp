@@ -1,0 +1,38 @@
+-- cache-off 
+1350
+-- cache2048-lru LLAMA_MOE_CACHE_SAMPLE=0
+1350
+-- cache2048-auto 
+1350
+-- cache528-lru LLAMA_MOE_CACHE_SAMPLE=0
+1350
+-- cache528-auto 
+1350
+-- cache2048-s16 LLAMA_MOE_CACHE_SAMPLE=16
+1350
+-- cache528-dist0 LLAMA_MOE_CACHE_DIST=0
+1350
+-- cache256-auto 
+1350
+-- cache1024-pinned GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinprof GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinonline GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinonline15000 GGML_CUDA_REGISTER_HOST=1
+1350
+
+== diff against cache-off ==
+  OK    cache1024-pinned
+  OK    cache2048-auto
+  OK    cache2048-lru
+  OK    cache2048-pinonline
+  OK    cache2048-pinonline15000
+  OK    cache2048-pinprof
+  OK    cache2048-s16
+  OK    cache256-auto
+  OK    cache528-auto
+  OK    cache528-dist0
+  OK    cache528-lru
+exit 0

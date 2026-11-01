@@ -84,8 +84,15 @@ survive:
 ```powershell
 $vc = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat'
 $cm = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
-cmd /c "call `"$vc`" >nul 2>&1 && set `"PATH=C:\Users\steve\cuda126\bin;%PATH%`" && `"$cm`" --build build --target llama-bench llama-completion"
+cmd /v:on /c "call `"$vc`" >nul 2>&1 && set `"PATH=C:\Users\steve\cuda126\bin;!PATH!`" && `"$cm`" --build build --target llama-bench llama-completion"
 ```
+
+`/v:on` and `!PATH!` matter. With `%PATH%`, cmd expands the variable when it
+parses the line, before `vcvars64.bat` runs, so the MSVC directories drop out
+of `PATH`. C++ files still compile (CMake calls `cl.exe` by full path), but
+every `.cu` file fails with `nvcc fatal : Cannot find compiler 'cl.exe' in
+PATH`. Found at the 2026-10-31 upstream merge, the first build since
+2026-10-26 that recompiled CUDA files.
 
 Running a built binary needs only the CUDA 12.6 `PATH` fix above, not vcvars.
 
@@ -109,7 +116,7 @@ Other models on disk, none MoE, available if a dense control is needed:
 |---|---|
 | Working dir | `C:\code\llama.cpp-fork` |
 | Branch | `moe-gpu-optimize`, tracking `origin/moe-gpu-optimize` |
-| Upstream base | `63b4b303b` through merge `5df437a57`, 2026-10-26 (was `a4699400e`, `d854d98b`, and `78a8ae1` before that) |
+| Upstream base | `a91eab67d` through merge `2ca33f0d7`, 2026-10-31 (was `63b4b303b` via `5df437a57`, and before that `a4699400e`, `d854d98b` and `78a8ae1`) |
 | `origin` | `https://github.com/S95F/llama.cpp.git` (the fork) |
 | `upstream` | `https://github.com/ggml-org/llama.cpp.git` |
 
@@ -172,5 +179,7 @@ Recorded explicitly so no document implies these were tested.
   means "none known locally", not "none exist". The base has since moved twice
   through merges the user performed outside these sessions (to `a4699400e`, then
   to `63b4b303b` via `5df437a57`), so check the base rather than assuming it.
+  The 2026-10-31 fetch worked, and the merge to `a91eab67d` (`2ca33f0d7`, 120
+  upstream commits) was done in-session at the user's request.
 - **Only one MoE model.** No second MoE architecture, expert count, or
   quantization has been tested.

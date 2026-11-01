@@ -1,0 +1,8 @@
+== ./build/bin/test-backend-ops test -o MUL_MAT_VEC_FUSION -b CUDA0 (merged 2ca33f0d7, 2026-11-01T08:00:13Z) ==
+-- the two cases #31188 (f5222f25c) added:
+  MUL_MAT_VEC_FUSION(type=q4_K,glu_op=2,m=17,n=5120,k=256,use_id=1,n_mats=16,n_used=8,b=1,with_bias=0,with_gate=1,with_lane_scale=0,batch_dims=[4,2],skip=0): OK
+  MUL_MAT_VEC_FUSION(type=q8_0,glu_op=2,m=2048,n=128,k=256,use_id=1,n_mats=40,n_used=8,b=0,with_bias=0,with_gate=1,with_lane_scale=0,batch_dims=[4,2],skip=0): OK
+-- use_id=1 cases: 1152 total, 844 OK, 308 not supported, 0 FAIL
+  1376/1376 tests passed
+  Backend CUDA0: OK
+exit 0

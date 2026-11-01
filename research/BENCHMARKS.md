@@ -36,11 +36,13 @@ LLAMA_MOE_CACHE_SAMPLE=$sample ./build/bin/llama-completion \
     -t 8 --no-warmup -no-cnv -v < /dev/null 2>&1 | grep -E "ubatch <= 8" | tail -1
 ```
 
-`LLAMA_MOE_CACHE_SAMPLE=0` is the upstream LRU arm; unset or `16` is the branch
-arm. Sweep `mib` over `384,528,586,645,1024,2048`. 255 tokens are generated after
-the first.
+`LLAMA_MOE_CACHE_SAMPLE=0` is the upstream LRU arm; unset is the shipping branch
+arm (32 samples). `16` forces 16 samples at every size, so above the crossover,
+where the shipping policy does not sample, it differs from both (EXP-0003's
+`s16` rows at 1024 and 2048 MiB). Sweep `mib` over
+`384,528,586,645,1024,2048`. 255 tokens are generated after the first.
 
-### Reference, base `a4699400e` (current)
+### Reference, base `a4699400e` (exact on `2ca33f0d7` where re-run)
 
 Source: EXP-0003, `research/results/experiments/EXP-0003/b1.csv`. The shipping
 policy is the sampled distance-weighted victim with 32 samples.
@@ -56,8 +58,11 @@ policy is the sampled distance-weighted victim with 32 samples.
 
 **The 2048 MiB row is the standard rebase check.** Nothing samples there, so it
 is fully deterministic: if it reproduces `61.38% / 58033.62 MiB` the traces are
-still valid for the new base. It has reproduced exactly across `d854d98b` and
-`a4699400e`.
+still valid for the new base. It has reproduced exactly across `d854d98b`,
+`a4699400e`, `5df437a57` (EXP-0004) and `2ca33f0d7`. On `2ca33f0d7` the whole
+shipping column reproduced to the integer counts, and the upstream column at
+528 and 2048 MiB, the two sizes run
+(`research/results/baseline/rebase-2ca33f0d7/b1.csv`).
 
 Caution on the A/B toggle: `LLAMA_MOE_CACHE_SAMPLE` clamps to `g.n_slots` while
 the automatic path does not, so on a group with fewer slots than the requested
@@ -140,6 +145,48 @@ than the 16.1 GiB session at every size. **The larger ratios in the 16.1 GiB
 table are not an improvement** - host memory pressure penalises whichever arm
 reads more bytes, which is the upstream arm, inflating the ratio.
 
+### Across the merge `2ca33f0d7`, 2048 MiB only, 2026-11-01
+
+The merged build against the pre-merge `a88e64081`, one size, ABBA then BAAB,
+18.5 to 19.7 GiB (18976 to 20127 MiB) available, `VIractal.exe` not running
+(the only process the script checks) and the GPU idle (0 to 2%, about 25 W) at
+every launch (`baseline/rebase-2ca33f0d7/bench_r3.md`; per-rep samples in
+`bench_r3.jsonl`, reduced by `summarize_r3.py` into `bench_r3_summary.txt`):
+
+| | merged tok/s | pre-merge tok/s | change |
+|---|---:|---:|---:|
+| block 1 (ABBA) | 14.99 | 14.19 | +5.6% |
+| block 2 (BAAB) | 14.48 | 14.45 | +0.2% |
+| all eight runs | 14.73 | 14.32 | +2.9% |
+
+**No decode change detected across the merge.** The +2.9% is run 1 alone
+(15.86, the first process after `bench_r2.sh`). All its reps are high, most of
+all reps 2 and 3 (16.69 and 15.70 against at most 14.46 in runs 2 to 8), and
+its rep 1 is 10.05 against 7.33 to 9.58; why is untested. Dropping run 1, a
+choice made after seeing the data, leaves three merged runs against four
+pre-merge ones, no longer order-balanced. Reps 2 to 4 then differ by -0.2,
++0.4 and +0.1%, inside their run-to-run ranges of 0.9 to 2.0%; rep 1 (7.33 to
+9.58) is too noisy to compare. A change under about 1% is not excluded.
+
+`bench_r2.sh` (pp512 then tg64 in each process, ABBA, `bench_abba_tg_r2.md`)
+gave tg64 +5.7% and pp512 +6.2% (218.75 against 205.89 tok/s). Both are inside
+the run-to-run spread of one build (pre-merge tg64 24.72 and 26.63, 7.7%
+apart; merged pp512 206.44 and 231.05, 11.9%): no conclusion either way.
+
+**The reps are not exchangeable.** In all eight runs, both builds, rep 1 is the
+slowest and rep 4 the fastest: rep 1 7.33 to 10.05 tok/s, reps 2 and 3 14.17
+to 16.69, rep 4 20.55 to 21.02. llama-bench never seeds `std::rand`, so rep k
+decodes the same tokens in every process, and its generation warm-up is one
+token. A `-r 4` mean therefore mixes reps up to 2.8x apart, for a reason not
+yet known, and it depends on what ran earlier in the process: with pp512 first
+(`bench_r2.sh`; this also moves the rand stream, so the tokens differ too)
+tg64 measured 24.72 to 27.26 tok/s. The model stays loaded across `-mcmoe`
+values (a context parameter), so a sweep run as the command above measures
+2048 MiB last, after five sizes in the same process. If the references were run
+that way, that may be why a fresh process now measures 14.1 to 15.9 tok/s per
+run against their 21.24 to 24.25 (level 4, not tested). Cause:
+OPEN_QUESTIONS.md Q20.
+
 ## B3 - Correctness
 
 ```sh
@@ -166,13 +213,17 @@ short of that.
 **Reference: all configurations byte-identical.** This is a pass/fail gate, not
 a measurement. Any difference is a bug.
 
-Last run EXP-0006 on `24c58282f` plus its changes: 11 of 11 OK against the
-reference, `PIN_PROFILE` set (`EXP-0006/b3_correctness_gpu256.txt`). Before it,
+Last run on the merge `2ca33f0d7`: 11 of 11 OK, `PIN_PROFILE` set, and all 12
+outputs byte-identical to EXP-0006's pre-merge ones
+(`baseline/rebase-2ca33f0d7/b3_correctness_gpu256.txt`, `b3_across_merge.txt`).
+Before it, EXP-0006 on `24c58282f` plus its changes: 11 of 11 OK against the
+reference, `PIN_PROFILE` set (`EXP-0006/b3_correctness_gpu256.txt`). Before that,
 EXP-0005 on `5df437a57`: 9 of 9; EXP-0002 on `d854d98b`: 8 of 8 at 64 tokens
 against the CPU reference.
 
-A baseline build of upstream master at `d854d98b` does **not** currently exist,
-so the two `upstream-*` rows were not run on the current base.
+A baseline build of upstream master does **not** currently exist for `d854d98b`
+or any later base, so the two `upstream-*` rows have not run on any of them,
+the current `a91eab67d` included.
 
 ## B4 - Prompt processing
 
@@ -237,9 +288,11 @@ is a second difference: a cache group with no slots runs on the CPU, so hardware
 decodes a different text than the 2048 MiB traces from about token 110
 (EXP-0005, OPEN_QUESTIONS.md Q15).
 
-**Re-validate after every rebase.** The traces are base-specific even though the
-simulator is not: upstream's own commits can change the router's top-8 and
-therefore the generated text.
+**After every rebase, run the router check** (B1 at 2048 MiB, KNOWLEDGE_BASE.md
+"Standing practice") **and re-validate if it fails.** The traces are
+base-specific even though the simulator is not: upstream's own commits can
+change the router's top-8 and therefore the generated text. The check decodes
+the `prompt` trace only; the other three are assumed to move with it.
 
 ### Screening rule for policy comparisons
 
@@ -417,6 +470,19 @@ Committed so far:
   (`coverage_1024.json` as written before the runs, `coverage_1024_aligned.json`
   after the one-pass fix), the B3 record and the review records. Captures in
   `C:\nsys\exp0006` stay outside git; `provenance.txt` has their sha256.
+- `research/results/baseline/rebase-2ca33f0d7/` - the check of the upstream
+  merge `2ca33f0d7`: B1 (`b1.csv`), B3 and its diff against the pre-merge
+  outputs, the buffer sizes across the merge, test-backend-ops MUL_MAT_ID and
+  MUL_MAT_VEC_FUSION (`test_backend_ops_mmvf.txt`, run after the rest), and
+  the throughput checks (`check.sh`, `bench_r2.sh`, `bench_r3.sh`;
+  `bench_abba_tg.md` came from an unscripted tg64-only loop of the same form).
+  `bench_abba.md` and `bench_abba_tg.md` ran while a game used the GPU and are
+  kept but invalid (`NOTE_game.txt`). `bench_abba_tg_r2.md` (pp512 and tg64) and
+  `bench_r3.md` (B2 protocol, per-rep samples in `bench_r3.jsonl`, reduced by
+  `summarize_r3.py` into `bench_r3_summary.txt`) are the re-runs. Logs in
+  `C:\nsys\rebase_2ca33f0d7` stay outside git. The record of the nine-agent
+  review before the merge stayed in the session's local workflow log and is
+  not committed.
 
 **Gap: nothing from the pre-`research/` work was preserved.**
 `moe-bench/.gitignore` excludes `out/` and `*.csv`, so the `78a8ae1` reference

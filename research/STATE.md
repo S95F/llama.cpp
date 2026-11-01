@@ -4,16 +4,55 @@ Restart checkpoint. Read this first in every session.
 
 | | |
 |---|---|
-| Status | `COMPLETE` - iteration 6 done; awaiting `go` for iteration 7 |
-| Iteration | 6 (EXP-0006), authorized 2026-10-31, completed 2026-10-31 |
+| Status | `COMPLETE` - iteration 6 complete, the upstream merge checked and recorded; iteration 7 not started |
+| Iteration | 6 (EXP-0006) complete. Since then the user-requested upstream merge `2ca33f0d7` and its check (not an iteration) |
 | Experiment ID | EXP-0006 (R17 online profile, R16 fixed headroom, Q17), **Adopt** |
-| Phase | stopped after the commit. Game check before the runs was clear (2026-10-31, Battle.net and Steam launchers only) |
-| Pause reason | n/a |
+| Phase | idle; the next `go` starts EXP-0007 |
 | Branch | `moe-gpu-optimize` |
-| Last code commit | the iteration 6 commit on top of `24c58282f` (`git log -1`): `LLAMA_MOE_PIN_ONLINE` in `src/llama-moe-cache.cpp`, two B3 arms, `research/` |
-| Upstream base | `63b4b303b`, through the user's merge `5df437a57` (2026-10-26) |
-| Build | `llama.dll` 2026-10-31 20:41, current for this CUDA build (`llama-completion.exe` links it dynamically) |
-| Tree | clean after the commit |
+| Last code commit | `a88e64081` (iteration 6), then merge `2ca33f0d7` of upstream `a91eab67d` (120 commits) |
+| Upstream base | `a91eab67d`, through merge `2ca33f0d7` (2026-10-31); before that `63b4b303b` via `5df437a57` |
+| Build | full build of `2ca33f0d7`, 2026-10-31 23:18 (all 527 targets). Pre-merge binaries saved at `C:\nsys\premerge_a88e64081\bin` (their `llama-bench` labels itself `24c58282f`, a stale build-info; the code is `a88e64081`) |
+| Tree | clean after the merge-check commit; nothing pushed |
+
+## Last step: the upstream merge check (2026-10-31 to 11-01)
+
+The user asked to merge upstream master and check it. Results in
+`research/results/baseline/rebase-2ca33f0d7/`:
+
+- Nine-agent review of the 120 commits before merging: no risk survived its
+  verification stage, no decode gain expected for this setup. Its record
+  stayed in the session's local workflow log and is not committed, so it
+  cannot be checked from the repo. The merge's tree, `9c44cac3dd22`
+  (`git rev-parse 2ca33f0d7^{tree}`), is what `git merge-tree --write-tree
+  a88e64081 a91eab67d` gives, the command the review's trial merge used.
+  Committed, not pushed.
+- Build: the documented `cmd /c ... %PATH%` one-liner lost `cl.exe` for nvcc;
+  fixed to `cmd /v:on ... !PATH!` (ENVIRONMENT.md has why). Full build OK.
+- `check.sh`: B1 all 8 rows exact to the integer counts (2048 MiB 61.38% /
+  58033.62 MiB, hits 50092), so the router did not move on the `prompt` trace
+  and the traces stay valid (the other three traces assumed to follow). B3 11 of 11, all 12 outputs byte-identical to
+  EXP-0006's pre-merge ones. Buffer sizes and 2048 MiB stdout identical.
+  test-backend-ops on CUDA0: MUL_MAT_ID 931/931, and MUL_MAT_VEC_FUSION
+  1376/1376 including #31188's two new fused MoE cases (run afterwards;
+  `-o MUL_MAT_ID` does not select them, despite `check.sh`'s comment).
+- **Paused once**: a game (`VIractal.exe`) started at 23:34:03 during the check
+  and contaminated every timing after it (`NOTE_game.txt`; `bench_abba.md`,
+  `bench_abba_tg.md` kept but invalid). Resumed on the user's `go` 2026-11-01.
+  At every timed launch after, `VIractal.exe` was not running and the GPU was
+  idle (0 to 2%, about 25 W).
+- Decode, 2048 MiB, B2 protocol, ABBA then BAAB (`bench_r3.sh`): **no change
+  detected**. The pooled +2.9% is run 1 alone. Dropping it, after seeing the
+  data, leaves 3 merged against 4 pre-merge runs; reps 2 to 4 then differ by
+  -0.2, +0.4 and +0.1%, inside their 0.9 to 2.0% run-to-run ranges, so a
+  change under about 1% is not excluded. `bench_r2.sh` (pp512 first): tg64
+  +5.7%, pp512 +6.2%, both inside one build's run-to-run spread.
+- New: llama-bench's tg reps step up within a process (rep 1 7.3 to 10.1, reps
+  2 and 3 14.2 to 16.7, rep 4 20.6 to 21.0 tok/s, all eight fresh runs, both
+  builds), so a B2 mean depends on the rep count and the process history. A
+  fresh process measures 14.1 to 15.9 tok/s per run at 2048 MiB (means 14.7
+  merged, 14.3 pre-merge) against B2's 21.24 to 24.25
+  references, perhaps because those ran 2048 MiB last in a sweep (level 4,
+  not tested). OPEN_QUESTIONS Q20, KNOWLEDGE_BASE measurement discipline.
 
 ## Protocol
 
@@ -27,7 +66,7 @@ run. If a game is found: save state here, tell the user, stop everything, do not
 recheck, and do not resume when the game closes. `go` while paused resumes and
 overrides the check.
 
-## Last completed step
+## Last completed iteration
 
 **Iteration 6, EXP-0006, 2026-10-31: Adopt** the opt-in
 `LLAMA_MOE_PIN_ONLINE=<N>` (pin the experts the run's own first N decode passes
@@ -89,7 +128,7 @@ export PATH="/c/Users/steve/cuda126/bin:$PATH"
 ```powershell
 $vc = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat'
 $cm = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
-cmd /c "call `"$vc`" >nul 2>&1 && set `"PATH=C:\Users\steve\cuda126\bin;%PATH%`" && `"$cm`" --build build --target llama-bench llama-completion"
+cmd /v:on /c "call `"$vc`" >nul 2>&1 && set `"PATH=C:\Users\steve\cuda126\bin;!PATH!`" && `"$cm`" --build build --target llama-bench llama-completion"
 ```
 
 **Tracing** uses Nsight Systems 2025.6.3, not on `PATH`; BENCHMARKS.md B7 has the
@@ -131,7 +170,8 @@ experts' pages**, aimed at the cold tail profile pinning leaves pageable
 If the user prefers no new code: R19's microbenchmark (`cudaHostRegister` on
 an evicted mapping, time the first submission, with and without a prefetch) or
 R13's two gates (Q13 second-stream concurrency under WDDM; Q7 next-layer
-recall from the traces).
+recall from the traces), or Q20's llama-bench rep checks (minutes, no code;
+they decide how B2 is run from now on).
 
 ## Pending benchmark commands
 

@@ -5,8 +5,10 @@ applicability. **Confidence levels** are those of KNOWLEDGE_BASE.md.
 
 ## Caveat on currency
 
-`git fetch upstream` **failed in the 2026-10-25 session** (exit 53, no network).
-The PR states in the first table were recorded during the 2026-10-24 survey.
+`git fetch upstream` **failed in the 2026-10-25 session** (exit 53, no network)
+and worked on 2026-10-31, when the branch merged upstream `a91eab67d` (merge
+`2ca33f0d7`). The PR states in the first table were recorded during the
+2026-10-24 survey.
 **EXP-0004 re-checked them on 2026-10-31** through the GitHub web pages, not
 through `git fetch`; states that changed are marked. Re-verify before relying on
 any of them.
@@ -19,6 +21,7 @@ any of them.
 | #30112 | multi-GPU expert cache | Merged. Cannot be exercised here - one GPU |
 | `c49edf096` | CUDA: fuse FFN gate/up matmuls and GLU in MMQ | In the `78a8ae1`..`d854d98b` range. **Suspected** cause of the router top-8 perturbation between the two bases (level 4 - intermediate commits were not built) |
 | `a55c16e4e` | ggml-cuda: fuse qwen MRoPE + set-rows | Same range, same suspicion, same confidence |
+| `f5222f25c` (#31188) | CUDA: fuse MoE (MUL_MAT_ID) gate/up and GLU in MMQ | In the `63b4b303b`..`a91eab67d` range. B1 and B3 unchanged across it, and its op tests pass here (`research/results/baseline/rebase-2ca33f0d7/`); whether it fires for this model was not checked |
 | `ggml_backend_cuda_host_buffer_type_get_max_size`, `ggml_cuda_host_malloc` | The CUDA host buffer type caps a buffer at 4 GiB, and a failed `cudaMallocHost` falls back to a pageable CPU buffer, logged at debug level | Why `--load-mode none` ends up about 80% pinned here (EXP-0005). Level 2 for the code, level 1 for the effect |
 | `GGML_OP_OFFLOAD_MIN_BATCH` (`ggml-cuda.cu`, default 32) | Ops on host weights are offloaded to the GPU only at this batch size or above | With the cache off, decode computes the experts on the CPU; B3 sets it to 1 so every configuration computes on the GPU (EXP-0005) |
 
@@ -163,9 +166,8 @@ on this model's traces, recorded as OPEN_QUESTIONS.md Q7.
 
 ```sh
 git fetch upstream
-git log --oneline d854d98ba..upstream/master -- src/llama-moe-cache.cpp src/llama-moe-cache.h
+git log --oneline a91eab67d..upstream/master -- src/llama-moe-cache.cpp src/llama-moe-cache.h
 gh pr view 30848 --json state,title
 ```
 
-Network was unavailable in the 2026-10-25 session, so this is the first thing to
-run when it returns.
+`a91eab67d` is the upstream commit of the last merge (`2ca33f0d7`).

@@ -1,0 +1,13 @@
+== merged B3 outputs against the pre-merge ones (C:/nsys/exp0006/correctness256) ==
+  SAME    cache-off.txt (1350 bytes)
+  SAME    cache1024-pinned.txt (1350 bytes)
+  SAME    cache2048-auto.txt (1350 bytes)
+  SAME    cache2048-lru.txt (1350 bytes)
+  SAME    cache2048-pinonline.txt (1350 bytes)
+  SAME    cache2048-pinonline15000.txt (1350 bytes)
+  SAME    cache2048-pinprof.txt (1350 bytes)
+  SAME    cache2048-s16.txt (1350 bytes)
+  SAME    cache256-auto.txt (1350 bytes)
+  SAME    cache528-auto.txt (1350 bytes)
+  SAME    cache528-dist0.txt (1350 bytes)
+  SAME    cache528-lru.txt (1350 bytes)

@@ -1,0 +1,11 @@
+A Steam game, VIractal.exe (D:\SteamLibrary\steamapps\common\VIractal\), started at
+2026-10-31 23:34:03 local (2026-11-01 05:34:03Z), during check.sh. Found afterwards:
+nvidia-smi showed 41% GPU load and 121 W with no llama process running.
+
+Timeline (local): check.sh started 23:19:16; B1 finished 23:25:08 (before the game);
+B3 finished 23:34:41; the buffer run, test-backend-ops and bench_abba.md ran after
+it (bench_abba.md written 23:40:55); bench_abba_tg.md ran 23:41 to 23:45.
+
+Valid: every deterministic result (B1 counters, B3 outputs, buffer sizes, stdout
+identity, test-backend-ops). Not valid: all timings after 23:34:03, that is
+bench_abba.md, bench_abba_tg.md and the eval times in the pre-merge 2048 MiB log.

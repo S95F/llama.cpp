@@ -1,0 +1,8 @@
+mcmoe=2048 arm=default 0.33.020.127 I llama_moe_cache: ubatch <= 8: hits = 50092, misses = 31516, hit rate = 61.38%, uploaded = 58033.62 MiB
+mcmoe=1024 arm=default 0.40.915.374 I llama_moe_cache: ubatch <= 8: hits = 33751, misses = 47857, hit rate = 41.36%, uploaded = 87882.56 MiB
+mcmoe=586 arm=default 0.43.106.331 I llama_moe_cache: ubatch <= 8: hits = 25394, misses = 54174, hit rate = 31.91%, uploaded = 98790.82 MiB
+mcmoe=528 arm=default 0.42.618.900 I llama_moe_cache: ubatch <= 8: hits = 23841, misses = 55727, hit rate = 29.96%, uploaded = 101622.50 MiB
+mcmoe=384 arm=default 0.43.545.470 I llama_moe_cache: ubatch <= 8: hits = 19121, misses = 60447, hit rate = 24.03%, uploaded = 110250.28 MiB
+mcmoe=256 arm=default 0.44.196.525 I llama_moe_cache: ubatch <= 8: hits = 13524, misses = 66044, hit rate = 17.00%, uploaded = 120494.19 MiB
+mcmoe=528 arm=lru 0.49.126.055 I llama_moe_cache: ubatch <= 8: hits = 827, misses = 78741, hit rate = 1.04%, uploaded = 143422.10 MiB
+mcmoe=2048 arm=lru 0.36.084.308 I llama_moe_cache: ubatch <= 8: hits = 50092, misses = 31516, hit rate = 61.38%, uploaded = 58033.62 MiB

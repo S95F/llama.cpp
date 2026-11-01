@@ -1,0 +1,22 @@
+seq arm       build      mean_ts  reps (tok/s)
+  1 merged    2ca33f0d7    15.86   10.05  16.69  15.70  21.02
+  2 premerge  24c58282f    14.24    7.80  14.33  14.24  20.58
+  3 premerge  24c58282f    14.15    7.33  14.29  14.31  20.67
+  4 merged    2ca33f0d7    14.11    7.36  14.17  14.31  20.58
+  5 premerge  24c58282f    14.15    7.40  14.30  14.33  20.55
+  6 merged    2ca33f0d7    14.22    7.45  14.32  14.38  20.73
+  7 merged    2ca33f0d7    14.74    9.51  14.46  14.37  20.63
+  8 premerge  24c58282f    14.76    9.58  14.45  14.28  20.72
+
+merged    runs 4  mean of run means  14.73  run sd  0.80  reps 16 rep sd  4.52
+premerge  runs 4  mean of run means  14.32  run sd  0.29  reps 16 rep sd  4.63
+
+block 1 (ABBA): merged  14.99  pre-merge  14.19  change  +5.6%
+block 2 (BAAB): merged  14.48  pre-merge  14.45  change  +0.2%
+
+rep 1, runs 2-8: merged   8.11  pre-merge   8.03  change  +1.0%
+rep 2, runs 2-8: merged  14.32  pre-merge  14.34  change  -0.2%
+rep 3, runs 2-8: merged  14.35  pre-merge  14.29  change  +0.4%
+rep 4, runs 2-8: merged  20.65  pre-merge  20.63  change  +0.1%
+
+all: merged  14.73  pre-merge  14.32  change  +2.9%  (blocks +0.2% to +5.6%)

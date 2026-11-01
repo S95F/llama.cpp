@@ -1,0 +1,6 @@
+merge   : 2ca33f0d7 (Merge branch 'ggml-org:master' into moe-gpu-optimize)
+parents : a88e64081 a91eab67d
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+avail   : 16873 MiB
+started : 2026-11-01T05:19:16Z
+finished: 2026-11-01T05:40:55Z
