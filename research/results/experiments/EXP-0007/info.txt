@@ -1,0 +1,122 @@
+commit  : b2586549c (+ working tree:  M src/llama-moe-cache.cpp )
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+nsys    : NVIDIA Nsight Systems version 2025.6.3.541-256337736014v0
+targets : 19968 MiB available at launch, 18944 for -lo arms
+runs    : prof-lo_w prof-lo_r1 prof_r1 prof-pf_r1 prof-pq_r1 addr-pq_r1 addr-pf_r1 addr_r1 addr_r2 addr-pf_r2 addr-pq_r2 prof-pq_r2 prof-pf_r2 prof_r2 prof-lo_r2 pg_r1 pg-pf_r1 pg-pf_r2 pg_r2
+env     : 
+started : 2026-11-01T10:32:46Z
+== prof-lo_w:  GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof-lo_w.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof-lo_w.csv -n 1024, target 18944 MiB
+evict: touched 18944 MiB in 4.6 s, available fell to 745 MiB; before {'avail': 19530, 'free': 515, 'standby_normal': 18832, 'standby_reserve': 48, 'standby_core': 102} after {'avail': 19687, 'free': 18910, 'standby_normal': 634, 'standby_reserve': 2, 'standby_core': 102}
+probe: 3/256 expert pages cached (1.2%), median 160 us, p90 225 us
+balloon: available 19663 MiB, target 18944, held 704 MiB, locked yes, available now 18957 MiB
+lowest available 1372 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof-lo_r1:  GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof-lo_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof-lo_r1.csv -n 1024, target 18944 MiB
+evict: touched 19200 MiB in 4.0 s, available fell to 736 MiB; before {'avail': 19883, 'free': 1581, 'standby_normal': 18087, 'standby_reserve': 76, 'standby_core': 101} after {'avail': 19965, 'free': 19170, 'standby_normal': 644, 'standby_reserve': 3, 'standby_core': 103}
+probe: 4/256 expert pages cached (1.6%), median 156 us, p90 219 us
+balloon: available 19942 MiB, target 18944, held 960 MiB, locked yes, available now 18972 MiB
+lowest available 919 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof_r1:  GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof_r1.csv -n 1024, target 19968 MiB
+evict: touched 19200 MiB in 3.9 s, available fell to 720 MiB; before {'avail': 19889, 'free': 1987, 'standby_normal': 17678, 'standby_reserve': 83, 'standby_core': 97} after {'avail': 19898, 'free': 19095, 'standby_normal': 653, 'standby_reserve': 11, 'standby_core': 96}
+probe: 5/256 expert pages cached (2.0%), median 155 us, p90 221 us
+balloon: available 19884 MiB, target 19968, held 0 MiB, locked yes, available now 19880 MiB
+lowest available 2180 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof-pf_r1: LLAMA_MOE_PREFETCH=1 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof-pf_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof-pf_r1.csv -n 1024, target 19968 MiB
+evict: touched 19456 MiB in 4.2 s, available fell to 738 MiB; before {'avail': 20155, 'free': 1031, 'standby_normal': 18922, 'standby_reserve': 68, 'standby_core': 100} after {'avail': 20196, 'free': 19429, 'standby_normal': 627, 'standby_reserve': 3, 'standby_core': 100}
+probe: 0/256 expert pages cached (0.0%), median 151 us, p90 223 us
+balloon: available 20186 MiB, target 19968, held 192 MiB, locked yes, available now 19989 MiB
+lowest available 1996 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof-pq_r1: LLAMA_MOE_PREFETCH=2 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof-pq_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof-pq_r1.csv -n 1024, target 19968 MiB
+evict: touched 19456 MiB in 3.9 s, available fell to 756 MiB; before {'avail': 20160, 'free': 896, 'standby_normal': 19054, 'standby_reserve': 76, 'standby_core': 95} after {'avail': 20219, 'free': 19415, 'standby_normal': 655, 'standby_reserve': 1, 'standby_core': 95}
+probe: 0/256 expert pages cached (0.0%), median 160 us, p90 231 us
+balloon: available 20216 MiB, target 19968, held 192 MiB, locked yes, available now 20020 MiB
+lowest available 887 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr-pq_r1: LLAMA_MOE_PREFETCH=2 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_addr-pq_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_addr-pq_r1.csv -n 1024, target 19968 MiB
+evict: touched 19712 MiB in 4.2 s, available fell to 618 MiB; before {'avail': 20280, 'free': 1253, 'standby_normal': 18834, 'standby_reserve': 62, 'standby_core': 95} after {'avail': 20334, 'free': 19685, 'standby_normal': 502, 'standby_reserve': 4, 'standby_core': 96}
+probe: 0/256 expert pages cached (0.0%), median 153 us, p90 217 us
+balloon: available 20336 MiB, target 19968, held 320 MiB, locked yes, available now 20008 MiB
+lowest available 1354 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr-pf_r1: LLAMA_MOE_PREFETCH=1 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_addr-pf_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_addr-pf_r1.csv -n 1024, target 19968 MiB
+evict: touched 19968 MiB in 4.2 s, available fell to 721 MiB; before {'avail': 20662, 'free': 1324, 'standby_normal': 19152, 'standby_reserve': 48, 'standby_core': 98} after {'avail': 20688, 'free': 19931, 'standby_normal': 611, 'standby_reserve': 1, 'standby_core': 98}
+probe: 1/256 expert pages cached (0.4%), median 150 us, p90 216 us
+balloon: available 20680 MiB, target 19968, held 704 MiB, locked yes, available now 19969 MiB
+lowest available 702 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr_r1:  GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_addr_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_addr_r1.csv -n 1024, target 19968 MiB
+evict: touched 20224 MiB in 3.9 s, available fell to 677 MiB; before {'avail': 20871, 'free': 1409, 'standby_normal': 19138, 'standby_reserve': 40, 'standby_core': 99} after {'avail': 20894, 'free': 20194, 'standby_normal': 563, 'standby_reserve': 1, 'standby_core': 99}
+probe: 5/256 expert pages cached (2.0%), median 153 us, p90 228 us
+balloon: available 20796 MiB, target 19968, held 768 MiB, locked yes, available now 20028 MiB
+lowest available 613 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr_r2:  GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_addr_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_addr_r2.csv -n 1024, target 19968 MiB
+evict: touched 20224 MiB in 4.2 s, available fell to 760 MiB; before {'avail': 20875, 'free': 1746, 'standby_normal': 18925, 'standby_reserve': 65, 'standby_core': 99} after {'avail': 20972, 'free': 20189, 'standby_normal': 646, 'standby_reserve': 1, 'standby_core': 99}
+probe: 1/256 expert pages cached (0.4%), median 159 us, p90 227 us
+balloon: available 20972 MiB, target 19968, held 960 MiB, locked yes, available now 20013 MiB
+lowest available 1020 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr-pf_r2: LLAMA_MOE_PREFETCH=1 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_addr-pf_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_addr-pf_r2.csv -n 1024, target 19968 MiB
+evict: touched 20224 MiB in 4.0 s, available fell to 762 MiB; before {'avail': 20935, 'free': 1878, 'standby_normal': 18842, 'standby_reserve': 73, 'standby_core': 99} after {'avail': 20983, 'free': 20189, 'standby_normal': 655, 'standby_reserve': 1, 'standby_core': 99}
+probe: 0/256 expert pages cached (0.0%), median 158 us, p90 225 us
+balloon: available 20972 MiB, target 19968, held 960 MiB, locked yes, available now 20012 MiB
+lowest available 650 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr-pq_r2: LLAMA_MOE_PREFETCH=2 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_addr-pq_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_addr-pq_r2.csv -n 1024, target 19968 MiB
+evict: touched 20224 MiB in 3.8 s, available fell to 758 MiB; before {'avail': 20942, 'free': 1925, 'standby_normal': 18839, 'standby_reserve': 40, 'standby_core': 99} after {'avail': 20998, 'free': 20197, 'standby_normal': 648, 'standby_reserve': 3, 'standby_core': 99}
+probe: 4/256 expert pages cached (1.6%), median 152 us, p90 224 us
+balloon: available 20994 MiB, target 19968, held 1024 MiB, locked yes, available now 19967 MiB
+lowest available 1009 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof-pq_r2: LLAMA_MOE_PREFETCH=2 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof-pq_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof-pq_r2.csv -n 1024, target 19968 MiB
+evict: touched 20480 MiB in 4.2 s, available fell to 565 MiB; before {'avail': 20993, 'free': 2033, 'standby_normal': 18781, 'standby_reserve': 34, 'standby_core': 99} after {'avail': 21052, 'free': 20445, 'standby_normal': 458, 'standby_reserve': 1, 'standby_core': 100}
+probe: 1/256 expert pages cached (0.4%), median 160 us, p90 230 us
+balloon: available 21041 MiB, target 19968, held 1024 MiB, locked yes, available now 20014 MiB
+lowest available 2007 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof-pf_r2: LLAMA_MOE_PREFETCH=1 GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof-pf_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof-pf_r2.csv -n 1024, target 19968 MiB
+evict: touched 20480 MiB in 4.0 s, available fell to 545 MiB; before {'avail': 20984, 'free': 1930, 'standby_normal': 18756, 'standby_reserve': 155, 'standby_core': 100} after {'avail': 21028, 'free': 20458, 'standby_normal': 426, 'standby_reserve': 1, 'standby_core': 101}
+probe: 0/256 expert pages cached (0.0%), median 154 us, p90 210 us
+balloon: available 21024 MiB, target 19968, held 1024 MiB, locked yes, available now 20010 MiB
+lowest available 2248 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof_r2:  GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof_r2.csv -n 1024, target 19968 MiB
+evict: touched 20736 MiB in 4.0 s, available fell to 580 MiB; before {'avail': 21266, 'free': 2086, 'standby_normal': 18967, 'standby_reserve': 70, 'standby_core': 105} after {'avail': 21322, 'free': 20715, 'standby_normal': 457, 'standby_reserve': 1, 'standby_core': 105}
+probe: 1/256 expert pages cached (0.4%), median 150 us, p90 223 us
+balloon: available 21319 MiB, target 19968, held 1344 MiB, locked yes, available now 19966 MiB
+lowest available 523 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof-lo_r2:  GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_prof-lo_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_prof-lo_r2.csv -n 1024, target 18944 MiB
+evict: touched 20736 MiB in 4.0 s, available fell to 711 MiB; before {'avail': 21373, 'free': 2376, 'standby_normal': 18779, 'standby_reserve': 73, 'standby_core': 106} after {'avail': 21441, 'free': 20701, 'standby_normal': 585, 'standby_reserve': 0, 'standby_core': 107}
+probe: 1/256 expert pages cached (0.4%), median 156 us, p90 215 us
+balloon: available 21429 MiB, target 18944, held 2432 MiB, locked yes, available now 18989 MiB
+lowest available 1015 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== pg_r1:  GGML_CUDA_REGISTER_HOST=0 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_pg_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_pg_r1.csv -n 128, target 19968 MiB
+evict: touched 20736 MiB in 4.1 s, available fell to 683 MiB; before {'avail': 21375, 'free': 3348, 'standby_normal': 17838, 'standby_reserve': 50, 'standby_core': 107} after {'avail': 21303, 'free': 20676, 'standby_normal': 580, 'standby_reserve': 28, 'standby_core': 107}
+probe: 0/256 expert pages cached (0.0%), median 159 us, p90 228 us
+balloon: available 21441 MiB, target 19968, held 1472 MiB, locked yes, available now 19961 MiB
+lowest available 5852 MiB
+stdout 805 chars, </think> at -1 sha256 d44bfbc24ae92c23
+== pg-pf_r1: LLAMA_MOE_PREFETCH=1 GGML_CUDA_REGISTER_HOST=0 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_pg-pf_r1.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_pg-pf_r1.csv -n 128, target 19968 MiB
+evict: touched 20736 MiB in 4.3 s, available fell to 637 MiB; before {'avail': 21362, 'free': 2125, 'standby_normal': 18969, 'standby_reserve': 50, 'standby_core': 107} after {'avail': 21410, 'free': 20721, 'standby_normal': 527, 'standby_reserve': 15, 'standby_core': 107}
+probe: 3/256 expert pages cached (1.2%), median 155 us, p90 219 us
+balloon: available 21403 MiB, target 19968, held 1408 MiB, locked yes, available now 19988 MiB
+lowest available 1118 MiB
+stdout 805 chars, </think> at -1 sha256 d44bfbc24ae92c23
+== pg-pf_r2: LLAMA_MOE_PREFETCH=1 GGML_CUDA_REGISTER_HOST=0 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_pg-pf_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_pg-pf_r2.csv -n 128, target 19968 MiB
+evict: touched 20992 MiB in 4.4 s, available fell to 517 MiB; before {'avail': 21475, 'free': 2101, 'standby_normal': 19183, 'standby_reserve': 36, 'standby_core': 107} after {'avail': 21538, 'free': 20982, 'standby_normal': 399, 'standby_reserve': 7, 'standby_core': 107}
+probe: 1/256 expert pages cached (0.4%), median 149 us, p90 218 us
+balloon: available 21543 MiB, target 19968, held 1536 MiB, locked yes, available now 20009 MiB
+lowest available 5458 MiB
+stdout 805 chars, </think> at -1 sha256 d44bfbc24ae92c23
+== pg_r2:  GGML_CUDA_REGISTER_HOST=0 LLAMA_MOE_CACHE_TRACE=C:/nsys/exp0007/trace_pg_r2.csv LLAMA_MOE_COPY_LOG=C:/nsys/exp0007/copies_pg_r2.csv -n 128, target 19968 MiB
+evict: touched 20992 MiB in 4.0 s, available fell to 531 MiB; before {'avail': 21493, 'free': 2265, 'standby_normal': 19087, 'standby_reserve': 32, 'standby_core': 62} after {'avail': 21507, 'free': 20848, 'standby_normal': 467, 'standby_reserve': 4, 'standby_core': 62}
+probe: 3/256 expert pages cached (1.2%), median 158 us, p90 227 us
+balloon: available 21479 MiB, target 19968, held 1472 MiB, locked yes, available now 20010 MiB
+lowest available 1466 MiB
+stdout 805 chars, </think> at -1 sha256 d44bfbc24ae92c23
+finished: 2026-11-01T11:13:25Z

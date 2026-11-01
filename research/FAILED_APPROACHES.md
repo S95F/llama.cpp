@@ -279,8 +279,8 @@ predicted -2 and -1 ms against address order over the whole run and measured
 measured +0.90; the file profile on the story was predicted about -1.3 ms
 against address order and measured -0.54. Under a profile 2.0 to 12% of the
 pageable copies are hard faults against 0.9% under address order, so a pageable
-byte costs more there (the cold tail as the reason is level 4, OPEN_QUESTIONS.md
-Q18). For the online arms the passes before the registration were also slower
+byte costs more there (EXP-0007: because more of the profile's pageable
+uploads are first reads since the load, which fault; re-reads do not). For the online arms the passes before the registration were also slower
 than the rebuild from EXP-0005's timelines assumed.
 
 **How it presents:** an exact share prediction that lends false confidence to
@@ -300,6 +300,24 @@ figure for a short window, or a pin set from a few passes, would move more.
 
 **Guard:** align trace and timeline tokens by a known event (the registration
 pass, the prompt's single-row call) before scoring windows.
+
+### Inheriting a variable from the user's environment
+
+Found by EXP-0007's pre-run review. `GGML_CUDA_REGISTER_HOST=1` is set in this
+host's Windows user environment, and harnesses that only add variables passed
+it to every process that did not set it. B3's "unpinned" cache-on rows pinned the default cap in address order in
+every B3 run from the script's creation (2026-10-25; EXP-0002, EXP-0003,
+EXP-0005, EXP-0006 and the merge check) to the first B3 of EXP-0007, and
+the B2 llama-bench scripts (EXP-0002, EXP-0003, the merge check) most likely
+did too; EXP-0007's planned unpinned cold arms would have been pinned. B3's
+outputs were identical either way, so no pass/fail changed, but those rows were
+not what their names said.
+
+**How it presents:** nothing in the output; a configuration label that the
+process never ran.
+
+**Guard:** clear or set every variable the code reads in each harness, and
+write the environment of every run to its record (`runs.sh` and `info.txt`).
 
 ---
 
@@ -336,6 +354,20 @@ Upstream PR #30594 is already attacking this properly (profile prefilling and
 zero-upload inference). ROADMAP R9 says to **prefer the upstream solution** and
 revisit only if it stalls. Duplicating it would be both wasted work and a
 guaranteed upstream conflict.
+
+### Prefetching every missed expert range
+
+EXP-0007 (partial negative; mode 2 was adopted). `LLAMA_MOE_PREFETCH=1` issues
+one `PrefetchVirtualMemory` call per layer over every missed expert range that
+is not fully pinned. The call blocks until its reads finish and costs 0.12 to 0.26 us per 4 KiB page already in RAM, and warm most candidate pages are: under
+address order it prefetched 112 MiB per pass for 4.6 to 4.7 ms, and the token
+got 2.03 ms slower (47.19 against 45.16 ms), in both rounds. Under the profile
+it gained 0.96 ms, 1.63 ms less than the probed mode 2. Early and cold it wins
+(-8.5 to -12.9 ms per token over tokens 3-130).
+
+**Revisit when:** no working-set probe exists (mode 2 falls back to it), or
+off Windows, where `llama_prefetch` is `madvise(MADV_WILLNEED)` and does not
+block (not measured).
 
 ### An online profile where a matching file profile exists
 

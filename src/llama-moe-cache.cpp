@@ -2,6 +2,7 @@
 
 #include "llama-impl.h"
 #include "llama-memory.h"
+#include "llama-mmap.h"
 #include "llama-model.h"
 
 #include "ggml-cpp.h"
@@ -25,6 +26,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <psapi.h>
 #else
 #include <unistd.h>
 #endif
@@ -310,6 +312,44 @@ static std::vector<std::pair<uintptr_t, uintptr_t>> llama_moe_cache_merge_ranges
 static std::mutex llama_moe_cache_pinned_mutex;
 static std::vector<std::pair<uintptr_t, uintptr_t>> llama_moe_cache_pinned;
 
+// bytes of [data, data + size) in pinned ranges
+static size_t llama_moe_cache_pinned_bytes(const void * data, size_t size) {
+    std::lock_guard<std::mutex> lock(llama_moe_cache_pinned_mutex);
+    const auto & pinned = llama_moe_cache_pinned;
+    const uintptr_t lo = (uintptr_t) data;
+    const uintptr_t hi = lo + size;
+    size_t res = 0;
+    auto it = std::upper_bound(pinned.begin(), pinned.end(), lo, [](uintptr_t v, const std::pair<uintptr_t, uintptr_t> & r) { return v < r.second; });
+    for (; it != pinned.end() && it->first < hi; ++it) {
+        res += std::min(hi, it->second) - std::max(lo, it->first);
+    }
+    return res;
+}
+
+// drop the ranges whose middle page is in the working set of the process, where a prefetch only costs time
+// Windows only, elsewhere every range is kept
+static void llama_moe_cache_drop_resident(llama_memory_ranges & mr) {
+#if defined(_WIN32)
+    const size_t page = llama_moe_cache_page_size();
+    std::vector<PSAPI_WORKING_SET_EX_INFORMATION> info(mr.size());
+    for (size_t i = 0; i < mr.size(); ++i) {
+        info[i].VirtualAddress = (PVOID) (((uintptr_t) mr[i].addr + mr[i].size/2) & ~(page - 1));
+    }
+    if (info.empty() || !QueryWorkingSetEx(GetCurrentProcess(), info.data(), (DWORD) (info.size()*sizeof(info[0])))) {
+        return;
+    }
+    size_t n = 0;
+    for (size_t i = 0; i < mr.size(); ++i) {
+        if (!info[i].VirtualAttributes.Valid) {
+            mr[n++] = mr[i];
+        }
+    }
+    mr.resize(n);
+#else
+    GGML_UNUSED(mr);
+#endif
+}
+
 }
 
 struct llama_moe_cache::impl {
@@ -370,6 +410,26 @@ struct llama_moe_cache::impl {
     int    log_every    = 0;
     FILE * trace_file   = nullptr;
 
+    // LLAMA_MOE_COPY_LOG=path writes, at teardown, a CSV of the host time of each upload and prefetch of the slot-map copies
+    // for a prefetch: ip = -1, expert = candidate ranges, n = ranges prefetched, bytes = bytes prefetched, pinned = candidate bytes
+    // uploads of large batches (upload()) have call 0, n is the number of whole experts (a padding-only upload has n = 0)
+    struct copy_rec {
+        uint32_t call;   // as in the trace
+        int16_t  layer;
+        int16_t  ip;     // index of the expert tensor, -1 for a prefetch
+        int32_t  expert; // first expert uploaded
+        int32_t  n;      // number of experts
+        uint32_t bytes;
+        uint32_t pinned; // bytes in pinned ranges
+        uint32_t us;
+    };
+    std::string copy_log_path;
+    std::vector<copy_rec> copy_log;
+
+    // LLAMA_MOE_PREFETCH: prefetch the pageable pages of a layer's missed experts in one call before uploading them.
+    // 1 = all of them; 2 = only those whose middle page is not in the working set (Windows; elsewhere the same as 1)
+    int prefetch = 0;
+
     // host expert ranges this cache registered with the device driver (pinned), sorted, released in the dtor
     std::vector<std::pair<uintptr_t, uintptr_t>> pinned_ranges;
     bool (*reg_host)(void *, size_t) = nullptr;
@@ -413,6 +473,12 @@ struct llama_moe_cache::impl {
             } else {
                 LLAMA_LOG_WARN("%s: failed to open the MoE cache trace file '%s'\n", __func__, env);
             }
+        }
+        if (const char * env = getenv("LLAMA_MOE_COPY_LOG")) {
+            copy_log_path = env;
+        }
+        if (const char * env = getenv("LLAMA_MOE_PREFETCH")) {
+            prefetch = std::clamp(atoi(env), 0, 2);
         }
         for (size_t i = 0; i < backends.size(); ++i) {
             const auto dev_type = ggml_backend_dev_type(ggml_backend_get_device(backends[i]));
@@ -947,6 +1013,18 @@ struct llama_moe_cache::impl {
         if (trace_file != nullptr) {
             fclose(trace_file);
         }
+        if (!copy_log_path.empty()) {
+            FILE * f = fopen(copy_log_path.c_str(), "w");
+            if (f != nullptr) {
+                fprintf(f, "call,layer,ip,expert,n,bytes,pinned,us\n");
+                for (const copy_rec & r : copy_log) {
+                    fprintf(f, "%u,%d,%d,%d,%d,%u,%u,%u\n", r.call, r.layer, r.ip, r.expert, r.n, r.bytes, r.pinned, r.us);
+                }
+                fclose(f);
+            } else {
+                LLAMA_LOG_WARN("%s: failed to open the MoE copy log '%s'\n", __func__, copy_log_path.c_str());
+            }
+        }
         if (unreg_host != nullptr && !pinned_ranges.empty()) {
             std::lock_guard<std::mutex> lock(llama_moe_cache_pinned_mutex);
             for (const auto & r : pinned_ranges) {
@@ -1058,6 +1136,38 @@ struct llama_moe_cache::impl {
             GGML_ABORT("the MoE cache is too small for the experts selected in layer %d", il);
         }
 
+        const bool log_copies = !copy_log_path.empty();
+        const uint32_t call = (uint32_t) (n_copy_calls + 1);
+
+        // the faults of the pageable pages are then read concurrently instead of one at a time by the uploads
+        if (prefetch > 0 && !fills.empty()) {
+            const int64_t t0 = ggml_time_us();
+            llama_memory_ranges mr;
+            size_t n_cand = 0;
+            for (const ggml_tensor * w : l.experts) {
+                for (const auto & f : fills) {
+                    const uint8_t * p = (const uint8_t *) w->data + f.expert*w->nb[2];
+                    if (llama_moe_cache_pinned_bytes(p, w->nb[2]) < w->nb[2]) {
+                        mr.push_back({ p, w->nb[2] });
+                        n_cand += w->nb[2];
+                    }
+                }
+            }
+            const size_t n_ranges = mr.size();
+            if (prefetch == 2) {
+                llama_moe_cache_drop_resident(mr);
+            }
+            size_t n_bytes = 0;
+            for (const auto & r : mr) {
+                n_bytes += r.size;
+            }
+            const int32_t n_kept = (int32_t) mr.size();
+            llama_prefetch(std::move(mr));
+            if (log_copies) {
+                copy_log.push_back({ call, (int16_t) il, -1, (int32_t) n_ranges, n_kept, (uint32_t) n_bytes, (uint32_t) n_cand, (uint32_t) (ggml_time_us() - t0) });
+            }
+        }
+
         // upload the missing experts, consecutive experts going to consecutive slots are uploaded together
         size_t bytes = 0;
         for (size_t ip = 0; ip < l.experts.size(); ++ip) {
@@ -1069,7 +1179,14 @@ struct llama_moe_cache::impl {
                 while (i + n < fills.size() && fills[i + n].expert == fills[i].expert + (int32_t) n && fills[i + n].slot == fills[i].slot + (int32_t) n) {
                     n++;
                 }
-                llama_moe_cache_set_async(backend, bank, (const uint8_t *) w->data + fills[i].expert*expert_size, fills[i].slot*expert_size, n*expert_size);
+                const uint8_t * p = (const uint8_t *) w->data + fills[i].expert*expert_size;
+                const int64_t t0 = log_copies ? ggml_time_us() : 0;
+                llama_moe_cache_set_async(backend, bank, p, fills[i].slot*expert_size, n*expert_size);
+                if (log_copies) {
+                    const uint32_t us = (uint32_t) (ggml_time_us() - t0);
+                    copy_log.push_back({ call, (int16_t) il, (int16_t) ip, fills[i].expert, (int32_t) n, (uint32_t) (n*expert_size),
+                        (uint32_t) llama_moe_cache_pinned_bytes(p, n*expert_size), us });
+                }
                 bytes += n*expert_size;
                 i += n;
             }
@@ -1097,6 +1214,22 @@ struct llama_moe_cache::impl {
         ggml_backend_tensor_set_async(backend, dst, src->data, 0, ggml_nbytes(src));
 
         return true;
+    }
+
+    // a large-batch upload in the copy log, as call 0: the host read these experts outside the slot-map copies
+    void log_upload(const void * data, size_t size, uint32_t us) {
+        const uintptr_t p = (uintptr_t) data;
+        for (size_t il = 0; il < layers.size(); ++il) {
+            for (size_t ip = 0; ip < layers[il].experts.size(); ++ip) {
+                const ggml_tensor * w = layers[il].experts[ip];
+                const uintptr_t base = (uintptr_t) w->data;
+                if (p >= base && p < base + ggml_nbytes(w)) {
+                    copy_log.push_back({ 0, (int16_t) il, (int16_t) ip, (int32_t) ((p - base)/w->nb[2]), (int32_t) (size/w->nb[2]),
+                        (uint32_t) size, (uint32_t) llama_moe_cache_pinned_bytes(data, size), us });
+                    return;
+                }
+            }
+        }
     }
 
     void log_stats() const {
@@ -1146,9 +1279,13 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor 
 }
 
 void llama_moe_cache::upload(ggml_backend_t backend, ggml_tensor * dst, const void * data, size_t offset, size_t size) {
+    const int64_t t0 = pimpl->copy_log_path.empty() ? 0 : ggml_time_us();
     llama_moe_cache_set_async(backend, dst, data, offset, size);
     pimpl->stats_upload.misses++;
     pimpl->stats_upload.bytes += size;
+    if (!pimpl->copy_log_path.empty()) {
+        pimpl->log_upload(data, size, (uint32_t) (ggml_time_us() - t0));
+    }
 }
 
 std::map<ggml_backend_buffer_type_t, size_t> llama_moe_cache::memory_breakdown() const {

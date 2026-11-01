@@ -4,7 +4,27 @@ Prioritized optimization opportunities. Reordered after every experiment, not
 followed blindly. Each item carries an estimate of gain, complexity, risk and
 cost, and names the evidence that motivates it.
 
-Last reprioritized: 2026-10-31, after EXP-0006.
+Last reprioritized: 2026-11-01, after EXP-0007.
+
+**What EXP-0007 changed.** R12 works, in its probed form. One
+`PrefetchVirtualMemory` call per layer over the missed experts' pages that are
+not in the working set (`LLAMA_MOE_PREFETCH=2`) takes the profile-pinned warm
+token from 41.77 to 39.18 ms (-6.2%; -9.7% over tokens 3-1022) and address
+order from 45.16 to 43.42 (-3.9%). Prefetching every missed range (mode 1)
+costs more than it saves once pages are resident. The fault attribution
+(Q18) changed the picture of what is left: 99.9% of the remaining hard faults are a
+pageable expert's first read since the load, and an expert once read
+essentially never faults again (Finding 13). Whether a first read faults depends on the expert's
+place in the file: the file's last 2.1 GiB never stayed resident after the
+load, and the head is lost in file order as the run grows. So the fault cost is
+a first-touch cost on pages the RAM budget did not keep, now paid in one
+blocking parallel read per layer (0.87 ms per token warm, 3.1 ms over tokens
+3-130). Two new items follow: read those experts off the decode thread (R20),
+and give the experts more of the budget by releasing the pages of the tensors
+uploaded to the GPU at load, which stay mapped after it (R21). A profile-pinned token is now 12.9 compute + 20.1 DMA + 6.1 idle, of which 2.1 ms is the per-layer sync (R14) and 1.6 no-API
+idle, 0.87 of it the prefetch calls. 1 GiB less
+launch headroom cost 0.5-0.6 s of prefill and 0.93 ms per token warm (R16b, one
+level).
 
 **What EXP-0006 changed.** The online profile (R17) works as designed but is not
 a free substitute for a file profile. Warm it is within 1 ms of a file profile
@@ -144,25 +164,54 @@ ms per position (95% CI -0.036 to +0.058; EXP-0005: 0.13). Several things
 changed at once, so the result is not attributed to the headroom alone. The
 prefill clause needs two or more levels: R16b.
 
+### R12 - Fault in each layer's missed experts with one batched prefetch
+
+**EXP-0007, Adopt** (opt-in `LLAMA_MOE_PREFETCH=2`, probed; mode 1 prefetches
+every missed range). Gate G: one `PrefetchVirtualMemory` call over cold expert
+ranges plus the copies took 0.24 to 0.32 of the faulting copies' time, and
+cost 0.12 to 0.26 us per 4 KiB page already in RAM. Warm, mode 2 against no
+prefetch: -2.59 ms (-6.2%) under the profile, -1.74 (-3.9%) under address
+order; mode 1 -0.96 and +2.03. Cold unpinned (tokens 3-126), mode 1 -12.91 ms
+(-16.5%). Same sign in both rounds everywhere; outputs unchanged. Mode 2 was
+not run unpinned or at 15000 MiB (R12b). KNOWLEDGE_BASE.md Finding 13.
+
 ## Priority 1
 
-### R12 - Fault in each layer's missed experts with one batched prefetch
+### R12b - Probed prefetch where it has not run, then the default
 
 | | |
 |---|---|
-| Motivated by | Finding 9: a decode fault reads 64 KiB synchronously in about 175 us (0.37 GB/s), while the startup prefetch reads the same disk at 3 to 4 GB/s; `llama_prefetch_rows` exists and the MoE cache never calls it. EXP-0006 (Finding 12): under profile pinning 2.0 to 12% of the pageable expert copies are hard faults (0.9% under address order; level 4: the cold tail, Q18), and slow-copy idle stays at 1.6 to 3.8 ms per token warm |
-| Hypothesis | One `PrefetchVirtualMemory` call per layer over all missed expert ranges, issued right after the router read-back and before the copies, turns serial faults into a parallel read and halves slow-copy idle in cold runs. |
-| Falsifiable by | A CPU-only microbenchmark (scattered 576 to 840 KiB ranges of the GGUF, cold cache) showing batched prefetch no faster than faulting by touch; or in-situ slow-copy idle not falling. |
-| Expected gain | Cold 2048 MiB: slow-copy idle is 91.7 ms per token, about 10 at prefetch speed, so up to about -80 ms. Warm, with profile pinning (EXP-0006): slow-copy idle 3.5 ms per token at the default cap and 1.6 at 15000 MiB, so about 0.8 to 1.7 ms if prefetch halves it (1.6 to 3.5 at most). Also the online profile's pageable passes before its registration (75-92 ms per token). |
-| Complexity | Small; the helper exists. |
-| Risk | Low: prefetch is advisory and changes no data path. |
-| Cost | Low. The cold microbenchmark can use EXP-0005's `evict.py` (no admin rights; 0 to 7 of 256 probed pages cached after it). |
+| Motivated by | EXP-0007: mode 2 won warm in both pinning orders and both rounds, but ran only pinned at the default cap on one prompt; the cold unpinned arms ran mode 1 only (-16.5%) |
+| Hypothesis | Mode 2 is no slower than mode 1 cold and unpinned, and no slower than no prefetch anywhere (pageable warm, 15000 MiB, the story prompt), so it can be on by default whenever the cache is. |
+| Falsifiable by | Any arm where mode 2 is slower than no prefetch by more than 0.3 ms per token warm in both rounds, or slower than mode 1 cold. |
+| Expected gain | None new warm; it decides the default. Cold, unpinned, about mode 1's -12.9 ms per token over tokens 3-126 (pageable warm was not run: unknown, bounded by its slow-copy idle, 6.7 ms in EXP-0004). |
+| Complexity | None (arms only), plus the default switch. |
+| Risk | Low; B3 already covers mode 2 around pinned experts. Add a pageable mode-2 row. |
+| Cost | Low: EXP-0007's harness, about 10 runs. |
 
-Raised to priority 1 by EXP-0006. Profile pinning removes most of the pageable
-bytes but not the hard faults. By hypothesis (level 4, Q18) what stays pageable
-is the experts selected rarely, whose pages leave RAM between uses; the fault
-attribution in the next experiment checks that first. Cheap to test, and it
-composes with every pinning order.
+### R20 - Read the never-read pageable experts ahead of need, off the decode thread
+
+| | |
+|---|---|
+| Motivated by | EXP-0007 (Finding 13): 99.9% of the remaining faults are first reads since the load, and an expert once read essentially stays; mode 2 still blocks 0.87 ms per token warm and 3.1 ms over tokens 3-130 in its prefetch calls, reading only such experts |
+| Hypothesis | A background thread that, after the prefill, reads the pageable experts the decode has not yet read (into the working set, most selected first by the profile, in the lost regions first: the file's tail and the head behind the front) removes most of that blocking time without slowing the decode. |
+| Falsifiable by | No-API idle not falling by at least half against mode 2, or the decode slower in tokens 3-130 (disk contention with the decode's own reads), or the lowest available RAM below the 300 MiB floor. |
+| Expected gain | At most about 0.9 ms per token warm and 3 ms over tokens 3-130 under the profile (the no-API idle mode 2 adds); about 1.4 s per 1024-token run. |
+| Complexity | Small to medium: a thread, the pageable ranges (the pinned table already gives them), a touch or a prefetch plus touch, stopping at teardown. |
+| Risk | Medium: the budget is the limit. The 18.3 GiB of experts and the process do not fit in what is available here, so reading the lost experts back takes pages from somewhere (the front would move faster, or other processes page out). Settle Q21 first; R21 may be the better first step. |
+| Cost | Low to measure with EXP-0007's harness and copy log. |
+
+### R21 - Release the mapped pages of the tensors uploaded to the GPU
+
+| | |
+|---|---|
+| Motivated by | EXP-0007 (Finding 13): the file's last 2.1 GiB never stays resident after the load at about 19.5 GiB available, and those experts' first reads fault 82 to 100% of the time (23 to 54% of all slow first reads over tokens 3-1022). The non-expert tensors uploaded to the GPU (2.0 GiB of the 2.49 GiB; the 0.5 GiB token embedding stays in a CPU mapping) are read through the mapping and stay mapped: the loader unmaps only the file before the first and after the last CPU-mapped tensor (here about 0.5 GiB), and on Windows `llama_mmap::unmap_fragment` does nothing (level 2, code) |
+| Hypothesis | After the load those pages sit in the working set (level 4), where nothing trims them; releasing them (unmapping and remapping only the CPU-side ranges, or removing them from the working set) gives about 2.0 GiB back to the experts, so the tail stays resident and the head front moves later. |
+| Falsifiable by | `QueryWorkingSetEx` after the load showing the non-expert pages not in the working set (then there is nothing to release), or slow first reads per token not falling by at least a third with them released. |
+| Expected gain | Bounded by the faults' cost: 3.5 ms per token of slow-copy idle warm under the profile without a prefetch, 0.87 ms of blocking reads with mode 2. The tail alone is 28% of the slow first reads over tokens 3-1022 but only about 10% warm (its experts are first read early); the freed RAM should also hold back the head's front, which is most of the rest. Also the prefill (H4: headroom costs it), and 2.0 GiB of RAM for every user who offloads a model like this one with mmap (on Linux the kernel can reclaim clean mapped pages, so the gain there is untested), which is upstream material. |
+| Complexity | Small to measure (one query after the load); medium to fix (Windows has no partial unmap of a view: remap the expert ranges as separate views, or use the working-set trim calls on the ranges). |
+| Risk | Low to measure; medium to fix (the CPU-side tensors, such as the token embedding, must stay mapped). |
+| Cost | Low. |
 
 ### R14 - Shorten the per-layer host round trip
 
@@ -216,9 +265,15 @@ composes with every pinning order.
 
 ### R16b - Prefill against launch headroom (the rest of R16)
 
-R16's reproducibility half is done (EXP-0006). Its prefill clause is not:
-whether prefill time and slow copies rise as the launch headroom falls needs two
-or more balloon levels. It may also explain why EXP-0006's arms ran 0.7 to 1.4
+R16's reproducibility half is done (EXP-0006). EXP-0007 added one level 1 GiB
+lower (18944 MiB): prefill 3.22-3.25 s against 2.59-2.74, slow copies over
+tokens 3-1022 5.00 per token against 3.70, +0.93 ms per token warm, all in
+both rounds. A slope needs a third level; 2 GiB below 19968 would cross the 300 MiB floor
+under both pinnings (`prof-lo`, 1 GiB below, already reached 919 to 1015 MiB
+during the decode), so place it above 19968 (for example 20992 MiB) or at
+most about half a GiB below 18944, with profile pinning.
+Originally: whether prefill time and slow copies rise as the launch headroom
+falls needs two or more balloon levels. It may also explain why EXP-0006's arms ran 0.7 to 1.4
 ms slower warm than EXP-0005's (mostly slow-copy idle, at 0.2 to 1.7 GiB less
 headroom); the page cache is an untested alternative. Fold it into the next
 timing experiment as a second balloon level.

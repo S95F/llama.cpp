@@ -200,8 +200,19 @@ configuration and diffs against `--moe-cache-mib 0`. Configurations:
 `cache2048-pinprof` when `PIN_PROFILE=<trace>` is set (profile pinning at the
 default cap); `cache2048-pinonline` (online pinning after 16 passes, default
 cap) and `cache2048-pinonline15000` (after 64 passes, 15000 MiB), so the
-registration lands inside the 256 tokens; and `upstream-off` and
-`upstream-2048` when a baseline build is given.
+registration lands inside the 256 tokens; `cache2048-prefetch` (pageable,
+`LLAMA_MOE_PREFETCH=1`), and with `PIN_PROFILE` also
+`cache2048-pinprof-prefetch` and `cache2048-pinprof-prefetch2` (modes 1 and 2
+around pinned experts; EXP-0007); and `upstream-off` and `upstream-2048` when a
+baseline build is given.
+
+**The script exports `GGML_CUDA_REGISTER_HOST=0`** (since EXP-0007), so only the
+rows that set it pin. `GGML_CUDA_REGISTER_HOST=1` is set in this host's user
+environment (ENVIRONMENT.md), and before EXP-0007 every cache-on row that did not set it inherited it and
+pinned the default cap in address order (`cache-off` inherited it too, but
+builds no cache and so never pins).
+The outputs were identical either way, so no earlier pass/fail changes, but
+those rows were not the configurations their names say.
 
 **Every configuration computes its experts on the GPU**
 (`GGML_OP_OFFLOAD_MIN_BATCH=1`, exported by the script). Without it, the cache-off
@@ -213,7 +224,12 @@ short of that.
 **Reference: all configurations byte-identical.** This is a pass/fail gate, not
 a measurement. Any difference is a bug.
 
-Last run on the merge `2ca33f0d7`: 11 of 11 OK, `PIN_PROFILE` set, and all 12
+Last run in EXP-0007 (working tree on `b2586549c`, prefetch modes 1 and 2):
+14 of 14 OK with the pinning variable controlled, `PIN_PROFILE` set, all 15
+outputs byte-identical to each other and to the merge check's
+(`EXP-0007/b3_correctness_gpu256.txt`; the first attempt, with the variable
+inherited, also 14 of 14: `b3_correctness_gpu256_inherited.txt`). Before it, on
+the merge `2ca33f0d7`: 11 of 11 OK, `PIN_PROFILE` set, and all 12
 outputs byte-identical to EXP-0006's pre-merge ones
 (`baseline/rebase-2ca33f0d7/b3_correctness_gpu256.txt`, `b3_across_merge.txt`).
 Before it, EXP-0006 on `24c58282f` plus its changes: 11 of 11 OK against the
@@ -389,6 +405,27 @@ reference harness):
 - In the Nsight sqlite export, `CUPTI_ACTIVITY_KIND_MEMCPY.srcKind` is 1 for
   pinned and 0 for pageable host memory (`ENUM_CUDA_MEM_KIND`).
 
+### Reference, base `b2586549c` plus EXP-0007, warm (tokens 387 to 1022)
+
+2048 MiB cache, profile pinning at the default cap unless marked, mean of two
+reps (mirror order), model evicted and about 19968 MiB available at every launch (19880 to 20028,
+balloon-held except `prof_r1`; `lo`: 18944). Every arm ran with the copy log and the selection trace on.
+
+| arm | ms/token | compute | DMA | idle | slow-copy idle | no-API idle | pinned share |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| profile, no prefetch | 41.77 | 12.92 | 20.07 | 8.65 | 3.51 | 0.72 | 77.7% |
+| profile, `LLAMA_MOE_PREFETCH=1` | 40.81 | 12.95 | 20.12 | 7.62 | 0.00 | 2.96 | 77.7% |
+| profile, `LLAMA_MOE_PREFETCH=2` | **39.18** | 12.88 | 20.10 | 6.07 | 0.02 | 1.59 | 77.7% |
+| address order, no prefetch | 45.16 | 12.96 | 22.63 | 9.46 | 2.81 | 0.77 | 49.3% |
+| address order, mode 1 | 47.19 | 12.91 | 22.71 | 11.46 | 0.02 | 5.46 | 49.3% |
+| address order, mode 2 | 43.42 | 12.98 | 22.61 | 7.71 | 0.00 | 1.54 | 49.3% |
+| profile, 1 GiB less headroom | 42.69 | 12.88 | 20.01 | 9.68 | 4.71 | 0.72 | 77.7% |
+
+The no-prefetch arms reproduce EXP-0006's within 0.2 ms (41.73 and 45.32).
+Unpinned cold, tokens 3-126 of 128: 78.43 ms per token, 65.52 with mode 1.
+Tokens 3-1022 and 3-130 are in
+`research/results/experiments/EXP-0007/analysis.md`.
+
 ### Reference, base `24c58282f` plus EXP-0006, warm (tokens 387 to 1022)
 
 2048 MiB cache, mean of two reps (ABBA), model evicted and 19968 MiB available
@@ -470,6 +507,16 @@ Committed so far:
   (`coverage_1024.json` as written before the runs, `coverage_1024_aligned.json`
   after the one-pass fix), the B3 record and the review records. Captures in
   `C:\nsys\exp0006` stay outside git; `provenance.txt` has their sha256.
+- `research/results/experiments/EXP-0007/` - gate G (`prefetch_bench.py`,
+  `gate.csv`, `gate.txt`, `gate_pre.txt`), per-run balloon, paging, process
+  and low-memory records, timelines, logs and summaries for the 19 runs
+  (warm-up included), `runs.json`, `analysis.json` and `analysis.md`, the fault
+  attribution (`attrib.json`, from `attrib.py`), the harness (`runs.sh`) and the
+  two B3 records with a note on the first. Captures, selection traces and copy
+  logs (1.67 GB: Nsight captures 1.44 GB, copy logs 195 MB, selection traces
+  28 MB) in `C:\nsys\exp0007` stay outside git; `provenance.txt` has
+  their sha256. The pre- and post-run reviews are summarized in `EXP-0007.md`;
+  their records stayed in the session's local workflow log.
 - `research/results/baseline/rebase-2ca33f0d7/` - the check of the upstream
   merge `2ca33f0d7`: B1 (`b1.csv`), B3 and its diff against the pre-merge
   outputs, the buffer sizes across the merge, test-backend-ops MUL_MAT_ID and

@@ -1,0 +1,7077 @@
+{
+ "db": "C:/nsys/exp0007/pg-pf_r1.sqlite",
+ "summary": {
+  "n_tokens": 124,
+  "logits_bytes": 993280,
+  "kernel_rows": 3892,
+  "graph_rows": 5166,
+  "ms_per_token_mean": 64.75385016935483,
+  "ms_per_token_median": 62.6685205,
+  "share": {
+   "compute_ns": 0.19814322758278044,
+   "h2d_ns": 0.40904304362449495,
+   "d2h_ns": 0.0018382206245947422,
+   "memset_ns": 0.0,
+   "idle_ns": 0.39097550816812987,
+   "overlap_compute_h2d_ns": 0.0
+  },
+  "ms_per_token": {
+   "compute_ns": 12.830536870967743,
+   "h2d_ns": 26.48711195967742,
+   "d2h_ns": 0.1190318629032258,
+   "memset_ns": 0.0,
+   "busy_ns": 39.43668069354839,
+   "idle_ns": 25.317169475806452,
+   "overlap_compute_h2d_ns": 0.0,
+   "overlap_compute_d2h_ns": 0.0
+  },
+  "overlap_over_min_compute_h2d": 0.0,
+  "h2d_mib_per_token": 225.09270895681072,
+  "h2d_expert_mib_per_token": 225.02967489919354,
+  "h2d_expert_mib_total": 27903.6796875,
+  "h2d_expert_mib_all_decode": 29013.875,
+  "n_decode_steps": 127,
+  "h2d_gbps_while_copying": 8.91100595438308,
+  "h2d_gbps_over_token_time": 3.644984997336852,
+  "per_token": {
+   "n_h2d": 416.4596774193548,
+   "n_h2d_expert": 366.4596774193548,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0
+  },
+  "host_api_ms_per_token": {
+   "cudaGraphLaunch": 1.1253289596774194,
+   "cudaMemcpyAsync": 36.582695717741935,
+   "cudaStreamSynchronize": 15.654924580645162
+  },
+  "host_api_calls_per_token": {
+   "cudaGraphLaunch": 41.0,
+   "cudaMemcpyAsync": 457.4596774193548,
+   "cudaStreamSynchronize": 109.0
+  },
+  "idle_ms_per_token_while_host_in": {
+   "cudaStreamSynchronize": 1.974456758064516,
+   "cudaMemcpyAsync": 12.219427282258065,
+   "cudaGraphLaunch": 0.13108116129032257,
+   "cudaLaunchKernel": 0.0,
+   "no_api": 10.992204274193547,
+   "expert_copy_slow": 0.06558816129032258,
+   "expert_copy_fast": 11.416900112903226
+  },
+  "h2d_by_src_kind_mib_per_token": {
+   "pageable": 225.06873739919354,
+   "pinned": 0.0239715576171875
+  },
+  "expert_copy_rates": {
+   "pageable": {
+    "n": 45441,
+    "bytes": 29259128832,
+    "aggregate_gpu_gbps": 8.919895323759201,
+    "aggregate_host_gbps": 6.617099167751637,
+    "per_copy_gpu_gbps": {
+     "p10": 7.6071967498549045,
+     "median": 8.243406800743525,
+     "p90": 13.044822032824856
+    },
+    "per_copy_host_gbps": {
+     "p10": 3.8491718548102902,
+     "median": 7.609204137639856,
+     "p90": 8.726756228916376
+    }
+   },
+   "pageable/fast": {
+    "n": 45431,
+    "bytes": 29253230592,
+    "aggregate_gpu_gbps": 8.919913765967324,
+    "aggregate_host_gbps": 6.628773651748942,
+    "per_copy_gpu_gbps": {
+     "p10": 7.6071967498549045,
+     "median": 8.243406800743525,
+     "p90": 13.044822032824856
+    },
+    "per_copy_host_gbps": {
+     "p10": 3.851433944522802,
+     "median": 7.609846725499303,
+     "p90": 8.726814918832545
+    }
+   },
+   "pageable/slow": {
+    "n": 10,
+    "bytes": 5898240,
+    "aggregate_gpu_gbps": 8.829356941196899,
+    "aggregate_host_gbps": 0.6797324097584766,
+    "per_copy_gpu_gbps": {
+     "p10": 7.8355241781028155,
+     "median": 8.44025453367362,
+     "p90": 10.861126967803822
+    },
+    "per_copy_host_gbps": {
+     "p10": 0.3928208463620657,
+     "median": 1.1785712406357491,
+     "p90": 1.3804221633146476
+    }
+   }
+  },
+  "slow_gbps": 1.5,
+  "expert_copies_slow_per_token": 0.08064516129032258,
+  "host_expert_copy_ms_per_token": {
+   "slow": 0.06997820161290323,
+   "fast": 35.58926014516129
+  },
+  "app": {
+   "prompt eval time": "prompt eval time =    2665.33 ms /    46 tokens (   57.94 ms per token,    17.26 tokens per second)",
+   "eval time": "eval time =    8347.70 ms /   127 runs   (   65.73 ms per token,    15.21 tokens per second)",
+   "graphs reused": "graphs reused =        126",
+   "ubatch <= 8:": "ubatch <= 8: hits = 24875, misses = 15773, hit rate = 61.20%, uploaded = 29029.44 MiB",
+   "large batches:": "large batches: 6315 uploads of uncached experts, 5707.74 MiB"
+  }
+ },
+ "tokens": [
+  {
+   "token": 3,
+   "t_ns": 64188957,
+   "compute_ns": 13191574,
+   "h2d_ns": 14708561,
+   "d2h_ns": 121599,
+   "memset_ns": 0,
+   "busy_ns": 28021734,
+   "idle_ns": 36167223,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 157549104,
+   "h2d_expert_bytes": 157483008,
+   "n_h2d": 296,
+   "n_h2d_expert": 246,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14432
+    },
+    "pageable": {
+     "bytes": 157523968,
+     "n": 286,
+     "ns": 14694129
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16476394,
+    "cudaMemcpyAsync": 34315238,
+    "cudaGraphLaunch": 1275256
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 337,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 33251324
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2504624,
+    "cudaMemcpyAsync": 21775351,
+    "cudaGraphLaunch": 207355,
+    "cudaLaunchKernel": 0,
+    "no_api": 11679893,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 20882364
+   }
+  },
+  {
+   "token": 4,
+   "t_ns": 67375908,
+   "compute_ns": 12844954,
+   "h2d_ns": 15746718,
+   "d2h_ns": 120800,
+   "memset_ns": 0,
+   "busy_ns": 28712472,
+   "idle_ns": 38663436,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 165847600,
+   "h2d_expert_bytes": 165781504,
+   "n_h2d": 305,
+   "n_h2d_expert": 255,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14560
+    },
+    "pageable": {
+     "bytes": 165822464,
+     "n": 295,
+     "ns": 15732158
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15531884,
+    "cudaMemcpyAsync": 35632866,
+    "cudaGraphLaunch": 1211048
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 346,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 34607863
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1949422,
+    "cudaMemcpyAsync": 21891495,
+    "cudaGraphLaunch": 158319,
+    "cudaLaunchKernel": 0,
+    "no_api": 14664200,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 21030915
+   }
+  },
+  {
+   "token": 5,
+   "t_ns": 90289067,
+   "compute_ns": 12854425,
+   "h2d_ns": 25829813,
+   "d2h_ns": 121695,
+   "memset_ns": 0,
+   "busy_ns": 38805933,
+   "idle_ns": 51483134,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 264225328,
+   "h2d_expert_bytes": 264159232,
+   "n_h2d": 458,
+   "n_h2d_expert": 408,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14144
+    },
+    "pageable": {
+     "bytes": 264200192,
+     "n": 448,
+     "ns": 25815669
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15656796,
+    "cudaMemcpyAsync": 55561940,
+    "cudaGraphLaunch": 1304148
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 499,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 54486021
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2023400,
+    "cudaMemcpyAsync": 31952184,
+    "cudaGraphLaunch": 170622,
+    "cudaLaunchKernel": 0,
+    "no_api": 17336928,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 31052861
+   }
+  },
+  {
+   "token": 6,
+   "t_ns": 122529225,
+   "compute_ns": 13183000,
+   "h2d_ns": 61046866,
+   "d2h_ns": 119582,
+   "memset_ns": 0,
+   "busy_ns": 74349448,
+   "idle_ns": 48179777,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 532931120,
+   "h2d_expert_bytes": 532865024,
+   "n_h2d": 869,
+   "n_h2d_expert": 819,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14272
+    },
+    "pageable": {
+     "bytes": 532905984,
+     "n": 859,
+     "ns": 61032594
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16105592,
+    "cudaMemcpyAsync": 81066234,
+    "cudaGraphLaunch": 1271514
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 910,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 80114332
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2160799,
+    "cudaMemcpyAsync": 22389132,
+    "cudaGraphLaunch": 115736,
+    "cudaLaunchKernel": 0,
+    "no_api": 23514110,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 21669782
+   }
+  },
+  {
+   "token": 7,
+   "t_ns": 78876806,
+   "compute_ns": 13285906,
+   "h2d_ns": 23569924,
+   "d2h_ns": 118719,
+   "memset_ns": 0,
+   "busy_ns": 36974549,
+   "idle_ns": 41902257,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 239796784,
+   "h2d_expert_bytes": 239730688,
+   "n_h2d": 422,
+   "n_h2d_expert": 372,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14015
+    },
+    "pageable": {
+     "bytes": 239771648,
+     "n": 412,
+     "ns": 23555909
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16185055,
+    "cudaMemcpyAsync": 46955610,
+    "cudaGraphLaunch": 1105520
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 463,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 46034262
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1948690,
+    "cudaMemcpyAsync": 25634498,
+    "cudaGraphLaunch": 53573,
+    "cudaLaunchKernel": 0,
+    "no_api": 14265496,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 24902503
+   }
+  },
+  {
+   "token": 8,
+   "t_ns": 81551761,
+   "compute_ns": 12698646,
+   "h2d_ns": 25794773,
+   "d2h_ns": 118719,
+   "memset_ns": 0,
+   "busy_ns": 38612138,
+   "idle_ns": 42939623,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 261661232,
+   "h2d_expert_bytes": 261595136,
+   "n_h2d": 455,
+   "n_h2d_expert": 405,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14368
+    },
+    "pageable": {
+     "bytes": 261636096,
+     "n": 445,
+     "ns": 25780405
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15544385,
+    "cudaMemcpyAsync": 50504870,
+    "cudaGraphLaunch": 1165463
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 496,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 49596735
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2025616,
+    "cudaMemcpyAsync": 26909468,
+    "cudaGraphLaunch": 141804,
+    "cudaLaunchKernel": 0,
+    "no_api": 13862735,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 26166000
+   }
+  },
+  {
+   "token": 9,
+   "t_ns": 46461259,
+   "compute_ns": 12685398,
+   "h2d_ns": 13451407,
+   "d2h_ns": 117471,
+   "memset_ns": 0,
+   "busy_ns": 26254276,
+   "idle_ns": 20206983,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 129442352,
+   "h2d_expert_bytes": 129376256,
+   "n_h2d": 251,
+   "n_h2d_expert": 201,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13504
+    },
+    "pageable": {
+     "bytes": 129417216,
+     "n": 241,
+     "ns": 13437903
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15590922,
+    "cudaMemcpyAsync": 21571846,
+    "cudaGraphLaunch": 984952
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 292,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 20729349
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1981295,
+    "cudaMemcpyAsync": 10089676,
+    "cudaGraphLaunch": 114825,
+    "cudaLaunchKernel": 0,
+    "no_api": 8021187,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 9358207
+   }
+  },
+  {
+   "token": 10,
+   "t_ns": 62087854,
+   "compute_ns": 12691385,
+   "h2d_ns": 17167145,
+   "d2h_ns": 121312,
+   "memset_ns": 0,
+   "busy_ns": 29979842,
+   "idle_ns": 32108012,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 168657456,
+   "h2d_expert_bytes": 168591360,
+   "n_h2d": 311,
+   "n_h2d_expert": 261,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13696
+    },
+    "pageable": {
+     "bytes": 168632320,
+     "n": 301,
+     "ns": 17153449
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16225385,
+    "cudaMemcpyAsync": 33005034,
+    "cudaGraphLaunch": 1258316
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 352,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 32060511
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2903450,
+    "cudaMemcpyAsync": 17936011,
+    "cudaGraphLaunch": 72202,
+    "cudaLaunchKernel": 0,
+    "no_api": 11196349,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 17183859
+   }
+  },
+  {
+   "token": 11,
+   "t_ns": 62712232,
+   "compute_ns": 13234231,
+   "h2d_ns": 14398768,
+   "d2h_ns": 119006,
+   "memset_ns": 0,
+   "busy_ns": 27752005,
+   "idle_ns": 34960227,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 150503984,
+   "h2d_expert_bytes": 150437888,
+   "n_h2d": 284,
+   "n_h2d_expert": 234,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13696
+    },
+    "pageable": {
+     "bytes": 150478848,
+     "n": 274,
+     "ns": 14385072
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15877900,
+    "cudaMemcpyAsync": 31796859,
+    "cudaGraphLaunch": 1078698
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 325,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 30939898
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1859491,
+    "cudaMemcpyAsync": 19330582,
+    "cudaGraphLaunch": 132389,
+    "cudaLaunchKernel": 0,
+    "no_api": 13637765,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 18633898
+   }
+  },
+  {
+   "token": 12,
+   "t_ns": 106547177,
+   "compute_ns": 13188471,
+   "h2d_ns": 51582877,
+   "d2h_ns": 119936,
+   "memset_ns": 0,
+   "busy_ns": 64891284,
+   "idle_ns": 41655893,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 451363376,
+   "h2d_expert_bytes": 451297280,
+   "n_h2d": 755,
+   "n_h2d_expert": 705,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13664
+    },
+    "pageable": {
+     "bytes": 451338240,
+     "n": 745,
+     "ns": 51569213
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16110645,
+    "cudaMemcpyAsync": 68220588,
+    "cudaGraphLaunch": 1132671
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 796,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 67343900
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2060787,
+    "cudaMemcpyAsync": 19018143,
+    "cudaGraphLaunch": 37176,
+    "cudaLaunchKernel": 0,
+    "no_api": 20539787,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 18349766
+   }
+  },
+  {
+   "token": 13,
+   "t_ns": 59184740,
+   "compute_ns": 12683961,
+   "h2d_ns": 17267030,
+   "d2h_ns": 118622,
+   "memset_ns": 0,
+   "busy_ns": 30069613,
+   "idle_ns": 29115127,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 167330352,
+   "h2d_expert_bytes": 167264256,
+   "n_h2d": 311,
+   "n_h2d_expert": 261,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14080
+    },
+    "pageable": {
+     "bytes": 167305216,
+     "n": 301,
+     "ns": 17252950
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15545735,
+    "cudaMemcpyAsync": 29690868,
+    "cudaGraphLaunch": 1066256
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 352,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 28748903
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1954326,
+    "cudaMemcpyAsync": 14517774,
+    "cudaGraphLaunch": 146389,
+    "cudaLaunchKernel": 0,
+    "no_api": 12496638,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 13763235
+   }
+  },
+  {
+   "token": 14,
+   "t_ns": 57097046,
+   "compute_ns": 12673856,
+   "h2d_ns": 17223609,
+   "d2h_ns": 117952,
+   "memset_ns": 0,
+   "busy_ns": 30015417,
+   "idle_ns": 27081629,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 170189360,
+   "h2d_expert_bytes": 170123264,
+   "n_h2d": 314,
+   "n_h2d_expert": 264,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14176
+    },
+    "pageable": {
+     "bytes": 170164224,
+     "n": 304,
+     "ns": 17209433
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15588681,
+    "cudaMemcpyAsync": 30796920,
+    "cudaGraphLaunch": 1053986
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 355,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 29916123
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2008954,
+    "cudaMemcpyAsync": 15605487,
+    "cudaGraphLaunch": 123835,
+    "cudaLaunchKernel": 0,
+    "no_api": 9343353,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 14865782
+   }
+  },
+  {
+   "token": 15,
+   "t_ns": 102303082,
+   "compute_ns": 13193204,
+   "h2d_ns": 33619923,
+   "d2h_ns": 119581,
+   "memset_ns": 0,
+   "busy_ns": 46932708,
+   "idle_ns": 55370374,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 328598064,
+   "h2d_expert_bytes": 328531968,
+   "n_h2d": 557,
+   "n_h2d_expert": 507,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14176
+    },
+    "pageable": {
+     "bytes": 328572928,
+     "n": 547,
+     "ns": 33605747
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16071984,
+    "cudaMemcpyAsync": 61259323,
+    "cudaGraphLaunch": 1154346
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 598,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 60240873
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2040442,
+    "cudaMemcpyAsync": 29892460,
+    "cudaGraphLaunch": 65936,
+    "cudaLaunchKernel": 0,
+    "no_api": 23371536,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 29081667
+   }
+  },
+  {
+   "token": 16,
+   "t_ns": 76212412,
+   "compute_ns": 12701336,
+   "h2d_ns": 29062394,
+   "d2h_ns": 118303,
+   "memset_ns": 0,
+   "busy_ns": 41882033,
+   "idle_ns": 34330379,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 260194864,
+   "h2d_expert_bytes": 260128768,
+   "n_h2d": 455,
+   "n_h2d_expert": 405,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13824
+    },
+    "pageable": {
+     "bytes": 260169728,
+     "n": 445,
+     "ns": 29048570
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15413144,
+    "cudaMemcpyAsync": 42964127,
+    "cudaGraphLaunch": 1178729
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 496,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 429687,
+    "fast": 41658482
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1892407,
+    "cudaMemcpyAsync": 16130213,
+    "cudaGraphLaunch": 81168,
+    "cudaLaunchKernel": 0,
+    "no_api": 16226591,
+    "expert_copy_slow": 371736,
+    "expert_copy_fast": 15088651
+   }
+  },
+  {
+   "token": 17,
+   "t_ns": 73606769,
+   "compute_ns": 12667837,
+   "h2d_ns": 31865600,
+   "d2h_ns": 119487,
+   "memset_ns": 0,
+   "busy_ns": 44652924,
+   "idle_ns": 28953845,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 286507568,
+   "h2d_expert_bytes": 286441472,
+   "n_h2d": 494,
+   "n_h2d_expert": 444,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14272
+    },
+    "pageable": {
+     "bytes": 286482432,
+     "n": 484,
+     "ns": 31851328
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15765701,
+    "cudaMemcpyAsync": 44663699,
+    "cudaGraphLaunch": 1143249
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 535,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 451218,
+    "fast": 43348748
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2168888,
+    "cudaMemcpyAsync": 15044674,
+    "cudaGraphLaunch": 130773,
+    "cudaLaunchKernel": 0,
+    "no_api": 11609510,
+    "expert_copy_slow": 379161,
+    "expert_copy_fast": 13991111
+   }
+  },
+  {
+   "token": 18,
+   "t_ns": 81078389,
+   "compute_ns": 12677463,
+   "h2d_ns": 31306416,
+   "d2h_ns": 119263,
+   "memset_ns": 0,
+   "busy_ns": 44103142,
+   "idle_ns": 36975247,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 288686640,
+   "h2d_expert_bytes": 288620544,
+   "n_h2d": 497,
+   "n_h2d_expert": 447,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14303
+    },
+    "pageable": {
+     "bytes": 288661504,
+     "n": 487,
+     "ns": 31292113
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15483041,
+    "cudaMemcpyAsync": 50338150,
+    "cudaGraphLaunch": 1213005
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 538,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 49427406
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2014933,
+    "cudaMemcpyAsync": 21276471,
+    "cudaGraphLaunch": 92536,
+    "cudaLaunchKernel": 0,
+    "no_api": 13591307,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 20581908
+   }
+  },
+  {
+   "token": 19,
+   "t_ns": 61932751,
+   "compute_ns": 12677493,
+   "h2d_ns": 19201543,
+   "d2h_ns": 118560,
+   "memset_ns": 0,
+   "busy_ns": 31997596,
+   "idle_ns": 29935155,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 189006384,
+   "h2d_expert_bytes": 188940288,
+   "n_h2d": 344,
+   "n_h2d_expert": 294,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13792
+    },
+    "pageable": {
+     "bytes": 188981248,
+     "n": 334,
+     "ns": 19187751
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15472941,
+    "cudaMemcpyAsync": 35480495,
+    "cudaGraphLaunch": 1130796
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 385,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 1496594,
+    "fast": 33000651
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1964814,
+    "cudaMemcpyAsync": 18336782,
+    "cudaGraphLaunch": 120371,
+    "cudaLaunchKernel": 0,
+    "no_api": 9513188,
+    "expert_copy_slow": 1447281,
+    "expert_copy_fast": 16082913
+   }
+  },
+  {
+   "token": 20,
+   "t_ns": 63000006,
+   "compute_ns": 12650235,
+   "h2d_ns": 22738991,
+   "d2h_ns": 118751,
+   "memset_ns": 0,
+   "busy_ns": 35507977,
+   "idle_ns": 27492029,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 210379312,
+   "h2d_expert_bytes": 210313216,
+   "n_h2d": 377,
+   "n_h2d_expert": 327,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13920
+    },
+    "pageable": {
+     "bytes": 210354176,
+     "n": 367,
+     "ns": 22725071
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15533218,
+    "cudaMemcpyAsync": 33706329,
+    "cudaGraphLaunch": 1100563
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 418,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 32763959
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1935721,
+    "cudaMemcpyAsync": 13173234,
+    "cudaGraphLaunch": 118608,
+    "cudaLaunchKernel": 0,
+    "no_api": 12264466,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12420872
+   }
+  },
+  {
+   "token": 21,
+   "t_ns": 80909782,
+   "compute_ns": 12918423,
+   "h2d_ns": 32026843,
+   "d2h_ns": 119551,
+   "memset_ns": 0,
+   "busy_ns": 45064817,
+   "idle_ns": 35844965,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 289104432,
+   "h2d_expert_bytes": 289038336,
+   "n_h2d": 500,
+   "n_h2d_expert": 450,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14048
+    },
+    "pageable": {
+     "bytes": 289079296,
+     "n": 490,
+     "ns": 32012795
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15978785,
+    "cudaMemcpyAsync": 45667500,
+    "cudaGraphLaunch": 1145699
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 541,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 44733235
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2148714,
+    "cudaMemcpyAsync": 15929775,
+    "cudaGraphLaunch": 84811,
+    "cudaLaunchKernel": 0,
+    "no_api": 17681665,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 15198458
+   }
+  },
+  {
+   "token": 22,
+   "t_ns": 62624809,
+   "compute_ns": 12908282,
+   "h2d_ns": 22770469,
+   "d2h_ns": 118527,
+   "memset_ns": 0,
+   "busy_ns": 35797278,
+   "idle_ns": 26827531,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 206438960,
+   "h2d_expert_bytes": 206372864,
+   "n_h2d": 371,
+   "n_h2d_expert": 321,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13632
+    },
+    "pageable": {
+     "bytes": 206413824,
+     "n": 361,
+     "ns": 22756837
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15685639,
+    "cudaMemcpyAsync": 33958019,
+    "cudaGraphLaunch": 1178484
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 412,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 485773,
+    "fast": 32320352
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1965446,
+    "cudaMemcpyAsync": 13300202,
+    "cudaGraphLaunch": 152999,
+    "cudaLaunchKernel": 0,
+    "no_api": 11408884,
+    "expert_copy_slow": 407182,
+    "expert_copy_fast": 11945938
+   }
+  },
+  {
+   "token": 23,
+   "t_ns": 97398674,
+   "compute_ns": 13098261,
+   "h2d_ns": 39259938,
+   "d2h_ns": 119422,
+   "memset_ns": 0,
+   "busy_ns": 52477621,
+   "idle_ns": 44921053,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 360784432,
+   "h2d_expert_bytes": 360718336,
+   "n_h2d": 614,
+   "n_h2d_expert": 564,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14528
+    },
+    "pageable": {
+     "bytes": 360759296,
+     "n": 604,
+     "ns": 39245410
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15975500,
+    "cudaMemcpyAsync": 59130802,
+    "cudaGraphLaunch": 1096895
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 655,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 58223669
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2009904,
+    "cudaMemcpyAsync": 22122175,
+    "cudaGraphLaunch": 41171,
+    "cudaLaunchKernel": 0,
+    "no_api": 20747803,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 21443655
+   }
+  },
+  {
+   "token": 24,
+   "t_ns": 58488394,
+   "compute_ns": 13230040,
+   "h2d_ns": 20011076,
+   "d2h_ns": 118911,
+   "memset_ns": 0,
+   "busy_ns": 33360027,
+   "idle_ns": 25128367,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 193675824,
+   "h2d_expert_bytes": 193609728,
+   "n_h2d": 353,
+   "n_h2d_expert": 303,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13823
+    },
+    "pageable": {
+     "bytes": 193650688,
+     "n": 343,
+     "ns": 19997253
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15838068,
+    "cudaMemcpyAsync": 33607849,
+    "cudaGraphLaunch": 1059207
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 394,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 32766368
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1693321,
+    "cudaMemcpyAsync": 15689184,
+    "cudaGraphLaunch": 97730,
+    "cudaLaunchKernel": 0,
+    "no_api": 7648132,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 14995589
+   }
+  },
+  {
+   "token": 25,
+   "t_ns": 57750673,
+   "compute_ns": 12718486,
+   "h2d_ns": 18457677,
+   "d2h_ns": 118560,
+   "memset_ns": 0,
+   "busy_ns": 31294723,
+   "idle_ns": 26455950,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 175055408,
+   "h2d_expert_bytes": 174989312,
+   "n_h2d": 323,
+   "n_h2d_expert": 273,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13888
+    },
+    "pageable": {
+     "bytes": 175030272,
+     "n": 313,
+     "ns": 18443789
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15603401,
+    "cudaMemcpyAsync": 29083975,
+    "cudaGraphLaunch": 1072477
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 364,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 28155969
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1966196,
+    "cudaMemcpyAsync": 12769443,
+    "cudaGraphLaunch": 99429,
+    "cudaLaunchKernel": 0,
+    "no_api": 11620882,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12011397
+   }
+  },
+  {
+   "token": 26,
+   "t_ns": 75323331,
+   "compute_ns": 12671449,
+   "h2d_ns": 30377344,
+   "d2h_ns": 120192,
+   "memset_ns": 0,
+   "busy_ns": 43168985,
+   "idle_ns": 32154346,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 273744432,
+   "h2d_expert_bytes": 273678336,
+   "n_h2d": 476,
+   "n_h2d_expert": 426,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14592
+    },
+    "pageable": {
+     "bytes": 273719296,
+     "n": 466,
+     "ns": 30362752
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15534386,
+    "cudaMemcpyAsync": 44337372,
+    "cudaGraphLaunch": 1177115
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 517,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 43368676
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2037172,
+    "cudaMemcpyAsync": 16216381,
+    "cudaGraphLaunch": 60262,
+    "cudaLaunchKernel": 0,
+    "no_api": 13840531,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 15488395
+   }
+  },
+  {
+   "token": 27,
+   "t_ns": 63598529,
+   "compute_ns": 12652766,
+   "h2d_ns": 23068582,
+   "d2h_ns": 118717,
+   "memset_ns": 0,
+   "busy_ns": 35840065,
+   "idle_ns": 27758464,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 219169328,
+   "h2d_expert_bytes": 219103232,
+   "n_h2d": 392,
+   "n_h2d_expert": 342,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14048
+    },
+    "pageable": {
+     "bytes": 219144192,
+     "n": 382,
+     "ns": 23054534
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15591611,
+    "cudaMemcpyAsync": 37721998,
+    "cudaGraphLaunch": 1058720
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 433,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 36858172
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1994801,
+    "cudaMemcpyAsync": 16876931,
+    "cudaGraphLaunch": 80231,
+    "cudaLaunchKernel": 0,
+    "no_api": 8806501,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 16177234
+   }
+  },
+  {
+   "token": 28,
+   "t_ns": 90570953,
+   "compute_ns": 12687484,
+   "h2d_ns": 42453739,
+   "d2h_ns": 119520,
+   "memset_ns": 0,
+   "busy_ns": 55260743,
+   "idle_ns": 35310210,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 366608944,
+   "h2d_expert_bytes": 366542848,
+   "n_h2d": 620,
+   "n_h2d_expert": 570,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13888
+    },
+    "pageable": {
+     "bytes": 366583808,
+     "n": 610,
+     "ns": 42439851
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15418928,
+    "cudaMemcpyAsync": 55687076,
+    "cudaGraphLaunch": 1292605
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 661,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 406754,
+    "fast": 54326823
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1984600,
+    "cudaMemcpyAsync": 15552184,
+    "cudaGraphLaunch": 180004,
+    "cudaLaunchKernel": 0,
+    "no_api": 17593422,
+    "expert_copy_slow": 354480,
+    "expert_copy_fast": 14475704
+   }
+  },
+  {
+   "token": 29,
+   "t_ns": 54895623,
+   "compute_ns": 12641080,
+   "h2d_ns": 17544209,
+   "d2h_ns": 117440,
+   "memset_ns": 0,
+   "busy_ns": 30302729,
+   "idle_ns": 24592894,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 165413424,
+   "h2d_expert_bytes": 165347328,
+   "n_h2d": 305,
+   "n_h2d_expert": 255,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14304
+    },
+    "pageable": {
+     "bytes": 165388288,
+     "n": 295,
+     "ns": 17529905
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15152810,
+    "cudaMemcpyAsync": 26658839,
+    "cudaGraphLaunch": 1034516
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 346,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 25786704
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1634391,
+    "cudaMemcpyAsync": 11096762,
+    "cudaGraphLaunch": 147788,
+    "cudaLaunchKernel": 0,
+    "no_api": 11713953,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10390412
+   }
+  },
+  {
+   "token": 30,
+   "t_ns": 96884982,
+   "compute_ns": 12961688,
+   "h2d_ns": 32391801,
+   "d2h_ns": 119264,
+   "memset_ns": 0,
+   "busy_ns": 45472753,
+   "idle_ns": 51412229,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 313254448,
+   "h2d_expert_bytes": 313188352,
+   "n_h2d": 536,
+   "n_h2d_expert": 486,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14464
+    },
+    "pageable": {
+     "bytes": 313229312,
+     "n": 526,
+     "ns": 32377337
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15867749,
+    "cudaMemcpyAsync": 59768439,
+    "cudaGraphLaunch": 1143414
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 577,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 58908358
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2054154,
+    "cudaMemcpyAsync": 29689087,
+    "cudaGraphLaunch": 38104,
+    "cudaLaunchKernel": 0,
+    "no_api": 19630884,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 29011420
+   }
+  },
+  {
+   "token": 31,
+   "t_ns": 53533810,
+   "compute_ns": 12663194,
+   "h2d_ns": 16972729,
+   "d2h_ns": 118784,
+   "memset_ns": 0,
+   "busy_ns": 29754707,
+   "idle_ns": 23779103,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 161890864,
+   "h2d_expert_bytes": 161824768,
+   "n_h2d": 299,
+   "n_h2d_expert": 249,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13664
+    },
+    "pageable": {
+     "bytes": 161865728,
+     "n": 289,
+     "ns": 16959065
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15507758,
+    "cudaMemcpyAsync": 28058950,
+    "cudaGraphLaunch": 1057576
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 340,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 27140452
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1912690,
+    "cudaMemcpyAsync": 13195073,
+    "cudaGraphLaunch": 92985,
+    "cudaLaunchKernel": 0,
+    "no_api": 8578355,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12452994
+   }
+  },
+  {
+   "token": 32,
+   "t_ns": 40579258,
+   "compute_ns": 13108182,
+   "h2d_ns": 8019809,
+   "d2h_ns": 115167,
+   "memset_ns": 0,
+   "busy_ns": 21243158,
+   "idle_ns": 19336100,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 80446000,
+   "h2d_expert_bytes": 80379904,
+   "n_h2d": 173,
+   "n_h2d_expert": 123,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13792
+    },
+    "pageable": {
+     "bytes": 80420864,
+     "n": 163,
+     "ns": 8006017
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15245454,
+    "cudaMemcpyAsync": 14973813,
+    "cudaGraphLaunch": 939506
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 214,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 14122631
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1572285,
+    "cudaMemcpyAsync": 8195065,
+    "cudaGraphLaunch": 349940,
+    "cudaLaunchKernel": 0,
+    "no_api": 9218810,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7448392
+   }
+  },
+  {
+   "token": 33,
+   "t_ns": 53293556,
+   "compute_ns": 12676990,
+   "h2d_ns": 15525542,
+   "d2h_ns": 117951,
+   "memset_ns": 0,
+   "busy_ns": 28320483,
+   "idle_ns": 24973073,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 145867312,
+   "h2d_expert_bytes": 145801216,
+   "n_h2d": 275,
+   "n_h2d_expert": 225,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14048
+    },
+    "pageable": {
+     "bytes": 145842176,
+     "n": 265,
+     "ns": 15511494
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15099070,
+    "cudaMemcpyAsync": 25278372,
+    "cudaGraphLaunch": 1097720
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 316,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 24406554
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1718845,
+    "cudaMemcpyAsync": 11443867,
+    "cudaGraphLaunch": 298581,
+    "cudaLaunchKernel": 0,
+    "no_api": 11511780,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10744833
+   }
+  },
+  {
+   "token": 34,
+   "t_ns": 62760072,
+   "compute_ns": 12665435,
+   "h2d_ns": 26156042,
+   "d2h_ns": 119135,
+   "memset_ns": 0,
+   "busy_ns": 38940612,
+   "idle_ns": 23819460,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 231252528,
+   "h2d_expert_bytes": 231186432,
+   "n_h2d": 410,
+   "n_h2d_expert": 360,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13952
+    },
+    "pageable": {
+     "bytes": 231227392,
+     "n": 400,
+     "ns": 26142090
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15662964,
+    "cudaMemcpyAsync": 35915812,
+    "cudaGraphLaunch": 1129984
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 451,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 35065215
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2084552,
+    "cudaMemcpyAsync": 12044102,
+    "cudaGraphLaunch": 35164,
+    "cudaLaunchKernel": 0,
+    "no_api": 9655642,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 11358166
+   }
+  },
+  {
+   "token": 35,
+   "t_ns": 76507258,
+   "compute_ns": 12717339,
+   "h2d_ns": 33977808,
+   "d2h_ns": 120223,
+   "memset_ns": 0,
+   "busy_ns": 46815370,
+   "idle_ns": 29691888,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 297509424,
+   "h2d_expert_bytes": 297443328,
+   "n_h2d": 515,
+   "n_h2d_expert": 465,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13440
+    },
+    "pageable": {
+     "bytes": 297484288,
+     "n": 505,
+     "ns": 33964368
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15848757,
+    "cudaMemcpyAsync": 47529167,
+    "cudaGraphLaunch": 1188598
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 556,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 46584465
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2348148,
+    "cudaMemcpyAsync": 15772670,
+    "cudaGraphLaunch": 81129,
+    "cudaLaunchKernel": 0,
+    "no_api": 11489941,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 15047358
+   }
+  },
+  {
+   "token": 36,
+   "t_ns": 39726593,
+   "compute_ns": 12644829,
+   "h2d_ns": 14700583,
+   "d2h_ns": 118368,
+   "memset_ns": 0,
+   "busy_ns": 27463780,
+   "idle_ns": 12262813,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 128729648,
+   "h2d_expert_bytes": 128663552,
+   "n_h2d": 248,
+   "n_h2d_expert": 198,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13664
+    },
+    "pageable": {
+     "bytes": 128704512,
+     "n": 238,
+     "ns": 14686919
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15500625,
+    "cudaMemcpyAsync": 17304251,
+    "cudaGraphLaunch": 1018734
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 289,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 16459003
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1919967,
+    "cudaMemcpyAsync": 4554729,
+    "cudaGraphLaunch": 186216,
+    "cudaLaunchKernel": 0,
+    "no_api": 5601901,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 3857435
+   }
+  },
+  {
+   "token": 37,
+   "t_ns": 64226972,
+   "compute_ns": 12684541,
+   "h2d_ns": 20977691,
+   "d2h_ns": 118688,
+   "memset_ns": 0,
+   "busy_ns": 33780920,
+   "idle_ns": 30446052,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 193503792,
+   "h2d_expert_bytes": 193437696,
+   "n_h2d": 350,
+   "n_h2d_expert": 300,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14208
+    },
+    "pageable": {
+     "bytes": 193478656,
+     "n": 340,
+     "ns": 20963483
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15569310,
+    "cudaMemcpyAsync": 33920437,
+    "cudaGraphLaunch": 1111313
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 391,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 32958424
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1958416,
+    "cudaMemcpyAsync": 15171813,
+    "cudaGraphLaunch": 87952,
+    "cudaLaunchKernel": 0,
+    "no_api": 13227871,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 14386659
+   }
+  },
+  {
+   "token": 38,
+   "t_ns": 49955374,
+   "compute_ns": 12703295,
+   "h2d_ns": 15259998,
+   "d2h_ns": 117630,
+   "memset_ns": 0,
+   "busy_ns": 28080923,
+   "idle_ns": 21874451,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 144646704,
+   "h2d_expert_bytes": 144580608,
+   "n_h2d": 275,
+   "n_h2d_expert": 225,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14655
+    },
+    "pageable": {
+     "bytes": 144621568,
+     "n": 265,
+     "ns": 15245343
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15571914,
+    "cudaMemcpyAsync": 24779945,
+    "cudaGraphLaunch": 1057924
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 316,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 23884066
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2039493,
+    "cudaMemcpyAsync": 11486781,
+    "cudaGraphLaunch": 116705,
+    "cudaLaunchKernel": 0,
+    "no_api": 8231472,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10727129
+   }
+  },
+  {
+   "token": 39,
+   "t_ns": 54696937,
+   "compute_ns": 12659130,
+   "h2d_ns": 22712748,
+   "d2h_ns": 118688,
+   "memset_ns": 0,
+   "busy_ns": 35490566,
+   "idle_ns": 19206371,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 197059120,
+   "h2d_expert_bytes": 196993024,
+   "n_h2d": 356,
+   "n_h2d_expert": 306,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14592
+    },
+    "pageable": {
+     "bytes": 197033984,
+     "n": 346,
+     "ns": 22698156
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15789243,
+    "cudaMemcpyAsync": 28380214,
+    "cudaGraphLaunch": 1093770
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 397,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 27478268
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2155995,
+    "cudaMemcpyAsync": 7918362,
+    "cudaGraphLaunch": 56945,
+    "cudaLaunchKernel": 0,
+    "no_api": 9075069,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7183943
+   }
+  },
+  {
+   "token": 40,
+   "t_ns": 45015734,
+   "compute_ns": 12669851,
+   "h2d_ns": 14701001,
+   "d2h_ns": 117023,
+   "memset_ns": 0,
+   "busy_ns": 27487875,
+   "idle_ns": 17527859,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 132424240,
+   "h2d_expert_bytes": 132358144,
+   "n_h2d": 254,
+   "n_h2d_expert": 204,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13984
+    },
+    "pageable": {
+     "bytes": 132399104,
+     "n": 244,
+     "ns": 14687017
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15047530,
+    "cudaMemcpyAsync": 20300971,
+    "cudaGraphLaunch": 1081992
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 295,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 19356579
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1723231,
+    "cudaMemcpyAsync": 7312107,
+    "cudaGraphLaunch": 262641,
+    "cudaLaunchKernel": 0,
+    "no_api": 8229880,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6506869
+   }
+  },
+  {
+   "token": 41,
+   "t_ns": 47751328,
+   "compute_ns": 12656796,
+   "h2d_ns": 19676263,
+   "d2h_ns": 118335,
+   "memset_ns": 0,
+   "busy_ns": 32451394,
+   "idle_ns": 15299934,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 171794992,
+   "h2d_expert_bytes": 171728896,
+   "n_h2d": 314,
+   "n_h2d_expert": 264,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13856
+    },
+    "pageable": {
+     "bytes": 171769856,
+     "n": 304,
+     "ns": 19662407
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15400915,
+    "cudaMemcpyAsync": 23549983,
+    "cudaGraphLaunch": 1013724
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 355,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 22720859
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1804986,
+    "cudaMemcpyAsync": 5916814,
+    "cudaGraphLaunch": 123518,
+    "cudaLaunchKernel": 0,
+    "no_api": 7454616,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5246337
+   }
+  },
+  {
+   "token": 42,
+   "t_ns": 57811696,
+   "compute_ns": 12694687,
+   "h2d_ns": 23796002,
+   "d2h_ns": 120351,
+   "memset_ns": 0,
+   "busy_ns": 36611040,
+   "idle_ns": 21200656,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 210084400,
+   "h2d_expert_bytes": 210018304,
+   "n_h2d": 377,
+   "n_h2d_expert": 327,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13568
+    },
+    "pageable": {
+     "bytes": 210059264,
+     "n": 367,
+     "ns": 23782434
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15613588,
+    "cudaMemcpyAsync": 30903987,
+    "cudaGraphLaunch": 1029226
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 418,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 30083973
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1955633,
+    "cudaMemcpyAsync": 9268348,
+    "cudaGraphLaunch": 131502,
+    "cudaLaunchKernel": 0,
+    "no_api": 9845173,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8639443
+   }
+  },
+  {
+   "token": 43,
+   "t_ns": 96014268,
+   "compute_ns": 12698843,
+   "h2d_ns": 37212062,
+   "d2h_ns": 119422,
+   "memset_ns": 0,
+   "busy_ns": 50030327,
+   "idle_ns": 45983941,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 345178672,
+   "h2d_expert_bytes": 345112576,
+   "n_h2d": 587,
+   "n_h2d_expert": 537,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13824
+    },
+    "pageable": {
+     "bytes": 345153536,
+     "n": 577,
+     "ns": 37198238
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15404780,
+    "cudaMemcpyAsync": 59901249,
+    "cudaGraphLaunch": 1278156
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 628,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 58961620
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1912775,
+    "cudaMemcpyAsync": 24904841,
+    "cudaGraphLaunch": 176894,
+    "cudaLaunchKernel": 0,
+    "no_api": 18989431,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 24230712
+   }
+  },
+  {
+   "token": 44,
+   "t_ns": 96261307,
+   "compute_ns": 12690171,
+   "h2d_ns": 43179363,
+   "d2h_ns": 119934,
+   "memset_ns": 0,
+   "busy_ns": 55989468,
+   "idle_ns": 40271839,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 371647024,
+   "h2d_expert_bytes": 371580928,
+   "n_h2d": 629,
+   "n_h2d_expert": 579,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14304
+    },
+    "pageable": {
+     "bytes": 371621888,
+     "n": 619,
+     "ns": 43165059
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15602837,
+    "cudaMemcpyAsync": 58985986,
+    "cudaGraphLaunch": 1287950
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 670,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 516056,
+    "fast": 57530191
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2201542,
+    "cudaMemcpyAsync": 18097608,
+    "cudaGraphLaunch": 67605,
+    "cudaLaunchKernel": 0,
+    "no_api": 19905084,
+    "expert_copy_slow": 435033,
+    "expert_copy_fast": 16963263
+   }
+  },
+  {
+   "token": 45,
+   "t_ns": 77011797,
+   "compute_ns": 12708374,
+   "h2d_ns": 32326690,
+   "d2h_ns": 119231,
+   "memset_ns": 0,
+   "busy_ns": 45154295,
+   "idle_ns": 31857502,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 288145968,
+   "h2d_expert_bytes": 288079872,
+   "n_h2d": 497,
+   "n_h2d_expert": 447,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13984
+    },
+    "pageable": {
+     "bytes": 288120832,
+     "n": 487,
+     "ns": 32312706
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15738926,
+    "cudaMemcpyAsync": 44411345,
+    "cudaGraphLaunch": 1098768
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 538,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 43442387
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2149277,
+    "cudaMemcpyAsync": 14251725,
+    "cudaGraphLaunch": 111498,
+    "cudaLaunchKernel": 0,
+    "no_api": 15345002,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 13465517
+   }
+  },
+  {
+   "token": 46,
+   "t_ns": 107836702,
+   "compute_ns": 12706718,
+   "h2d_ns": 46882763,
+   "d2h_ns": 119264,
+   "memset_ns": 0,
+   "busy_ns": 59708745,
+   "idle_ns": 48127957,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 426746416,
+   "h2d_expert_bytes": 426680320,
+   "n_h2d": 716,
+   "n_h2d_expert": 666,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14111
+    },
+    "pageable": {
+     "bytes": 426721280,
+     "n": 706,
+     "ns": 46868652
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16102601,
+    "cudaMemcpyAsync": 72950708,
+    "cudaGraphLaunch": 1210769
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 757,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 2,
+   "host_expert_copy_ns": {
+    "slow": 3043043,
+    "fast": 68976439
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2638019,
+    "cudaMemcpyAsync": 28392375,
+    "cudaGraphLaunch": 46491,
+    "cudaLaunchKernel": 0,
+    "no_api": 17051072,
+    "expert_copy_slow": 2942569,
+    "expert_copy_fast": 24748927
+   }
+  },
+  {
+   "token": 47,
+   "t_ns": 55700000,
+   "compute_ns": 12668538,
+   "h2d_ns": 20212287,
+   "d2h_ns": 118238,
+   "memset_ns": 0,
+   "busy_ns": 32999063,
+   "idle_ns": 22700937,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 184803888,
+   "h2d_expert_bytes": 184737792,
+   "n_h2d": 338,
+   "n_h2d_expert": 288,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14495
+    },
+    "pageable": {
+     "bytes": 184778752,
+     "n": 328,
+     "ns": 20197792
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15079048,
+    "cudaMemcpyAsync": 30521955,
+    "cudaGraphLaunch": 1169022
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 379,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 29620644
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1673613,
+    "cudaMemcpyAsync": 12183689,
+    "cudaGraphLaunch": 289736,
+    "cudaLaunchKernel": 0,
+    "no_api": 8553899,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 11455456
+   }
+  },
+  {
+   "token": 48,
+   "t_ns": 82297771,
+   "compute_ns": 13234325,
+   "h2d_ns": 38949405,
+   "d2h_ns": 118847,
+   "memset_ns": 0,
+   "busy_ns": 52302577,
+   "idle_ns": 29995194,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 337003056,
+   "h2d_expert_bytes": 336936960,
+   "n_h2d": 575,
+   "n_h2d_expert": 525,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14944
+    },
+    "pageable": {
+     "bytes": 336977920,
+     "n": 565,
+     "ns": 38934461
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16031684,
+    "cudaMemcpyAsync": 51498772,
+    "cudaGraphLaunch": 1222596
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 616,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 50546813
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1985246,
+    "cudaMemcpyAsync": 14818524,
+    "cudaGraphLaunch": 113627,
+    "cudaLaunchKernel": 0,
+    "no_api": 13077797,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 14103903
+   }
+  },
+  {
+   "token": 49,
+   "t_ns": 73648720,
+   "compute_ns": 12691869,
+   "h2d_ns": 33088895,
+   "d2h_ns": 123742,
+   "memset_ns": 0,
+   "busy_ns": 45904506,
+   "idle_ns": 27744214,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 295871024,
+   "h2d_expert_bytes": 295804928,
+   "n_h2d": 512,
+   "n_h2d_expert": 462,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14048
+    },
+    "pageable": {
+     "bytes": 295845888,
+     "n": 502,
+     "ns": 33074847
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15438272,
+    "cudaMemcpyAsync": 45492618,
+    "cudaGraphLaunch": 1258838
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 553,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 44534322
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1932697,
+    "cudaMemcpyAsync": 14670252,
+    "cudaGraphLaunch": 110219,
+    "cudaLaunchKernel": 0,
+    "no_api": 11031046,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 13952965
+   }
+  },
+  {
+   "token": 50,
+   "t_ns": 72779959,
+   "compute_ns": 12674491,
+   "h2d_ns": 34952560,
+   "d2h_ns": 119230,
+   "memset_ns": 0,
+   "busy_ns": 47746281,
+   "idle_ns": 25033678,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 299827760,
+   "h2d_expert_bytes": 299761664,
+   "n_h2d": 515,
+   "n_h2d_expert": 465,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13728
+    },
+    "pageable": {
+     "bytes": 299802624,
+     "n": 505,
+     "ns": 34938832
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15547885,
+    "cudaMemcpyAsync": 42621079,
+    "cudaGraphLaunch": 1162891
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 556,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 41578427
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1999936,
+    "cudaMemcpyAsync": 9967413,
+    "cudaGraphLaunch": 68607,
+    "cudaLaunchKernel": 0,
+    "no_api": 12997722,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 9164676
+   }
+  },
+  {
+   "token": 51,
+   "t_ns": 73432562,
+   "compute_ns": 12694810,
+   "h2d_ns": 33547282,
+   "d2h_ns": 118750,
+   "memset_ns": 0,
+   "busy_ns": 46360842,
+   "idle_ns": 27071720,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 288006704,
+   "h2d_expert_bytes": 287940608,
+   "n_h2d": 497,
+   "n_h2d_expert": 447,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13664
+    },
+    "pageable": {
+     "bytes": 287981568,
+     "n": 487,
+     "ns": 33533618
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15576219,
+    "cudaMemcpyAsync": 43212878,
+    "cudaGraphLaunch": 1216091
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 538,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 42271337
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2086623,
+    "cudaMemcpyAsync": 11889911,
+    "cudaGraphLaunch": 96422,
+    "cudaLaunchKernel": 0,
+    "no_api": 12998764,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 11158468
+   }
+  },
+  {
+   "token": 52,
+   "t_ns": 66349867,
+   "compute_ns": 12700504,
+   "h2d_ns": 28316026,
+   "d2h_ns": 118431,
+   "memset_ns": 0,
+   "busy_ns": 41134961,
+   "idle_ns": 25214906,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 249872944,
+   "h2d_expert_bytes": 249806848,
+   "n_h2d": 437,
+   "n_h2d_expert": 387,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13664
+    },
+    "pageable": {
+     "bytes": 249847808,
+     "n": 427,
+     "ns": 28302362
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15525915,
+    "cudaMemcpyAsync": 36592159,
+    "cudaGraphLaunch": 1112296
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 478,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 35666287
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1951097,
+    "cudaMemcpyAsync": 10416394,
+    "cudaGraphLaunch": 109081,
+    "cudaLaunchKernel": 0,
+    "no_api": 12738334,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 9710292
+   }
+  },
+  {
+   "token": 53,
+   "t_ns": 50566634,
+   "compute_ns": 12930967,
+   "h2d_ns": 21116886,
+   "d2h_ns": 117566,
+   "memset_ns": 0,
+   "busy_ns": 34165419,
+   "idle_ns": 16401215,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 185131568,
+   "h2d_expert_bytes": 185065472,
+   "n_h2d": 335,
+   "n_h2d_expert": 285,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14080
+    },
+    "pageable": {
+     "bytes": 185106432,
+     "n": 325,
+     "ns": 21102806
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15583451,
+    "cudaMemcpyAsync": 26031743,
+    "cudaGraphLaunch": 1042960
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 376,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 25147132
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1761978,
+    "cudaMemcpyAsync": 6914312,
+    "cudaGraphLaunch": 148801,
+    "cudaLaunchKernel": 0,
+    "no_api": 7576124,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6189047
+   }
+  },
+  {
+   "token": 54,
+   "t_ns": 65094005,
+   "compute_ns": 14077046,
+   "h2d_ns": 23387108,
+   "d2h_ns": 119198,
+   "memset_ns": 0,
+   "busy_ns": 37583352,
+   "idle_ns": 27510653,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 215401008,
+   "h2d_expert_bytes": 215334912,
+   "n_h2d": 383,
+   "n_h2d_expert": 333,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13984
+    },
+    "pageable": {
+     "bytes": 215375872,
+     "n": 373,
+     "ns": 23373124
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16886494,
+    "cudaMemcpyAsync": 34303272,
+    "cudaGraphLaunch": 1096984
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 424,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 33370433
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1920666,
+    "cudaMemcpyAsync": 13041406,
+    "cudaGraphLaunch": 157989,
+    "cudaLaunchKernel": 0,
+    "no_api": 12390592,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12324185
+   }
+  },
+  {
+   "token": 55,
+   "t_ns": 64349563,
+   "compute_ns": 13169428,
+   "h2d_ns": 26865604,
+   "d2h_ns": 118496,
+   "memset_ns": 0,
+   "busy_ns": 40153528,
+   "idle_ns": 24196035,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 237232688,
+   "h2d_expert_bytes": 237166592,
+   "n_h2d": 416,
+   "n_h2d_expert": 366,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14176
+    },
+    "pageable": {
+     "bytes": 237207552,
+     "n": 406,
+     "ns": 26851428
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15844998,
+    "cudaMemcpyAsync": 35584913,
+    "cudaGraphLaunch": 1227672
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 457,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 34612160
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1891760,
+    "cudaMemcpyAsync": 10862080,
+    "cudaGraphLaunch": 134555,
+    "cudaLaunchKernel": 0,
+    "no_api": 11307640,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10097101
+   }
+  },
+  {
+   "token": 56,
+   "t_ns": 43122309,
+   "compute_ns": 12670395,
+   "h2d_ns": 18563270,
+   "d2h_ns": 117277,
+   "memset_ns": 0,
+   "busy_ns": 31350942,
+   "idle_ns": 11771367,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 160408112,
+   "h2d_expert_bytes": 160342016,
+   "n_h2d": 296,
+   "n_h2d_expert": 246,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 15680
+    },
+    "pageable": {
+     "bytes": 160382976,
+     "n": 286,
+     "ns": 18547590
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15310799,
+    "cudaMemcpyAsync": 21240749,
+    "cudaGraphLaunch": 1023995
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 337,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 20242754
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1728760,
+    "cudaMemcpyAsync": 4701158,
+    "cudaGraphLaunch": 175805,
+    "cudaLaunchKernel": 0,
+    "no_api": 5165644,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 3898642
+   }
+  },
+  {
+   "token": 57,
+   "t_ns": 46491499,
+   "compute_ns": 13799184,
+   "h2d_ns": 17013885,
+   "d2h_ns": 117088,
+   "memset_ns": 0,
+   "busy_ns": 30930157,
+   "idle_ns": 15561342,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 146686512,
+   "h2d_expert_bytes": 146620416,
+   "n_h2d": 275,
+   "n_h2d_expert": 225,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13888
+    },
+    "pageable": {
+     "bytes": 146661376,
+     "n": 265,
+     "ns": 16999997
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16114823,
+    "cudaMemcpyAsync": 21969928,
+    "cudaGraphLaunch": 1157557
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 316,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 21070856
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1631664,
+    "cudaMemcpyAsync": 6726467,
+    "cudaGraphLaunch": 280578,
+    "cudaLaunchKernel": 0,
+    "no_api": 6922633,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5963739
+   }
+  },
+  {
+   "token": 58,
+   "t_ns": 82054860,
+   "compute_ns": 12709082,
+   "h2d_ns": 37370575,
+   "d2h_ns": 119775,
+   "memset_ns": 0,
+   "busy_ns": 50199432,
+   "idle_ns": 31855428,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 331858480,
+   "h2d_expert_bytes": 331792384,
+   "n_h2d": 563,
+   "n_h2d_expert": 513,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14016
+    },
+    "pageable": {
+     "bytes": 331833344,
+     "n": 553,
+     "ns": 37356559
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15570560,
+    "cudaMemcpyAsync": 50367675,
+    "cudaGraphLaunch": 1168711
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 604,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 49355215
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1985678,
+    "cudaMemcpyAsync": 15266482,
+    "cudaGraphLaunch": 107249,
+    "cudaLaunchKernel": 0,
+    "no_api": 14496019,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 14546321
+   }
+  },
+  {
+   "token": 59,
+   "t_ns": 90873734,
+   "compute_ns": 12694705,
+   "h2d_ns": 40600676,
+   "d2h_ns": 119999,
+   "memset_ns": 0,
+   "busy_ns": 53415380,
+   "idle_ns": 37458354,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 346399280,
+   "h2d_expert_bytes": 346333184,
+   "n_h2d": 590,
+   "n_h2d_expert": 540,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14016
+    },
+    "pageable": {
+     "bytes": 346374144,
+     "n": 580,
+     "ns": 40586660
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15317726,
+    "cudaMemcpyAsync": 57705976,
+    "cudaGraphLaunch": 1573671
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 631,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 447340,
+    "fast": 55930536
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2184665,
+    "cudaMemcpyAsync": 19235258,
+    "cudaGraphLaunch": 391843,
+    "cudaLaunchKernel": 0,
+    "no_api": 15646588,
+    "expert_copy_slow": 447340,
+    "expert_copy_fast": 17817699
+   }
+  },
+  {
+   "token": 60,
+   "t_ns": 66798408,
+   "compute_ns": 13236310,
+   "h2d_ns": 29392519,
+   "d2h_ns": 118016,
+   "memset_ns": 0,
+   "busy_ns": 42746845,
+   "idle_ns": 24051563,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 253936176,
+   "h2d_expert_bytes": 253870080,
+   "n_h2d": 443,
+   "n_h2d_expert": 393,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13568
+    },
+    "pageable": {
+     "bytes": 253911040,
+     "n": 433,
+     "ns": 29378951
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15814634,
+    "cudaMemcpyAsync": 38938818,
+    "cudaGraphLaunch": 1160237
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 484,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 37968295
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1850128,
+    "cudaMemcpyAsync": 11612207,
+    "cudaGraphLaunch": 139457,
+    "cudaLaunchKernel": 0,
+    "no_api": 10449771,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10843691
+   }
+  },
+  {
+   "token": 61,
+   "t_ns": 104553879,
+   "compute_ns": 12684697,
+   "h2d_ns": 55489854,
+   "d2h_ns": 119071,
+   "memset_ns": 0,
+   "busy_ns": 68293622,
+   "idle_ns": 36260257,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 467894832,
+   "h2d_expert_bytes": 467828736,
+   "n_h2d": 782,
+   "n_h2d_expert": 732,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14112
+    },
+    "pageable": {
+     "bytes": 467869696,
+     "n": 772,
+     "ns": 55475742
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15155368,
+    "cudaMemcpyAsync": 70397525,
+    "cudaGraphLaunch": 1362137
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 823,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 69280949
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1872859,
+    "cudaMemcpyAsync": 17107462,
+    "cudaGraphLaunch": 225041,
+    "cudaLaunchKernel": 0,
+    "no_api": 17054895,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 16283246
+   }
+  },
+  {
+   "token": 62,
+   "t_ns": 68378075,
+   "compute_ns": 12684063,
+   "h2d_ns": 26096649,
+   "d2h_ns": 122335,
+   "memset_ns": 0,
+   "busy_ns": 38903047,
+   "idle_ns": 29475028,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 235872816,
+   "h2d_expert_bytes": 235806720,
+   "n_h2d": 419,
+   "n_h2d_expert": 369,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14240
+    },
+    "pageable": {
+     "bytes": 235847680,
+     "n": 409,
+     "ns": 26082409
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15423460,
+    "cudaMemcpyAsync": 39561419,
+    "cudaGraphLaunch": 1381738
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 460,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 38433830
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1998828,
+    "cudaMemcpyAsync": 15688724,
+    "cudaGraphLaunch": 223009,
+    "cudaLaunchKernel": 0,
+    "no_api": 11564467,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 14766369
+   }
+  },
+  {
+   "token": 63,
+   "t_ns": 96766231,
+   "compute_ns": 12681625,
+   "h2d_ns": 44824823,
+   "d2h_ns": 119904,
+   "memset_ns": 0,
+   "busy_ns": 57626352,
+   "idle_ns": 39139879,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 396739120,
+   "h2d_expert_bytes": 396673024,
+   "n_h2d": 668,
+   "n_h2d_expert": 618,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13856
+    },
+    "pageable": {
+     "bytes": 396713984,
+     "n": 658,
+     "ns": 44810967
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15489394,
+    "cudaMemcpyAsync": 61722860,
+    "cudaGraphLaunch": 1273872
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 709,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 60690272
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2036265,
+    "cudaMemcpyAsync": 19157832,
+    "cudaGraphLaunch": 174833,
+    "cudaLaunchKernel": 0,
+    "no_api": 17770949,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 18420363
+   }
+  },
+  {
+   "token": 64,
+   "t_ns": 70599784,
+   "compute_ns": 12694742,
+   "h2d_ns": 32278244,
+   "d2h_ns": 118591,
+   "memset_ns": 0,
+   "busy_ns": 45091577,
+   "idle_ns": 25508207,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 284623408,
+   "h2d_expert_bytes": 284557312,
+   "n_h2d": 491,
+   "n_h2d_expert": 441,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13824
+    },
+    "pageable": {
+     "bytes": 284598272,
+     "n": 481,
+     "ns": 32264420
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15576295,
+    "cudaMemcpyAsync": 41443629,
+    "cudaGraphLaunch": 1086035
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 532,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 40486706
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1982692,
+    "cudaMemcpyAsync": 11382156,
+    "cudaGraphLaunch": 100727,
+    "cudaLaunchKernel": 0,
+    "no_api": 12042632,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10610857
+   }
+  },
+  {
+   "token": 65,
+   "t_ns": 83480449,
+   "compute_ns": 12703833,
+   "h2d_ns": 36945392,
+   "d2h_ns": 120255,
+   "memset_ns": 0,
+   "busy_ns": 49769480,
+   "idle_ns": 33710969,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 333759024,
+   "h2d_expert_bytes": 333692928,
+   "n_h2d": 569,
+   "n_h2d_expert": 519,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13663
+    },
+    "pageable": {
+     "bytes": 333733888,
+     "n": 559,
+     "ns": 36931729
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15592309,
+    "cudaMemcpyAsync": 52427294,
+    "cudaGraphLaunch": 1124037
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 610,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 51538663
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1949820,
+    "cudaMemcpyAsync": 17807867,
+    "cudaGraphLaunch": 49255,
+    "cudaLaunchKernel": 0,
+    "no_api": 13904027,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 17118322
+   }
+  },
+  {
+   "token": 66,
+   "t_ns": 67986750,
+   "compute_ns": 13157305,
+   "h2d_ns": 30448488,
+   "d2h_ns": 119135,
+   "memset_ns": 0,
+   "busy_ns": 43724928,
+   "idle_ns": 24261822,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 264921648,
+   "h2d_expert_bytes": 264855552,
+   "n_h2d": 461,
+   "n_h2d_expert": 411,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13504
+    },
+    "pageable": {
+     "bytes": 264896512,
+     "n": 451,
+     "ns": 30434984
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15898912,
+    "cudaMemcpyAsync": 40406892,
+    "cudaGraphLaunch": 1255576
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 502,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 39496959
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2060158,
+    "cudaMemcpyAsync": 12154695,
+    "cudaGraphLaunch": 104565,
+    "cudaLaunchKernel": 0,
+    "no_api": 9942404,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 11455507
+   }
+  },
+  {
+   "token": 67,
+   "t_ns": 65637457,
+   "compute_ns": 12688761,
+   "h2d_ns": 32492254,
+   "d2h_ns": 118367,
+   "memset_ns": 0,
+   "busy_ns": 45299382,
+   "idle_ns": 20338075,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 278749744,
+   "h2d_expert_bytes": 278683648,
+   "n_h2d": 485,
+   "n_h2d_expert": 435,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14048
+    },
+    "pageable": {
+     "bytes": 278724608,
+     "n": 475,
+     "ns": 32478206
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15693804,
+    "cudaMemcpyAsync": 38728390,
+    "cudaGraphLaunch": 1057992
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 526,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 37741157
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1958027,
+    "cudaMemcpyAsync": 8583976,
+    "cudaGraphLaunch": 32455,
+    "cudaLaunchKernel": 0,
+    "no_api": 9763617,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7786494
+   }
+  },
+  {
+   "token": 68,
+   "t_ns": 83180580,
+   "compute_ns": 13071382,
+   "h2d_ns": 43277249,
+   "d2h_ns": 123392,
+   "memset_ns": 0,
+   "busy_ns": 56472023,
+   "idle_ns": 26708557,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 369590832,
+   "h2d_expert_bytes": 369524736,
+   "n_h2d": 626,
+   "n_h2d_expert": 576,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13472
+    },
+    "pageable": {
+     "bytes": 369565696,
+     "n": 616,
+     "ns": 43263777
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15914424,
+    "cudaMemcpyAsync": 51946154,
+    "cudaGraphLaunch": 1116640
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 667,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 50999424
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1915642,
+    "cudaMemcpyAsync": 10973054,
+    "cudaGraphLaunch": 81724,
+    "cudaLaunchKernel": 0,
+    "no_api": 13738137,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10246613
+   }
+  },
+  {
+   "token": 69,
+   "t_ns": 64536121,
+   "compute_ns": 12636663,
+   "h2d_ns": 31296838,
+   "d2h_ns": 118270,
+   "memset_ns": 0,
+   "busy_ns": 44051771,
+   "idle_ns": 20484350,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 270328368,
+   "h2d_expert_bytes": 270262272,
+   "n_h2d": 470,
+   "n_h2d_expert": 420,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13536
+    },
+    "pageable": {
+     "bytes": 270303232,
+     "n": 460,
+     "ns": 31283302
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15461142,
+    "cudaMemcpyAsync": 37339783,
+    "cudaGraphLaunch": 1096337
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 511,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 36436269
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1906246,
+    "cudaMemcpyAsync": 8331310,
+    "cudaGraphLaunch": 67473,
+    "cudaLaunchKernel": 0,
+    "no_api": 10179321,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7632056
+   }
+  },
+  {
+   "token": 70,
+   "t_ns": 73156437,
+   "compute_ns": 12671960,
+   "h2d_ns": 36678693,
+   "d2h_ns": 119776,
+   "memset_ns": 0,
+   "busy_ns": 49470429,
+   "idle_ns": 23686008,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 315540016,
+   "h2d_expert_bytes": 315473920,
+   "n_h2d": 542,
+   "n_h2d_expert": 492,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13824
+    },
+    "pageable": {
+     "bytes": 315514880,
+     "n": 532,
+     "ns": 36664869
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15741023,
+    "cudaMemcpyAsync": 45326657,
+    "cudaGraphLaunch": 1164524
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 583,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 44405990
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2190320,
+    "cudaMemcpyAsync": 10933380,
+    "cudaGraphLaunch": 88177,
+    "cudaLaunchKernel": 0,
+    "no_api": 10474131,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10224647
+   }
+  },
+  {
+   "token": 71,
+   "t_ns": 45339603,
+   "compute_ns": 12917465,
+   "h2d_ns": 18561224,
+   "d2h_ns": 118110,
+   "memset_ns": 0,
+   "busy_ns": 31596799,
+   "idle_ns": 13742804,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 163201584,
+   "h2d_expert_bytes": 163135488,
+   "n_h2d": 302,
+   "n_h2d_expert": 252,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14143
+    },
+    "pageable": {
+     "bytes": 163176448,
+     "n": 292,
+     "ns": 18547081
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15547363,
+    "cudaMemcpyAsync": 22511806,
+    "cudaGraphLaunch": 986957
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 343,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 21680617
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1670575,
+    "cudaMemcpyAsync": 5983075,
+    "cudaGraphLaunch": 138865,
+    "cudaLaunchKernel": 0,
+    "no_api": 5950289,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5290124
+   }
+  },
+  {
+   "token": 72,
+   "t_ns": 63586530,
+   "compute_ns": 13470033,
+   "h2d_ns": 24551710,
+   "d2h_ns": 118272,
+   "memset_ns": 0,
+   "busy_ns": 38140015,
+   "idle_ns": 25446515,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 221348400,
+   "h2d_expert_bytes": 221282304,
+   "n_h2d": 392,
+   "n_h2d_expert": 342,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 15648
+    },
+    "pageable": {
+     "bytes": 221323264,
+     "n": 382,
+     "ns": 24536062
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16303270,
+    "cudaMemcpyAsync": 35554085,
+    "cudaGraphLaunch": 1147537
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 433,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 34454231
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1931869,
+    "cudaMemcpyAsync": 13125486,
+    "cudaGraphLaunch": 172193,
+    "cudaLaunchKernel": 0,
+    "no_api": 10216967,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12203442
+   }
+  },
+  {
+   "token": 73,
+   "t_ns": 52192860,
+   "compute_ns": 12654907,
+   "h2d_ns": 17805233,
+   "d2h_ns": 118175,
+   "memset_ns": 0,
+   "busy_ns": 30578315,
+   "idle_ns": 21614545,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 163095088,
+   "h2d_expert_bytes": 163028992,
+   "n_h2d": 302,
+   "n_h2d_expert": 252,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13888
+    },
+    "pageable": {
+     "bytes": 163069952,
+     "n": 292,
+     "ns": 17791345
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15320674,
+    "cudaMemcpyAsync": 27183421,
+    "cudaGraphLaunch": 1016098
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 343,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 1,
+   "host_expert_copy_ns": {
+    "slow": 1400832,
+    "fast": 24913091
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1678023,
+    "cudaMemcpyAsync": 11481358,
+    "cudaGraphLaunch": 137192,
+    "cudaLaunchKernel": 0,
+    "no_api": 8317972,
+    "expert_copy_slow": 1348150,
+    "expert_copy_fast": 9425158
+   }
+  },
+  {
+   "token": 74,
+   "t_ns": 58085006,
+   "compute_ns": 12686651,
+   "h2d_ns": 25517619,
+   "d2h_ns": 118750,
+   "memset_ns": 0,
+   "busy_ns": 38323020,
+   "idle_ns": 19761986,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 218628656,
+   "h2d_expert_bytes": 218562560,
+   "n_h2d": 389,
+   "n_h2d_expert": 339,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14080
+    },
+    "pageable": {
+     "bytes": 218603520,
+     "n": 379,
+     "ns": 25503539
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15467098,
+    "cudaMemcpyAsync": 32519287,
+    "cudaGraphLaunch": 1109621
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 430,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 31650133
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1946316,
+    "cudaMemcpyAsync": 9091164,
+    "cudaGraphLaunch": 112564,
+    "cudaLaunchKernel": 0,
+    "no_api": 8611942,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8385685
+   }
+  },
+  {
+   "token": 75,
+   "t_ns": 57693937,
+   "compute_ns": 12685434,
+   "h2d_ns": 25863082,
+   "d2h_ns": 118368,
+   "memset_ns": 0,
+   "busy_ns": 38666884,
+   "idle_ns": 19027053,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 222552624,
+   "h2d_expert_bytes": 222486528,
+   "n_h2d": 395,
+   "n_h2d_expert": 345,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13696
+    },
+    "pageable": {
+     "bytes": 222527488,
+     "n": 385,
+     "ns": 25849386
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15604432,
+    "cudaMemcpyAsync": 31877844,
+    "cudaGraphLaunch": 1088997
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 436,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 30999326
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1989655,
+    "cudaMemcpyAsync": 8193216,
+    "cudaGraphLaunch": 95069,
+    "cudaLaunchKernel": 0,
+    "no_api": 8749113,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7512094
+   }
+  },
+  {
+   "token": 76,
+   "t_ns": 50620105,
+   "compute_ns": 13476310,
+   "h2d_ns": 19093512,
+   "d2h_ns": 119327,
+   "memset_ns": 0,
+   "busy_ns": 32689149,
+   "idle_ns": 17930956,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 171516464,
+   "h2d_expert_bytes": 171450368,
+   "n_h2d": 314,
+   "n_h2d_expert": 264,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14208
+    },
+    "pageable": {
+     "bytes": 171491328,
+     "n": 304,
+     "ns": 19079304
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16168575,
+    "cudaMemcpyAsync": 25577151,
+    "cudaGraphLaunch": 1045514
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 355,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 24714267
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1775056,
+    "cudaMemcpyAsync": 8638484,
+    "cudaGraphLaunch": 63481,
+    "cudaLaunchKernel": 0,
+    "no_api": 7453935,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7951335
+   }
+  },
+  {
+   "token": 77,
+   "t_ns": 39947263,
+   "compute_ns": 12658268,
+   "h2d_ns": 13194104,
+   "d2h_ns": 118334,
+   "memset_ns": 0,
+   "busy_ns": 25970706,
+   "idle_ns": 13976557,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 118563376,
+   "h2d_expert_bytes": 118497280,
+   "n_h2d": 233,
+   "n_h2d_expert": 183,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13792
+    },
+    "pageable": {
+     "bytes": 118538240,
+     "n": 223,
+     "ns": 13180312
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15238670,
+    "cudaMemcpyAsync": 17427096,
+    "cudaGraphLaunch": 1027644
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 274,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 16530435
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1732640,
+    "cudaMemcpyAsync": 6112130,
+    "cudaGraphLaunch": 186630,
+    "cudaLaunchKernel": 0,
+    "no_api": 5945157,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5352722
+   }
+  },
+  {
+   "token": 78,
+   "t_ns": 54789864,
+   "compute_ns": 13808117,
+   "h2d_ns": 19809985,
+   "d2h_ns": 119775,
+   "memset_ns": 0,
+   "busy_ns": 33737877,
+   "idle_ns": 21051987,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 178422320,
+   "h2d_expert_bytes": 178356224,
+   "n_h2d": 326,
+   "n_h2d_expert": 276,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14336
+    },
+    "pageable": {
+     "bytes": 178397184,
+     "n": 316,
+     "ns": 19795649
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16537567,
+    "cudaMemcpyAsync": 27124629,
+    "cudaGraphLaunch": 1074551
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 367,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 26183383
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1854893,
+    "cudaMemcpyAsync": 9495164,
+    "cudaGraphLaunch": 98159,
+    "cudaLaunchKernel": 0,
+    "no_api": 9603771,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8739334
+   }
+  },
+  {
+   "token": 79,
+   "t_ns": 45836144,
+   "compute_ns": 12653436,
+   "h2d_ns": 14959405,
+   "d2h_ns": 116991,
+   "memset_ns": 0,
+   "busy_ns": 27729832,
+   "idle_ns": 18106312,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 133104176,
+   "h2d_expert_bytes": 133038080,
+   "n_h2d": 254,
+   "n_h2d_expert": 204,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13760
+    },
+    "pageable": {
+     "bytes": 133079040,
+     "n": 244,
+     "ns": 14945645
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15594919,
+    "cudaMemcpyAsync": 20161491,
+    "cudaGraphLaunch": 1055550
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 295,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 19286453
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2155776,
+    "cudaMemcpyAsync": 7037479,
+    "cudaGraphLaunch": 180026,
+    "cudaLaunchKernel": 0,
+    "no_api": 8733031,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6286672
+   }
+  },
+  {
+   "token": 80,
+   "t_ns": 46675401,
+   "compute_ns": 13714549,
+   "h2d_ns": 14742507,
+   "d2h_ns": 117311,
+   "memset_ns": 0,
+   "busy_ns": 28574367,
+   "idle_ns": 18101034,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 136520240,
+   "h2d_expert_bytes": 136454144,
+   "n_h2d": 260,
+   "n_h2d_expert": 210,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13599
+    },
+    "pageable": {
+     "bytes": 136495104,
+     "n": 250,
+     "ns": 14728908
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16812967,
+    "cudaMemcpyAsync": 21484742,
+    "cudaGraphLaunch": 1043711
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 301,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 20635055
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2259930,
+    "cudaMemcpyAsync": 8538144,
+    "cudaGraphLaunch": 263373,
+    "cudaLaunchKernel": 0,
+    "no_api": 7039587,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7816019
+   }
+  },
+  {
+   "token": 81,
+   "t_ns": 48590778,
+   "compute_ns": 12676921,
+   "h2d_ns": 17975214,
+   "d2h_ns": 118112,
+   "memset_ns": 0,
+   "busy_ns": 30770247,
+   "idle_ns": 17820531,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 160793136,
+   "h2d_expert_bytes": 160727040,
+   "n_h2d": 299,
+   "n_h2d_expert": 249,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 15520
+    },
+    "pageable": {
+     "bytes": 160768000,
+     "n": 289,
+     "ns": 17959694
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15474473,
+    "cudaMemcpyAsync": 22912361,
+    "cudaGraphLaunch": 1051430
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 340,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 22038626
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1892968,
+    "cudaMemcpyAsync": 7032441,
+    "cudaGraphLaunch": 109802,
+    "cudaLaunchKernel": 0,
+    "no_api": 8785320,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6348584
+   }
+  },
+  {
+   "token": 82,
+   "t_ns": 39373411,
+   "compute_ns": 12632824,
+   "h2d_ns": 12273178,
+   "d2h_ns": 116767,
+   "memset_ns": 0,
+   "busy_ns": 25022769,
+   "idle_ns": 14350642,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 112476720,
+   "h2d_expert_bytes": 112410624,
+   "n_h2d": 224,
+   "n_h2d_expert": 174,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14528
+    },
+    "pageable": {
+     "bytes": 112451584,
+     "n": 214,
+     "ns": 12258650
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15393086,
+    "cudaMemcpyAsync": 16855815,
+    "cudaGraphLaunch": 985515
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 265,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 16039172
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1950653,
+    "cudaMemcpyAsync": 6321172,
+    "cudaGraphLaunch": 211579,
+    "cudaLaunchKernel": 0,
+    "no_api": 5867238,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5604302
+   }
+  },
+  {
+   "token": 83,
+   "t_ns": 47081222,
+   "compute_ns": 12702042,
+   "h2d_ns": 12998294,
+   "d2h_ns": 116479,
+   "memset_ns": 0,
+   "busy_ns": 25816815,
+   "idle_ns": 21264407,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 124559920,
+   "h2d_expert_bytes": 124493824,
+   "n_h2d": 245,
+   "n_h2d_expert": 195,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13536
+    },
+    "pageable": {
+     "bytes": 124534784,
+     "n": 235,
+     "ns": 12984758
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15183213,
+    "cudaMemcpyAsync": 22855418,
+    "cudaGraphLaunch": 1003860
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 286,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 21969471
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1740644,
+    "cudaMemcpyAsync": 11536706,
+    "cudaGraphLaunch": 265480,
+    "cudaLaunchKernel": 0,
+    "no_api": 7721577,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10774584
+   }
+  },
+  {
+   "token": 84,
+   "t_ns": 47303588,
+   "compute_ns": 12670332,
+   "h2d_ns": 18351435,
+   "d2h_ns": 117983,
+   "memset_ns": 0,
+   "busy_ns": 31139750,
+   "idle_ns": 16163838,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 160793136,
+   "h2d_expert_bytes": 160727040,
+   "n_h2d": 299,
+   "n_h2d_expert": 249,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14080
+    },
+    "pageable": {
+     "bytes": 160768000,
+     "n": 289,
+     "ns": 18337355
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15111567,
+    "cudaMemcpyAsync": 24072009,
+    "cudaGraphLaunch": 1056728
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 340,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 23186867
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1643405,
+    "cudaMemcpyAsync": 7589457,
+    "cudaGraphLaunch": 195542,
+    "cudaLaunchKernel": 0,
+    "no_api": 6735434,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6835806
+   }
+  },
+  {
+   "token": 85,
+   "t_ns": 46462987,
+   "compute_ns": 12676284,
+   "h2d_ns": 17108086,
+   "d2h_ns": 117151,
+   "memset_ns": 0,
+   "busy_ns": 29901521,
+   "idle_ns": 16561466,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 151970352,
+   "h2d_expert_bytes": 151904256,
+   "n_h2d": 284,
+   "n_h2d_expert": 234,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13888
+    },
+    "pageable": {
+     "bytes": 151945216,
+     "n": 274,
+     "ns": 17094198
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15220883,
+    "cudaMemcpyAsync": 22271136,
+    "cudaGraphLaunch": 1026402
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 325,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 21406658
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1727619,
+    "cudaMemcpyAsync": 6999138,
+    "cudaGraphLaunch": 208004,
+    "cudaLaunchKernel": 0,
+    "no_api": 7626705,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6276395
+   }
+  },
+  {
+   "token": 86,
+   "t_ns": 86039821,
+   "compute_ns": 13323223,
+   "h2d_ns": 44618103,
+   "d2h_ns": 118879,
+   "memset_ns": 0,
+   "busy_ns": 58060205,
+   "idle_ns": 27979616,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 379511344,
+   "h2d_expert_bytes": 379445248,
+   "n_h2d": 641,
+   "n_h2d_expert": 591,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13439
+    },
+    "pageable": {
+     "bytes": 379486208,
+     "n": 631,
+     "ns": 44604664
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16238041,
+    "cudaMemcpyAsync": 53570175,
+    "cudaGraphLaunch": 1153724
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 682,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 52661506
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2037188,
+    "cudaMemcpyAsync": 11289450,
+    "cudaGraphLaunch": 87472,
+    "cudaLaunchKernel": 0,
+    "no_api": 14565506,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10599721
+   }
+  },
+  {
+   "token": 87,
+   "t_ns": 76536825,
+   "compute_ns": 12701143,
+   "h2d_ns": 39101186,
+   "d2h_ns": 119487,
+   "memset_ns": 0,
+   "busy_ns": 51921816,
+   "idle_ns": 24615009,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 331072048,
+   "h2d_expert_bytes": 331005952,
+   "n_h2d": 566,
+   "n_h2d_expert": 516,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13599
+    },
+    "pageable": {
+     "bytes": 331046912,
+     "n": 556,
+     "ns": 39087587
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15764795,
+    "cudaMemcpyAsync": 46276417,
+    "cudaGraphLaunch": 1159825
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 607,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 45309177
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2159730,
+    "cudaMemcpyAsync": 9514718,
+    "cudaGraphLaunch": 48133,
+    "cudaLaunchKernel": 0,
+    "no_api": 12892428,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8729892
+   }
+  },
+  {
+   "token": 88,
+   "t_ns": 83734432,
+   "compute_ns": 12708957,
+   "h2d_ns": 41888753,
+   "d2h_ns": 119040,
+   "memset_ns": 0,
+   "busy_ns": 54716750,
+   "idle_ns": 29017682,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 357384752,
+   "h2d_expert_bytes": 357318656,
+   "n_h2d": 605,
+   "n_h2d_expert": 555,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13952
+    },
+    "pageable": {
+     "bytes": 357359616,
+     "n": 595,
+     "ns": 41874801
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16141717,
+    "cudaMemcpyAsync": 51318637,
+    "cudaGraphLaunch": 1307997
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 646,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 50353520
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2653362,
+    "cudaMemcpyAsync": 11756977,
+    "cudaGraphLaunch": 125146,
+    "cudaLaunchKernel": 0,
+    "no_api": 14482197,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 11030768
+   }
+  },
+  {
+   "token": 89,
+   "t_ns": 80896118,
+   "compute_ns": 12663931,
+   "h2d_ns": 44847381,
+   "d2h_ns": 118879,
+   "memset_ns": 0,
+   "busy_ns": 57630191,
+   "idle_ns": 23265927,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 380068400,
+   "h2d_expert_bytes": 380002304,
+   "n_h2d": 644,
+   "n_h2d_expert": 594,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13440
+    },
+    "pageable": {
+     "bytes": 380043264,
+     "n": 634,
+     "ns": 44833941
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15365635,
+    "cudaMemcpyAsync": 50896679,
+    "cudaGraphLaunch": 1211827
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 685,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 49992634
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1855695,
+    "cudaMemcpyAsync": 8337324,
+    "cudaGraphLaunch": 144415,
+    "cudaLaunchKernel": 0,
+    "no_api": 12928493,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7638605
+   }
+  },
+  {
+   "token": 90,
+   "t_ns": 70225164,
+   "compute_ns": 13317940,
+   "h2d_ns": 27030890,
+   "d2h_ns": 118560,
+   "memset_ns": 0,
+   "busy_ns": 40467390,
+   "idle_ns": 29757774,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 249299504,
+   "h2d_expert_bytes": 249233408,
+   "n_h2d": 437,
+   "n_h2d_expert": 387,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 15424
+    },
+    "pageable": {
+     "bytes": 249274368,
+     "n": 427,
+     "ns": 27015466
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16384869,
+    "cudaMemcpyAsync": 40694195,
+    "cudaGraphLaunch": 1029604
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 478,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 39898899
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2067463,
+    "cudaMemcpyAsync": 15957360,
+    "cudaGraphLaunch": 24476,
+    "cudaLaunchKernel": 0,
+    "no_api": 11708475,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 15300241
+   }
+  },
+  {
+   "token": 91,
+   "t_ns": 91831966,
+   "compute_ns": 13163318,
+   "h2d_ns": 47543274,
+   "d2h_ns": 119039,
+   "memset_ns": 0,
+   "busy_ns": 60825631,
+   "idle_ns": 31006335,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 403710512,
+   "h2d_expert_bytes": 403644416,
+   "n_h2d": 680,
+   "n_h2d_expert": 630,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13824
+    },
+    "pageable": {
+     "bytes": 403685376,
+     "n": 670,
+     "ns": 47529450
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15866882,
+    "cudaMemcpyAsync": 58119464,
+    "cudaGraphLaunch": 1254465
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 721,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 57174724
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1991558,
+    "cudaMemcpyAsync": 12787887,
+    "cudaGraphLaunch": 140882,
+    "cudaLaunchKernel": 0,
+    "no_api": 16086008,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12090069
+   }
+  },
+  {
+   "token": 92,
+   "t_ns": 89713552,
+   "compute_ns": 13272886,
+   "h2d_ns": 46924666,
+   "d2h_ns": 118688,
+   "memset_ns": 0,
+   "busy_ns": 60316240,
+   "idle_ns": 29397312,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 403276336,
+   "h2d_expert_bytes": 403210240,
+   "n_h2d": 677,
+   "n_h2d_expert": 627,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14079
+    },
+    "pageable": {
+     "bytes": 403251200,
+     "n": 667,
+     "ns": 46910587
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16340730,
+    "cudaMemcpyAsync": 57790881,
+    "cudaGraphLaunch": 1151485
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 718,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 56884962
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2160484,
+    "cudaMemcpyAsync": 13234927,
+    "cudaGraphLaunch": 48331,
+    "cudaLaunchKernel": 0,
+    "no_api": 13953570,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12546345
+   }
+  },
+  {
+   "token": 93,
+   "t_ns": 59705312,
+   "compute_ns": 12697882,
+   "h2d_ns": 23801309,
+   "d2h_ns": 119007,
+   "memset_ns": 0,
+   "busy_ns": 36618198,
+   "idle_ns": 23087114,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 211042864,
+   "h2d_expert_bytes": 210976768,
+   "n_h2d": 377,
+   "n_h2d_expert": 327,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13856
+    },
+    "pageable": {
+     "bytes": 211017728,
+     "n": 367,
+     "ns": 23787453
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15733592,
+    "cudaMemcpyAsync": 31151367,
+    "cudaGraphLaunch": 1105340
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 418,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 30235343
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2188140,
+    "cudaMemcpyAsync": 9534853,
+    "cudaGraphLaunch": 66567,
+    "cudaLaunchKernel": 0,
+    "no_api": 11297554,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8790417
+   }
+  },
+  {
+   "token": 94,
+   "t_ns": 55975135,
+   "compute_ns": 12667864,
+   "h2d_ns": 24487417,
+   "d2h_ns": 119552,
+   "memset_ns": 0,
+   "busy_ns": 37274833,
+   "idle_ns": 18700302,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 212648496,
+   "h2d_expert_bytes": 212582400,
+   "n_h2d": 380,
+   "n_h2d_expert": 330,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14112
+    },
+    "pageable": {
+     "bytes": 212623360,
+     "n": 370,
+     "ns": 24473305
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15533180,
+    "cudaMemcpyAsync": 30982755,
+    "cudaGraphLaunch": 1104180
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 421,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 30044916
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1980036,
+    "cudaMemcpyAsync": 8630096,
+    "cudaGraphLaunch": 94718,
+    "cudaLaunchKernel": 0,
+    "no_api": 7995452,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7877155
+   }
+  },
+  {
+   "token": 95,
+   "t_ns": 65258419,
+   "compute_ns": 12670296,
+   "h2d_ns": 27829697,
+   "d2h_ns": 119647,
+   "memset_ns": 0,
+   "busy_ns": 40619640,
+   "idle_ns": 24638779,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 245547568,
+   "h2d_expert_bytes": 245481472,
+   "n_h2d": 431,
+   "n_h2d_expert": 381,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13568
+    },
+    "pageable": {
+     "bytes": 245522432,
+     "n": 421,
+     "ns": 27816129
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15578625,
+    "cudaMemcpyAsync": 37145969,
+    "cudaGraphLaunch": 1118334
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 472,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 36246637
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1976201,
+    "cudaMemcpyAsync": 11560580,
+    "cudaGraphLaunch": 72123,
+    "cudaLaunchKernel": 0,
+    "no_api": 11029875,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10862125
+   }
+  },
+  {
+   "token": 96,
+   "t_ns": 67607137,
+   "compute_ns": 12690873,
+   "h2d_ns": 32242656,
+   "d2h_ns": 118367,
+   "memset_ns": 0,
+   "busy_ns": 45051896,
+   "idle_ns": 22555241,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 280281648,
+   "h2d_expert_bytes": 280215552,
+   "n_h2d": 488,
+   "n_h2d_expert": 438,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14208
+    },
+    "pageable": {
+     "bytes": 280256512,
+     "n": 478,
+     "ns": 32228448
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15678047,
+    "cudaMemcpyAsync": 40946830,
+    "cudaGraphLaunch": 1273068
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 529,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 39959509
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2075001,
+    "cudaMemcpyAsync": 10979995,
+    "cudaGraphLaunch": 212775,
+    "cudaLaunchKernel": 0,
+    "no_api": 9287470,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10229237
+   }
+  },
+  {
+   "token": 97,
+   "t_ns": 60553305,
+   "compute_ns": 12692217,
+   "h2d_ns": 27699457,
+   "d2h_ns": 118399,
+   "memset_ns": 0,
+   "busy_ns": 40510073,
+   "idle_ns": 20043232,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 241451568,
+   "h2d_expert_bytes": 241385472,
+   "n_h2d": 425,
+   "n_h2d_expert": 375,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13568
+    },
+    "pageable": {
+     "bytes": 241426432,
+     "n": 415,
+     "ns": 27685889
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15403073,
+    "cudaMemcpyAsync": 34535437,
+    "cudaGraphLaunch": 1049353
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 466,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 33679100
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1752284,
+    "cudaMemcpyAsync": 9003942,
+    "cudaGraphLaunch": 125953,
+    "cudaLaunchKernel": 0,
+    "no_api": 9161053,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8338503
+   }
+  },
+  {
+   "token": 98,
+   "t_ns": 78744580,
+   "compute_ns": 12698038,
+   "h2d_ns": 39163454,
+   "d2h_ns": 120031,
+   "memset_ns": 0,
+   "busy_ns": 51981523,
+   "idle_ns": 26763057,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 332972592,
+   "h2d_expert_bytes": 332906496,
+   "n_h2d": 569,
+   "n_h2d_expert": 519,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14112
+    },
+    "pageable": {
+     "bytes": 332947456,
+     "n": 559,
+     "ns": 39149342
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15574060,
+    "cudaMemcpyAsync": 47879058,
+    "cudaGraphLaunch": 1240718
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 610,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 46942426
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2125875,
+    "cudaMemcpyAsync": 11015953,
+    "cudaGraphLaunch": 65039,
+    "cudaLaunchKernel": 0,
+    "no_api": 13556190,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 10273215
+   }
+  },
+  {
+   "token": 99,
+   "t_ns": 71133154,
+   "compute_ns": 12718394,
+   "h2d_ns": 31722743,
+   "d2h_ns": 118815,
+   "memset_ns": 0,
+   "busy_ns": 44559952,
+   "idle_ns": 26573202,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 279585328,
+   "h2d_expert_bytes": 279519232,
+   "n_h2d": 485,
+   "n_h2d_expert": 435,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13824
+    },
+    "pageable": {
+     "bytes": 279560192,
+     "n": 475,
+     "ns": 31708919
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15664143,
+    "cudaMemcpyAsync": 42215614,
+    "cudaGraphLaunch": 1159772
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 526,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 41333777
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2049714,
+    "cudaMemcpyAsync": 12808687,
+    "cudaGraphLaunch": 47772,
+    "cudaLaunchKernel": 0,
+    "no_api": 11667029,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 12138082
+   }
+  },
+  {
+   "token": 100,
+   "t_ns": 52536632,
+   "compute_ns": 12659124,
+   "h2d_ns": 20619448,
+   "d2h_ns": 117824,
+   "memset_ns": 0,
+   "busy_ns": 33396396,
+   "idle_ns": 19140236,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 184869424,
+   "h2d_expert_bytes": 184803328,
+   "n_h2d": 338,
+   "n_h2d_expert": 288,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13695
+    },
+    "pageable": {
+     "bytes": 184844288,
+     "n": 328,
+     "ns": 20605753
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15141350,
+    "cudaMemcpyAsync": 27693574,
+    "cudaGraphLaunch": 1137771
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 379,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 26752817
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1801708,
+    "cudaMemcpyAsync": 8968049,
+    "cudaGraphLaunch": 166810,
+    "cudaLaunchKernel": 0,
+    "no_api": 8203669,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8216616
+   }
+  },
+  {
+   "token": 101,
+   "t_ns": 53383441,
+   "compute_ns": 12648666,
+   "h2d_ns": 24035776,
+   "d2h_ns": 119680,
+   "memset_ns": 0,
+   "busy_ns": 36804122,
+   "idle_ns": 16579319,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 210346544,
+   "h2d_expert_bytes": 210280448,
+   "n_h2d": 377,
+   "n_h2d_expert": 327,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13696
+    },
+    "pageable": {
+     "bytes": 210321408,
+     "n": 367,
+     "ns": 24022080
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15501305,
+    "cudaMemcpyAsync": 29491015,
+    "cudaGraphLaunch": 1026447
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 418,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 28651177
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1819838,
+    "cudaMemcpyAsync": 7691125,
+    "cudaGraphLaunch": 81353,
+    "cudaLaunchKernel": 0,
+    "no_api": 6987003,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7014711
+   }
+  },
+  {
+   "token": 102,
+   "t_ns": 53380656,
+   "compute_ns": 12684376,
+   "h2d_ns": 21607155,
+   "d2h_ns": 117695,
+   "memset_ns": 0,
+   "busy_ns": 34409226,
+   "idle_ns": 18971430,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 190399024,
+   "h2d_expert_bytes": 190332928,
+   "n_h2d": 347,
+   "n_h2d_expert": 297,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13920
+    },
+    "pageable": {
+     "bytes": 190373888,
+     "n": 337,
+     "ns": 21593235
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16020195,
+    "cudaMemcpyAsync": 28258293,
+    "cudaGraphLaunch": 1110000
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 388,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 27329702
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2520557,
+    "cudaMemcpyAsync": 8725469,
+    "cudaGraphLaunch": 104410,
+    "cudaLaunchKernel": 0,
+    "no_api": 7620994,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7986508
+   }
+  },
+  {
+   "token": 103,
+   "t_ns": 62593031,
+   "compute_ns": 12675832,
+   "h2d_ns": 28195637,
+   "d2h_ns": 119136,
+   "memset_ns": 0,
+   "busy_ns": 40990605,
+   "idle_ns": 21602426,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 245654064,
+   "h2d_expert_bytes": 245587968,
+   "n_h2d": 431,
+   "n_h2d_expert": 381,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13824
+    },
+    "pageable": {
+     "bytes": 245628928,
+     "n": 421,
+     "ns": 28181813
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15803583,
+    "cudaMemcpyAsync": 36142437,
+    "cudaGraphLaunch": 1085602
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 472,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 35289293
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2122507,
+    "cudaMemcpyAsync": 10209465,
+    "cudaGraphLaunch": 115971,
+    "cudaLaunchKernel": 0,
+    "no_api": 9154483,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 9519469
+   }
+  },
+  {
+   "token": 104,
+   "t_ns": 40206939,
+   "compute_ns": 12635671,
+   "h2d_ns": 14851558,
+   "d2h_ns": 117279,
+   "memset_ns": 0,
+   "busy_ns": 27604508,
+   "idle_ns": 12602431,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 130662960,
+   "h2d_expert_bytes": 130596864,
+   "n_h2d": 254,
+   "n_h2d_expert": 204,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13727
+    },
+    "pageable": {
+     "bytes": 130637824,
+     "n": 244,
+     "ns": 14837831
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15537177,
+    "cudaMemcpyAsync": 18620069,
+    "cudaGraphLaunch": 973788
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 295,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 17760881
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1977253,
+    "cudaMemcpyAsync": 5680986,
+    "cudaGraphLaunch": 163209,
+    "cudaLaunchKernel": 0,
+    "no_api": 4780983,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 4950938
+   }
+  },
+  {
+   "token": 105,
+   "t_ns": 60677622,
+   "compute_ns": 12677143,
+   "h2d_ns": 27999799,
+   "d2h_ns": 118751,
+   "memset_ns": 0,
+   "busy_ns": 40795693,
+   "idle_ns": 19881929,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 241607216,
+   "h2d_expert_bytes": 241541120,
+   "n_h2d": 425,
+   "n_h2d_expert": 375,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14239
+    },
+    "pageable": {
+     "bytes": 241582080,
+     "n": 415,
+     "ns": 27985560
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15728759,
+    "cudaMemcpyAsync": 33615716,
+    "cudaGraphLaunch": 1128801
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 466,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 32690105
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2133403,
+    "cudaMemcpyAsync": 7897861,
+    "cudaGraphLaunch": 86250,
+    "cudaLaunchKernel": 0,
+    "no_api": 9764415,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7174820
+   }
+  },
+  {
+   "token": 106,
+   "t_ns": 64741077,
+   "compute_ns": 12689210,
+   "h2d_ns": 31907870,
+   "d2h_ns": 144543,
+   "memset_ns": 0,
+   "busy_ns": 44741623,
+   "idle_ns": 19999454,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 274702896,
+   "h2d_expert_bytes": 274636800,
+   "n_h2d": 476,
+   "n_h2d_expert": 426,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13888
+    },
+    "pageable": {
+     "bytes": 274677760,
+     "n": 466,
+     "ns": 31893982
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16019243,
+    "cudaMemcpyAsync": 37595332,
+    "cudaGraphLaunch": 1068271
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 517,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 36706476
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2302942,
+    "cudaMemcpyAsync": 7988286,
+    "cudaGraphLaunch": 33906,
+    "cudaLaunchKernel": 0,
+    "no_api": 9674320,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7287952
+   }
+  },
+  {
+   "token": 107,
+   "t_ns": 52825078,
+   "compute_ns": 12675992,
+   "h2d_ns": 25043318,
+   "d2h_ns": 118750,
+   "memset_ns": 0,
+   "busy_ns": 37838060,
+   "idle_ns": 14987018,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 213590576,
+   "h2d_expert_bytes": 213524480,
+   "n_h2d": 380,
+   "n_h2d_expert": 330,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13664
+    },
+    "pageable": {
+     "bytes": 213565440,
+     "n": 370,
+     "ns": 25029654
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15422787,
+    "cudaMemcpyAsync": 29285129,
+    "cudaGraphLaunch": 1109955
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 421,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 28437449
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1835580,
+    "cudaMemcpyAsync": 6387087,
+    "cudaGraphLaunch": 159127,
+    "cudaLaunchKernel": 0,
+    "no_api": 6605224,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5734909
+   }
+  },
+  {
+   "token": 108,
+   "t_ns": 62124970,
+   "compute_ns": 12680572,
+   "h2d_ns": 28493569,
+   "d2h_ns": 121984,
+   "memset_ns": 0,
+   "busy_ns": 41296125,
+   "idle_ns": 20828845,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 246891056,
+   "h2d_expert_bytes": 246824960,
+   "n_h2d": 434,
+   "n_h2d_expert": 384,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14784
+    },
+    "pageable": {
+     "bytes": 246865920,
+     "n": 424,
+     "ns": 28478785
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15729999,
+    "cudaMemcpyAsync": 34448375,
+    "cudaGraphLaunch": 1099593
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 475,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 33509943
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2100747,
+    "cudaMemcpyAsync": 8193710,
+    "cudaGraphLaunch": 71376,
+    "cudaLaunchKernel": 0,
+    "no_api": 10463012,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7429476
+   }
+  },
+  {
+   "token": 109,
+   "t_ns": 59441984,
+   "compute_ns": 13128537,
+   "h2d_ns": 27396485,
+   "d2h_ns": 119456,
+   "memset_ns": 0,
+   "busy_ns": 40644478,
+   "idle_ns": 18797506,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 236290608,
+   "h2d_expert_bytes": 236224512,
+   "n_h2d": 416,
+   "n_h2d_expert": 366,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13696
+    },
+    "pageable": {
+     "bytes": 236265472,
+     "n": 406,
+     "ns": 27382789
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16211151,
+    "cudaMemcpyAsync": 32888842,
+    "cudaGraphLaunch": 1109059
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 457,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 31926734
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2110178,
+    "cudaMemcpyAsync": 7774575,
+    "cudaGraphLaunch": 88190,
+    "cudaLaunchKernel": 0,
+    "no_api": 8824563,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7016471
+   }
+  },
+  {
+   "token": 110,
+   "t_ns": 57949164,
+   "compute_ns": 12663259,
+   "h2d_ns": 26333832,
+   "d2h_ns": 119552,
+   "memset_ns": 0,
+   "busy_ns": 39116643,
+   "idle_ns": 18832521,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 227836464,
+   "h2d_expert_bytes": 227770368,
+   "n_h2d": 404,
+   "n_h2d_expert": 354,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14048
+    },
+    "pageable": {
+     "bytes": 227811328,
+     "n": 394,
+     "ns": 26319784
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15664838,
+    "cudaMemcpyAsync": 31569080,
+    "cudaGraphLaunch": 1173290
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 445,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 30613362
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2116987,
+    "cudaMemcpyAsync": 7392033,
+    "cudaGraphLaunch": 225538,
+    "cudaLaunchKernel": 0,
+    "no_api": 9097963,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6653170
+   }
+  },
+  {
+   "token": 111,
+   "t_ns": 47241378,
+   "compute_ns": 12657302,
+   "h2d_ns": 19110692,
+   "d2h_ns": 118559,
+   "memset_ns": 0,
+   "busy_ns": 31886553,
+   "idle_ns": 15354825,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 168395312,
+   "h2d_expert_bytes": 168329216,
+   "n_h2d": 311,
+   "n_h2d_expert": 261,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13952
+    },
+    "pageable": {
+     "bytes": 168370176,
+     "n": 301,
+     "ns": 19096740
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15406122,
+    "cudaMemcpyAsync": 24178172,
+    "cudaGraphLaunch": 1068003
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 352,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 23273080
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1805449,
+    "cudaMemcpyAsync": 7248357,
+    "cudaGraphLaunch": 62532,
+    "cudaLaunchKernel": 0,
+    "no_api": 6238487,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6514021
+   }
+  },
+  {
+   "token": 112,
+   "t_ns": 70356904,
+   "compute_ns": 12694777,
+   "h2d_ns": 34314279,
+   "d2h_ns": 119263,
+   "memset_ns": 0,
+   "busy_ns": 47128319,
+   "idle_ns": 23228585,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 287728176,
+   "h2d_expert_bytes": 287662080,
+   "n_h2d": 497,
+   "n_h2d_expert": 447,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14112
+    },
+    "pageable": {
+     "bytes": 287703040,
+     "n": 487,
+     "ns": 34300167
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15610107,
+    "cudaMemcpyAsync": 40921496,
+    "cudaGraphLaunch": 1234394
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 538,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 39844677
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2197647,
+    "cudaMemcpyAsync": 8800659,
+    "cudaGraphLaunch": 147702,
+    "cudaLaunchKernel": 0,
+    "no_api": 12082577,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7984560
+   }
+  },
+  {
+   "token": 113,
+   "t_ns": 45579920,
+   "compute_ns": 12668091,
+   "h2d_ns": 18221426,
+   "d2h_ns": 117728,
+   "memset_ns": 0,
+   "busy_ns": 31007245,
+   "idle_ns": 14572675,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 160916016,
+   "h2d_expert_bytes": 160849920,
+   "n_h2d": 299,
+   "n_h2d_expert": 249,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14016
+    },
+    "pageable": {
+     "bytes": 160890880,
+     "n": 289,
+     "ns": 18207410
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15350421,
+    "cudaMemcpyAsync": 22472223,
+    "cudaGraphLaunch": 1029360
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 340,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 21556401
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1751173,
+    "cudaMemcpyAsync": 6309792,
+    "cudaGraphLaunch": 125432,
+    "cudaLaunchKernel": 0,
+    "no_api": 6386278,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5549599
+   }
+  },
+  {
+   "token": 114,
+   "t_ns": 47294306,
+   "compute_ns": 12663803,
+   "h2d_ns": 18372390,
+   "d2h_ns": 118815,
+   "memset_ns": 0,
+   "busy_ns": 31155008,
+   "idle_ns": 16139298,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 164438576,
+   "h2d_expert_bytes": 164372480,
+   "n_h2d": 305,
+   "n_h2d_expert": 255,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13696
+    },
+    "pageable": {
+     "bytes": 164413440,
+     "n": 295,
+     "ns": 18358694
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15559479,
+    "cudaMemcpyAsync": 23599143,
+    "cudaGraphLaunch": 1056723
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 346,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 22665506
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1896301,
+    "cudaMemcpyAsync": 7433273,
+    "cudaGraphLaunch": 68312,
+    "cudaLaunchKernel": 0,
+    "no_api": 6741412,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 6681440
+   }
+  },
+  {
+   "token": 115,
+   "t_ns": 31565473,
+   "compute_ns": 13001462,
+   "h2d_ns": 9245684,
+   "d2h_ns": 116861,
+   "memset_ns": 0,
+   "busy_ns": 22364007,
+   "idle_ns": 9201466,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 83796528,
+   "h2d_expert_bytes": 83730432,
+   "n_h2d": 179,
+   "n_h2d_expert": 129,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13792
+    },
+    "pageable": {
+     "bytes": 83771392,
+     "n": 169,
+     "ns": 9231892
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15406788,
+    "cudaMemcpyAsync": 11507238,
+    "cudaGraphLaunch": 944498
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 220,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 10675198
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1641016,
+    "cudaMemcpyAsync": 3881072,
+    "cudaGraphLaunch": 256033,
+    "cudaLaunchKernel": 0,
+    "no_api": 3423345,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 3128675
+   }
+  },
+  {
+   "token": 116,
+   "t_ns": 52991412,
+   "compute_ns": 12674200,
+   "h2d_ns": 18667592,
+   "d2h_ns": 118239,
+   "memset_ns": 0,
+   "busy_ns": 31460031,
+   "idle_ns": 21531381,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 169493040,
+   "h2d_expert_bytes": 169426944,
+   "n_h2d": 311,
+   "n_h2d_expert": 261,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14016
+    },
+    "pageable": {
+     "bytes": 169467904,
+     "n": 301,
+     "ns": 18653576
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15106058,
+    "cudaMemcpyAsync": 26043270,
+    "cudaGraphLaunch": 1367238
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 352,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 25156314
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1725166,
+    "cudaMemcpyAsync": 9419169,
+    "cudaGraphLaunch": 270575,
+    "cudaLaunchKernel": 0,
+    "no_api": 10116471,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8695389
+   }
+  },
+  {
+   "token": 117,
+   "t_ns": 38858406,
+   "compute_ns": 13120242,
+   "h2d_ns": 12890553,
+   "d2h_ns": 117181,
+   "memset_ns": 0,
+   "busy_ns": 26127976,
+   "idle_ns": 12730430,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 115057200,
+   "h2d_expert_bytes": 114991104,
+   "n_h2d": 230,
+   "n_h2d_expert": 180,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13856
+    },
+    "pageable": {
+     "bytes": 115032064,
+     "n": 220,
+     "ns": 12876697
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15724156,
+    "cudaMemcpyAsync": 16327741,
+    "cudaGraphLaunch": 995442
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 271,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 15525224
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1798096,
+    "cudaMemcpyAsync": 5309761,
+    "cudaGraphLaunch": 175179,
+    "cudaLaunchKernel": 0,
+    "no_api": 5447394,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 4619591
+   }
+  },
+  {
+   "token": 118,
+   "t_ns": 70889732,
+   "compute_ns": 12671286,
+   "h2d_ns": 35772291,
+   "d2h_ns": 118848,
+   "memset_ns": 0,
+   "busy_ns": 48562425,
+   "idle_ns": 22327307,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 307135024,
+   "h2d_expert_bytes": 307068928,
+   "n_h2d": 527,
+   "n_h2d_expert": 477,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14176
+    },
+    "pageable": {
+     "bytes": 307109888,
+     "n": 517,
+     "ns": 35758115
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15629959,
+    "cudaMemcpyAsync": 42966204,
+    "cudaGraphLaunch": 1120196
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 568,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 42080007
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1981255,
+    "cudaMemcpyAsync": 9545188,
+    "cudaGraphLaunch": 64961,
+    "cudaLaunchKernel": 0,
+    "no_api": 10735903,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 8833842
+   }
+  },
+  {
+   "token": 119,
+   "t_ns": 52621399,
+   "compute_ns": 12612025,
+   "h2d_ns": 20534206,
+   "d2h_ns": 118848,
+   "memset_ns": 0,
+   "busy_ns": 33265079,
+   "idle_ns": 19356320,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 184107568,
+   "h2d_expert_bytes": 184041472,
+   "n_h2d": 335,
+   "n_h2d_expert": 285,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13920
+    },
+    "pageable": {
+     "bytes": 184082432,
+     "n": 325,
+     "ns": 20520286
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15251876,
+    "cudaMemcpyAsync": 26359477,
+    "cudaGraphLaunch": 1044771
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 376,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 25512675
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1738588,
+    "cudaMemcpyAsync": 7867459,
+    "cudaGraphLaunch": 125856,
+    "cudaLaunchKernel": 0,
+    "no_api": 9624417,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7157852
+   }
+  },
+  {
+   "token": 120,
+   "t_ns": 34531465,
+   "compute_ns": 12642010,
+   "h2d_ns": 10296964,
+   "d2h_ns": 115807,
+   "memset_ns": 0,
+   "busy_ns": 23054781,
+   "idle_ns": 11476684,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 94118448,
+   "h2d_expert_bytes": 94052352,
+   "n_h2d": 194,
+   "n_h2d_expert": 144,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14432
+    },
+    "pageable": {
+     "bytes": 94093312,
+     "n": 184,
+     "ns": 10282532
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15280891,
+    "cudaMemcpyAsync": 13891983,
+    "cudaGraphLaunch": 978981
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 235,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 13008700
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1925057,
+    "cudaMemcpyAsync": 5154552,
+    "cudaGraphLaunch": 261854,
+    "cudaLaunchKernel": 0,
+    "no_api": 4135221,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 4375859
+   }
+  },
+  {
+   "token": 121,
+   "t_ns": 53962508,
+   "compute_ns": 12675385,
+   "h2d_ns": 24076189,
+   "d2h_ns": 118367,
+   "memset_ns": 0,
+   "busy_ns": 36869941,
+   "idle_ns": 17092567,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 208552496,
+   "h2d_expert_bytes": 208486400,
+   "n_h2d": 374,
+   "n_h2d_expert": 324,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13856
+    },
+    "pageable": {
+     "bytes": 208527360,
+     "n": 364,
+     "ns": 24062333
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15383339,
+    "cudaMemcpyAsync": 28688658,
+    "cudaGraphLaunch": 1056620
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 415,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 27743352
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1729070,
+    "cudaMemcpyAsync": 6702805,
+    "cudaGraphLaunch": 154442,
+    "cudaLaunchKernel": 0,
+    "no_api": 8506250,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5992722
+   }
+  },
+  {
+   "token": 122,
+   "t_ns": 32745143,
+   "compute_ns": 12662422,
+   "h2d_ns": 8946518,
+   "d2h_ns": 114719,
+   "memset_ns": 0,
+   "busy_ns": 21723659,
+   "idle_ns": 11021484,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 80134704,
+   "h2d_expert_bytes": 80068608,
+   "n_h2d": 173,
+   "n_h2d_expert": 123,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13952
+    },
+    "pageable": {
+     "bytes": 80109568,
+     "n": 163,
+     "ns": 8932566
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 14566053,
+    "cudaMemcpyAsync": 12472208,
+    "cudaGraphLaunch": 937976
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 214,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 11698015
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1390140,
+    "cudaMemcpyAsync": 4687883,
+    "cudaGraphLaunch": 403676,
+    "cudaLaunchKernel": 0,
+    "no_api": 4539785,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 4008632
+   }
+  },
+  {
+   "token": 123,
+   "t_ns": 43434146,
+   "compute_ns": 13081302,
+   "h2d_ns": 15159909,
+   "d2h_ns": 117983,
+   "memset_ns": 0,
+   "busy_ns": 28359194,
+   "idle_ns": 15074952,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 135807536,
+   "h2d_expert_bytes": 135741440,
+   "n_h2d": 260,
+   "n_h2d_expert": 210,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14816
+    },
+    "pageable": {
+     "bytes": 135782400,
+     "n": 250,
+     "ns": 15145093
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 16013474,
+    "cudaMemcpyAsync": 19199882,
+    "cudaGraphLaunch": 988647
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 301,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 18282983
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2010431,
+    "cudaMemcpyAsync": 5981370,
+    "cudaGraphLaunch": 137394,
+    "cudaLaunchKernel": 0,
+    "no_api": 6945757,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 5193821
+   }
+  },
+  {
+   "token": 124,
+   "t_ns": 65624846,
+   "compute_ns": 12688951,
+   "h2d_ns": 30650112,
+   "d2h_ns": 119232,
+   "memset_ns": 0,
+   "busy_ns": 43458295,
+   "idle_ns": 22166551,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 258785840,
+   "h2d_expert_bytes": 258719744,
+   "n_h2d": 452,
+   "n_h2d_expert": 402,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14336
+    },
+    "pageable": {
+     "bytes": 258760704,
+     "n": 442,
+     "ns": 30635776
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15728749,
+    "cudaMemcpyAsync": 38760743,
+    "cudaGraphLaunch": 1183138
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 493,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 37843466
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 2144087,
+    "cudaMemcpyAsync": 10447030,
+    "cudaGraphLaunch": 66385,
+    "cudaLaunchKernel": 0,
+    "no_api": 9509049,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 9726138
+   }
+  },
+  {
+   "token": 125,
+   "t_ns": 60896148,
+   "compute_ns": 12662426,
+   "h2d_ns": 28256701,
+   "d2h_ns": 119327,
+   "memset_ns": 0,
+   "busy_ns": 41038454,
+   "idle_ns": 19857694,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 243597872,
+   "h2d_expert_bytes": 243531776,
+   "n_h2d": 431,
+   "n_h2d_expert": 381,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 14240
+    },
+    "pageable": {
+     "bytes": 243572736,
+     "n": 421,
+     "ns": 28242461
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15518965,
+    "cudaMemcpyAsync": 34192751,
+    "cudaGraphLaunch": 1140974
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 472,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 33197499
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1919962,
+    "cudaMemcpyAsync": 8249995,
+    "cudaGraphLaunch": 60721,
+    "cudaLaunchKernel": 0,
+    "no_api": 9627016,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 7474578
+   }
+  },
+  {
+   "token": 126,
+   "t_ns": 49190515,
+   "compute_ns": 12675577,
+   "h2d_ns": 22469764,
+   "d2h_ns": 117824,
+   "memset_ns": 0,
+   "busy_ns": 35263165,
+   "idle_ns": 13927350,
+   "overlap_compute_h2d_ns": 0,
+   "overlap_compute_d2h_ns": 0,
+   "h2d_bytes": 193503792,
+   "h2d_expert_bytes": 193437696,
+   "n_h2d": 350,
+   "n_h2d_expert": 300,
+   "n_h2d_small": 50,
+   "n_d2h": 41,
+   "n_graph_launch": 41,
+   "n_kernel": 0,
+   "h2d_by_src_kind": {
+    "pinned": {
+     "bytes": 25136,
+     "n": 10,
+     "ns": 13760
+    },
+    "pageable": {
+     "bytes": 193478656,
+     "n": 340,
+     "ns": 22456004
+    }
+   },
+   "host_api_ns": {
+    "cudaStreamSynchronize": 15526487,
+    "cudaMemcpyAsync": 25472256,
+    "cudaGraphLaunch": 1035679
+   },
+   "host_api_n": {
+    "cudaStreamSynchronize": 109,
+    "cudaMemcpyAsync": 391,
+    "cudaGraphLaunch": 41
+   },
+   "n_expert_copy_slow": 0,
+   "host_expert_copy_ns": {
+    "slow": 0,
+    "fast": 24618085
+   },
+   "idle_while_host_in_ns": {
+    "cudaStreamSynchronize": 1876767,
+    "cudaMemcpyAsync": 5176561,
+    "cudaGraphLaunch": 71969,
+    "cudaLaunchKernel": 0,
+    "no_api": 6802053,
+    "expert_copy_slow": 0,
+    "expert_copy_fast": 4504092
+   }
+  }
+ ]
+}

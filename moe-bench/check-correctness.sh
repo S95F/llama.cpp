@@ -23,6 +23,9 @@ NGEN=${NGEN:-256}
 # within a few hundred tokens: offload them too, so that only the movement of the experts differs (EXP-0005)
 export GGML_OP_OFFLOAD_MIN_BATCH=${GGML_OP_OFFLOAD_MIN_BATCH:-1}
 
+# only the rows that ask for it pin host experts, whatever the caller's environment says (EXP-0007)
+export GGML_CUDA_REGISTER_HOST=0
+
 mkdir -p "$OUT"
 rm -f "$OUT"/*.txt
 PROMPT=moe-bench/prompt.txt
@@ -67,6 +70,13 @@ fi
 # nor pinning in the middle of the generation, by the selections of its first small batches
 LLAMA_MOE_PIN_ONLINE=16 run cache2048-pinonline "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
 LLAMA_MOE_PIN_ONLINE=64 LLAMA_MOE_PIN_MIB=15000 run cache2048-pinonline15000 "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
+
+# nor prefetching the pages of the missed experts, all pageable or around pinned ones
+run cache2048-prefetch "$BIN" LLAMA_MOE_PREFETCH=1 --moe-cache-mib 2048
+if [ -n "${PIN_PROFILE:-}" ]; then
+    LLAMA_MOE_PREFETCH=1 LLAMA_MOE_PIN_PROFILE="$PIN_PROFILE" run cache2048-pinprof-prefetch "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
+    LLAMA_MOE_PREFETCH=2 LLAMA_MOE_PIN_PROFILE="$PIN_PROFILE" run cache2048-pinprof-prefetch2 "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
+fi
 
 if [ -n "$BASE_BIN" ]; then
     run upstream-off  "$BASE_BIN" - --moe-cache-mib 0

@@ -17,11 +17,12 @@ with the missing test named).
 | EXP-0004 | 2026-10-31 | The expert uploads overlap compute, so the copy is the bottleneck (Q6) | **Adopt** (measurement; no code change). H1 falsified | overlap 0 ns in every token of 15 traced runs; warm 2048 MiB token 56.2 ms = 12.8 compute + 27.1 DMA + 0.1 read-back + 16.1 idle; cold short pageable runs 55-66% page-fault waits; overlap bound 9.4 ms/token (17%) | [EXP-0004.md](experiments/EXP-0004.md) |
 | EXP-0005 | 2026-10-31 | Pinning about 15000 MiB, most-selected experts first, cuts the warm 2048 MiB token to 42 ms or less, and beats address order at the same MiB (R11); a fixed page-cache state makes reps agree within 3% (R10); `--load-mode none` (R5) | **Adopt** (opt-in `LLAMA_MOE_PIN_PROFILE`, upload split at pinned-range edges). R10 falsified in part | warm 52.95 -> 36.43 ms (-31%) at 14924 MiB by profile; profile vs address -2.69 ms (-6.8%) at 15000 MiB, -3.55 ms (-8.1%) at the default cap, same sign both rounds; `--load-mode none` about 80% pinned, 38.21 ms (matched window); correctness 10/10 at 256 tokens with every expert on the GPU, and the old gate found to compare CPU with GPU | [EXP-0005.md](experiments/EXP-0005.md) |
 | EXP-0006 | 2026-10-31 | Pinning by the run's own first 64 or 128 decode passes is within 1 ms of the file profile warm and beats address order over the whole run (R17); the file profile transfers worse to an unlike prompt (Q17); a fixed launch headroom makes reps agree (R16, its reproducibility half) | **Adopt** (opt-in `LLAMA_MOE_PIN_ONLINE=<N>`; the fixed-headroom harness). H1-H4 hold, H1 and H2 narrowly | warm vs file profile +0.65, -0.16, +0.83, +0.90 ms; over tokens 3-1022 -0.47 and -0.54 ms vs address order (predicted -2, -1), about 3 s per run behind the file profile at the default cap (6-7 s at 15000 MiB); out of domain 6.2% faster than the file profile warm, 0.64 s ahead end to end; reps within 0.8%, drift slope +0.011; 2.0-12% of the pageable expert copies fault under profile pinning (0.9% address order); correctness 11/11 | [EXP-0006.md](experiments/EXP-0006.md) |
+| EXP-0007 | 2026-11-01 | One `PrefetchVirtualMemory` call per layer over the missed experts' pages beats faulting them in one by one (R12); the pageable copies that fault are the ones not read for long (Q18); less launch headroom slows prefill and raises faults (R16b) | **Adopt** (opt-in `LLAMA_MOE_PREFETCH=2`, probed by working set). H1 falsified; H2-H4 hold | gate G: prefetch then copy 0.27x the faulting copy (cold, 3 experts); warm profile -2.59 ms (-6.2%), address order -1.74 (-3.9%), mode 1 -0.96 and +2.03; cold unpinned mode 1 -12.91 ms (-16.5%); 99.9% of the remaining faults are first reads since the load, re-reads essentially never fault; 1 GiB less headroom +0.5-0.6 s prefill, +0.93 ms warm; correctness 14/14 | [EXP-0007.md](experiments/EXP-0007.md) |
 
-Next: **EXP-0007**, ROADMAP **R12** - one batched prefetch per layer of the
-missed experts' pages, aimed at the cold tail that profile pinning leaves
-pageable, with a second balloon level folded in (R16b). Not started; awaiting
-authorization.
+Next: **EXP-0008**, not chosen until the next `go`. ROADMAP priority 1 is
+R12b (the probed prefetch unpinned, at 15000 MiB and on the story prompt, then
+the default) and R20 (read the never-read pageable experts off the decode
+thread). Not started; awaiting authorization.
 
 ## Dependency graph
 
@@ -49,10 +50,15 @@ EXP-0004  (timeline: no overlap; faults, staging, DMA)  DONE
           +-- EXP-0006 (R17 online profile; R16 reproducibility half; Q17 one prompt)  DONE
           |      ^-- coverage replay from EXP-0005's simulator on two new traces
           |      |
-          |      +-- R12 (batched prefetch: the cold tail's faults, Q18)
+          |      +-- EXP-0007 (R12 probed batch prefetch; Q18 attribution; R16b one level)  DONE
+          |      |      ^-- copy log joined with the selection trace
+          |      |      |
+          |      |      +-- R12b (probed prefetch unpinned, 15000 MiB, story; the default)
+          |      |      +-- R20 (read never-read pageable experts off the decode thread)
+          |      |      +-- Q21 (what takes the load's pages)
           |      +-- R18 (hybrid profile: file at load, online re-rank)
           |      +-- R19 (deferred residency cost of registration)
-          |      +-- R16b (prefill against launch headroom)
+          |      +-- R16b (prefill against launch headroom; one level in EXP-0007)
           +-- R13 (copy stream + next-layer prediction) <-- Q7 supplies the predictor
           +-- R14 (per-layer round trip)
 ```
@@ -88,6 +94,7 @@ to a context it was never tested in.
 | Profile order beats address order (Finding 11) | **A pin budget below the expert bytes** (about 15 of 18.3 GiB here, the Windows pinned budget). With room to pin everything, order does not matter. Also on a profile that covers the run's routing: held out by prompt but from the same domain, and the run prompt is the best covered of four. |
 | The online profile matches the file profile warm (Finding 12) | **A file profile from the same kind of text.** Out of domain it was 6.2% faster than the file profile (one prompt, which changed topic and register together). Its up-front cost (about 3 s per 1024 tokens at the default cap, 6-7 s at 15000 MiB) depends on N and on how slow the pageable passes are, so on the page-cache state and the headroom. |
 | The pageable remainder under profile pinning faults more per byte (Finding 12) | **This host's RAM/working-set ratio** and the headroom left after pinning. With RAM to keep the whole file cached, the pageable experts would stay resident and the difference should vanish (level 4). |
+| Faults left under pinning are first reads; a probed batch prefetch removes them (Finding 13) | **This host's RAM/working-set ratio and the launch headroom** (the file's last 2.1 GiB never stays resident at about 19.5 GiB available, and its head is lost in file order as the run grows), **the file's tensor order**, and **Windows**: `PrefetchVirtualMemory` blocks until its reads finish and the probe uses `QueryWorkingSetEx`; elsewhere `llama_prefetch` is `madvise(MADV_WILLNEED)` and the probe is skipped (untested). With RAM to keep the file cached there would be little to prefetch. One prompt, the default pin cap. |
 | Byte-identical output with the cache (B3) | **The same compute device for every expert.** The cache off, or a cache group with no slots, computes those experts on the CPU, whose output diverges from the GPU's within about 65 to 110 tokens. |
 | Overlap bound 9.4 ms/token (Finding 10) | The per-layer compute and upload times of this model on this GPU and link; scales with them. |
 | Byte-identical inertness above the crossover | Construction, not measurement luck - the branch sets `n_sample = 0` there. Holds for any model. |

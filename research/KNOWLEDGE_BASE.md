@@ -17,9 +17,10 @@ primary record and holds the full tables. Section numbers below refer to it.
 Findings 7 and 8 come from EXP-0002 and 0003, findings 9 and 10 and the rewrite
 of Finding 4 from EXP-0004, Finding 11 and the rewritten correctness invariant
 from EXP-0005, Finding 12, Finding 11's online figures and three
-measurement-discipline entries from EXP-0006, and two more entries and a
+measurement-discipline entries from EXP-0006, two more entries and a
 router check from the 2026-11-01 merge check
-(`research/results/baseline/rebase-2ca33f0d7/`).
+(`research/results/baseline/rebase-2ca33f0d7/`), and Finding 13 and two
+entries from EXP-0007.
 RESULTS.md measured on two bases: `78a8ae1` (sections 1-11) and `d854d98b`
 (section 12). Where they differ, the `d854d98b` figure is the one to use. The
 base has since moved to `a91eab67d` (merge `2ca33f0d7`), and the router check
@@ -392,8 +393,10 @@ pageable tokens 3-130).
 
 **Warm, DMA is the largest component (47 to 56%)**, compute 16 to 28%, idle 25 to
 29%. The faults never quite stop (2 to 5 per token late in a run, in bursts),
-and whether those are first touches or re-faults after the OS dropped a page is
-not known.
+and whether those are first touches or re-faults after the OS dropped a page was
+not known. EXP-0007 (Finding 13): under pinning at the default cap they are
+first reads, each pageable expert's first since the load; re-reads essentially
+never fault. The unpinned warm case was not rerun.
 
 **The OS keeps part of the model cached between processes** after a pinned run:
 pageable runs that followed one prefilled in 3.7 to 7.3 s instead of 13.4 to
@@ -555,7 +558,11 @@ the same cap as the other modes. ms per token, mean of two reps:
   pageable. **Level 4**: a profile pins the hot experts, so what stays pageable
   is the cold tail, selected rarely, whose pages leave RAM between uses;
   address order leaves whole layers pageable, hot experts included, and those
-  stay resident. Which experts fault was not identified.
+  stay resident. Which experts fault was not identified. **Corrected by
+  EXP-0007 (Finding 13):** the faults are first reads since the load (99.9%),
+  and an expert once read essentially never faults again (0 to 5 slow re-reads
+  per run); the profile's remainder has more
+  experts not yet read, not pages that leave RAM between uses.
 - **So the offline replay gives the share but not the milliseconds.** The replay
   reproduces every arm's measured pageable share within 0.2 points (0.1 once a
   one-pass offset in its windows was fixed). Converting share to ms with
@@ -589,6 +596,94 @@ level. Five of the six runs at 15000 MiB had a warm median below 1 GiB
 available, so those comparisons are headroom-limited. The three arms repeated
 from EXP-0005 ran 0.7 to 1.4 ms slower here, mostly in slow-copy idle, at 0.2
 to 1.7 GiB less launch headroom; the cause was not tested.
+
+---
+
+## Finding 13: the faults left after pinning are first reads, and a probed batch prefetch removes them
+
+**Level 1** (EXP-0007: 2048 MiB cache, 1024-token traced runs, two reps per arm
+in mirror order, a balloon targeting 19968 MiB available at launch (19880 to
+20028 measured; `prof_r1` 88 MiB short with nothing held), a copy log of every
+expert upload joined with the selection trace). Level 4 where
+marked.
+
+- **99.9% of the hard faults left are a pageable expert's first read since the
+  load.** Of the slow pageable expert uploads (below 1.5 GB/s over the host
+  call) 99.9% are of an expert the host had not read since the load, under
+  profile and address-order pinning at the default cap and in the first 126
+  tokens of an unpinned cold run. An expert the decode has read once is
+  essentially never slow again: 0 to 5 per run of 38,600 to 184,000 later
+  uploads, none after a gap of 500 passes or more. Copy speeds fall in three
+  classes (`prof_r1` medians): re-reads 7.2 GB/s, fast first reads 3.2 GB/s,
+  slow first reads 0.38 GB/s. The working-set probe of `LLAMA_MOE_PREFETCH=2`
+  finds exactly the first reads outside the working set, call for call; that
+  the fast ones come from standby and the slow ones from disk is level 4
+  (their per-page cost against gate G's).
+- **Whether a first read faults depends on where the expert sits in the file.**
+  The file's last 2.1 GiB (from about 18.7 of 20.82 GiB, layers 35-39) never
+  stayed resident after the load at about 19.5 GiB available: its prefill
+  uploads were already slow, and its first reads stay 82 to 100% slow all run.
+  The head is lost in file order: pageable first reads in layers 10-14 go from
+  0% slow (tokens 3-50) to 99% (387-1022) under the profile, a front that is
+  further on at 1 GiB less headroom, while the layers between the front and the
+  tail almost never fault. The front moves with the run's own memory use (its
+  working set grew from 12.9 to 17.3 GiB in one run), not with the balloon's
+  size (0 or 1344 MiB held gave 3803 and 3746 slow first reads). Pooled, 44 to
+  45% of first reads are slow over tokens 3-1022 (34 to 36% over 3-130, 60 to
+  71% over 387-1022), but that is an average over layers near 0% and near 100%.
+  **Level 4:** Windows repurposes the oldest standby pages first; under the
+  profile the head was already gone at the prefill, plausibly displaced by the
+  registration of the pinned experts at load.
+- **So the warm fault rate is the rate of new first reads in the lost
+  regions.** Under the profile, pageable first reads fall from 27 per pass
+  (tokens 3-130) to 3.5 (387-1022), of which 2.1 are slow, the same as its slow
+  copies per token. The profile faults more per pageable copy than address
+  order because more of its pageable uploads are first reads (10.4% against
+  4.0%), which explains 103% of the difference over tokens 3-1022; it is not
+  that pages leave RAM between uses. This corrects Finding 12's level 4
+  explanation and answers Finding 9's open question for these configurations.
+- **Level 4, a lever:** the non-expert tensors uploaded to the GPU (2.0 GiB)
+  are read through the mapping and stay mapped after the load (level 2, code:
+  the loader unmaps only the file outside the span of the CPU-mapped tensors,
+  here about 0.5 GiB, and on Windows `unmap_fragment` does nothing), probably
+  in the working set: about the size of the tail that never stays resident
+  (ROADMAP R21).
+- **One `PrefetchVirtualMemory` call per layer over the missed experts' pages
+  turns the serial faults into one parallel read** (gate G, cold: 0.24 to 0.32
+  of the faulting copy's time for 1 to 8 experts; it blocks until its reads are
+  done). Over pages already in RAM it is pure cost: 0.12 to 0.16 us per 4 KiB page
+  resident and 0.20 to 0.26 us from standby.
+- **Probing the working set first (`LLAMA_MOE_PREFETCH=2`) keeps the gain and
+  drops the cost.** `QueryWorkingSetEx` on one page per candidate range leaves
+  2.13 of 49.34 MiB per pass to prefetch under the profile. ms per token:
+
+| arm | 387-1022 | 3-1022 | slow-copy idle | no-API idle |
+|---|---:|---:|---:|---:|
+| profile, no prefetch | 41.77 | 44.38 | 3.51 | 0.72 |
+| profile, prefetch all (mode 1) | 40.81 | 41.65 | 0.00 | 2.96 |
+| profile, probed (mode 2) | **39.18** | **40.10** | 0.02 | 1.59 |
+| address order, no prefetch | 45.16 | 48.32 | 2.81 | 0.77 |
+| address order, mode 1 | 47.19 | 48.51 | 0.02 | 5.46 |
+| address order, mode 2 | 43.42 | 44.79 | 0.00 | 1.54 |
+
+  Mode 2 is 6.2% faster warm and 9.7% over tokens 3-1022 under the profile
+  (3.9% and 7.3% under address order), the same sign in both rounds. Mode 1
+  prefetches pages that are already resident and loses warm under address order
+  (+2.03 ms). Unpinned and cold (tokens 3-126), mode 1 is 16.5% faster (78.43 to
+  65.52 ms) and cuts the fault wait (slow-copy plus no-API idle) to 0.42;
+  its fast-copy idle rises by 1.9 to 4.1 ms (prefetched pages are copied from
+  standby), so all idle falls to 0.65-0.71.
+- **What is left is the blocking read itself**: in mode 2 the prefetch calls
+  add 0.87 ms per token of no-API idle warm and 3.1 ms over tokens 3-130.
+- **Less launch headroom costs prefill and faults**: 1 GiB less (18944 against
+  19968 MiB) took prefill from 2.59-2.74 to 3.22-3.25 s and slow copies from
+  3.70 to 5.00 per token over tokens 3-1022, +0.93 ms per token warm. One
+  further level only, so no slope.
+
+**Limits.** One prompt, two reps in one session, the 2048 MiB cache at the
+default pin cap, two headroom levels 1 GiB apart, Windows only (elsewhere
+`llama_prefetch` is `madvise(MADV_WILLNEED)` and the probe is skipped; not
+measured). Mode 2 was not run unpinned, at 15000 MiB or at the lower headroom.
 
 ---
 
@@ -691,10 +786,22 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
 - **Pageable share does not convert to milliseconds at one rate across pinning
   orders** (EXP-0006, Finding 12). A profile's pageable remainder faults more
   per byte (2.0 to 12% of its pageable copies against 0.9% under address order;
-  level 4: because it is the cold tail), so a slope taken from one session's
+  EXP-0007: because more of it is not yet read since the load), so a slope taken from one session's
   address-against-profile gap (EXP-0005: 0.125 and 0.163 ms per point) does not
   transfer to other profiles or prompts; in EXP-0006 it overestimated every
   gain.
+- **Set every variable the code reads in every harness, or unset it**
+  (EXP-0007). `GGML_CUDA_REGISTER_HOST=1` sits in this host's user environment
+  (ENVIRONMENT.md), so every process with the MoE cache on that did not set it
+  pinned the default cap in address order: B3's "unpinned" cache-on rows, and
+  most likely the B2 llama-bench scripts (their environments were not
+  recorded). Record the environment of every run (`runs.sh` writes it to
+  `info.txt`).
+- **A blocking prefetch moves fault time, it does not only remove it.**
+  `PrefetchVirtualMemory` returns when its reads are done, so the disk wait
+  moves from the copies (slow-copy idle) into GPU idle with no CUDA call
+  running. Count both as the fault wait: slow-copy idle alone falls to 0.1-0.3%
+  by construction, the sum to 42% (EXP-0007, cold unpinned).
 - **Align replay tokens to timeline tokens before scoring windows.** In a
   `LLAMA_MOE_CACHE_TRACE` file, replay token 0 is the prompt's last-layer call
   and replay token t is decode pass t, which is timeline token t. EXP-0006's

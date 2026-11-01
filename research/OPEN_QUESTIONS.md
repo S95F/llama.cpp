@@ -2,9 +2,56 @@
 
 Unresolved questions, missing evidence, and what it would take to settle each.
 Ordered by value, not by age. Q11 to Q14 are new from EXP-0004, Q15 to Q17 from
-EXP-0005, Q18 and Q19 from EXP-0006, Q20 from the 2026-11-01 merge check.
+EXP-0005, Q18 and Q19 from EXP-0006, Q20 from the 2026-11-01 merge check, Q21
+from EXP-0007.
 
-## Q18 - Why does the pageable remainder of expert-level pinning fault more per byte?
+## Q21 - Why does the file's tail never stay resident, and what takes the head?
+
+**New, from EXP-0007.** 99.9% of the hard faults left under pinning are a
+pageable expert's first read since the load, and whether it faults depends on where the
+expert sits in the 20.82 GiB file. The last 2.1 GiB (from about 18.7 GiB,
+layers 35-39) was not resident after the load at about 19.5 GiB available: its
+prefill uploads were already slow, and 82 to 100% of its first reads are slow
+all run. At the head, pages are lost in file order: under the profile, layers 0-4 were already slow at the prefill and layers
+5-9 early in the decode, and during the decode a front moves
+forward (layers 10-14 from 0% slow first reads over tokens 3-50 to 99% over
+387-1022), further at 1 GiB less headroom. The middle layers almost never
+fault. The balloon's size does not move it (0 or 1344 MiB held, the same
+counts); the run's own working set grew from 12.9 to 17.3 GiB.
+
+Level 4 candidates: the load's prefetch reads the file in order into a budget
+smaller than the file, and its last pages do not stay (or are never read);
+Windows repurposes the oldest standby pages first as the process grows; under
+profile pinning, registering 7.8 GiB at load displaces the head; and the pages of the non-expert tensors uploaded to the GPU at load (2.0 GiB)
+stay mapped (the loader unmaps only the file outside the CPU-mapped span, and
+on Windows `unmap_fragment` does nothing), probably in the working set,
+taking about 2.0 GiB of the budget.
+
+**To settle:** right after the load, query the working-set state of the
+non-expert tensors' pages (`QueryWorkingSetEx`) and time a read of a few pages
+spread over the file (as `evict.py`'s probe does) to map what is resident;
+repeat at the end of the prefill and every 128 passes; then launch with more
+headroom than the file needs (24 GiB or more available), where the prediction
+is near-zero slow first reads in every layer.
+
+**Why it matters:** it decides between R20 (read the lost experts off the
+decode thread, within the same budget) and R21 (enlarge the budget by
+releasing pages nothing reads again), and whether the load's prefetch order
+should change.
+
+## Q18 - Why does the pageable remainder of expert-level pinning fault more per byte? SETTLED
+
+**Settled by EXP-0007 (level 1 for the attribution, level 4 for the
+mechanism): the faults are first reads, and the profile's remainder has more of
+them.** 99.9% of the slow pageable uploads are an expert's first read since the
+load (44-45% of first reads are slow under both orders over tokens 3-1022,
+depending strongly on the expert's place in the file); re-reads essentially
+never fault, none after a gap of 500 passes or more. The profile pins the most
+selected experts, so more of its pageable uploads are first reads (10.4%
+against 4.0% over tokens 3-1022), and standardizing on that explains 103% of
+the difference. The level 4 hypothesis below (pages leave RAM between uses) is
+wrong. The probed batch prefetch (R12, mode 2) removes the faults' slow-copy
+idle. Why the file's tail and head are not resident at a first read is Q21.
 
 **New, from EXP-0006.** Every slow copy (an expert copy below 1.5 GB/s, a hard
 fault) is pageable. The share of pageable expert copies that are slow is 0.9%
@@ -55,7 +102,7 @@ it is a small fix.
 
 ## Q20 - Why do llama-bench's tg reps step up within a process?
 
-**New, from the 2026-11-01 merge check.** At 2048 MiB, pageable, fresh process,
+**New, from the 2026-11-01 merge check.** At 2048 MiB, fresh process,
 B2's `-p 0 -n 64 -r 4`, all eight runs on both builds had rep 1 slowest and
 rep 4 fastest: rep 1 7.33 to 10.05 tok/s, reps 2 and 3 14.17 to 16.69, rep 4
 20.55 to 21.02 (`results/baseline/rebase-2ca33f0d7/bench_r3.jsonl`).
@@ -72,11 +119,22 @@ what differed there: the pp512 test before it in the same process (which
 touched the experts its random tokens selected, plausibly most of them; level
 4, not checked) and the rand position.
 
+**Correction and a new candidate (EXP-0007's pre-run review).** These runs were
+recorded as pageable, but `bench_r3.sh` does not set `GGML_CUDA_REGISTER_HOST`,
+and the user's environment sets it to 1 (ENVIRONMENT.md). So they most likely
+pinned the default cap (7.8 GiB) in address order at load, as did B2's
+references from EXP-0002 and EXP-0003, whose scripts did not set it either.
+That adds a candidate, also level 4: Q19's deferred residency cost of the
+registration (0.9 to 2.9 s of GPU idle after a load-time registration in
+EXP-0006), paid in the first reps. Settle it with the variable set explicitly to 0
+and to 1.
+
 **To settle:** no code needed. `-r 8` in one process (a warm-up flattens; content
 repeats by rep index across processes), the same with `LLAMA_MOE_CACHE_TRACE` for
 fills per rep, `-p 0 -n 64,64` (bench_r2.sh's shape without pp512: does a
 tg-only first test remove the second's staircase? its tokens differ, since the
-rand stream runs on), and per-process page-fault counts.
+rand stream runs on), per-process page-fault counts, and each of these with
+`GGML_CUDA_REGISTER_HOST` set explicitly to 0 and to 1.
 
 **Why it matters:** B2 means average over reps that, at 2048 MiB in a fresh
 process, differ up to 2.8x (other sizes untested), in proportions set by the rep
@@ -103,6 +161,11 @@ on it (Finding 6 is simulated from the traces). Probably small (routing
 statistics are similar across texts), but unmeasured.
 
 ## Q16 - Does prefill depend on available RAM, and what made EXP-0004's prefill slow?
+
+**EXP-0007 added a second level** (18944 MiB, profile pinning): prefill 3.22
+and 3.25 s against 2.59 and 2.74, slow copies over tokens 3-1022 5.00 per token
+against 3.70, both rounds. So prefill and early faults do rise as headroom
+falls by 1 GiB; a slope needs a third level (R16b).
 
 **Still open after EXP-0006**, which held one headroom level (19968 MiB) and so
 tested only R16's reproducibility half. Its repeated arms ran 0.7 to 1.4 ms
@@ -149,7 +212,7 @@ cap against 26.8 to 29.3%).
 **Why it matters:** the default-cap gain (-8.1%) depends most on it, and it
 decides whether a hybrid profile (ROADMAP R18) is worth building.
 
-## Q11 - Are the faults left in a warm run first touches or re-faults?
+## Q11 - Are the faults left in a warm run first touches or re-faults? SETTLED IN PART
 
 **New, from EXP-0004.** Once warm, a 2048 MiB pageable token still makes 2 to 5
 slow copies per token (3.8 on average over tokens 387 to 1022), in bursts, worth
@@ -167,6 +230,13 @@ count how many slow copies hit an expert already copied earlier in the run.
 **Why it matters:** first touches are a startup cost that pinning, prefetch or a
 persistent process removes; re-faults are a residency problem that only pinning
 (R11) or more free RAM removes. It decides between R11 and R12 for warm runs.
+
+**EXP-0007, for 2048 MiB with pinning at the default cap, and the first 126
+tokens unpinned: first touches.** With the expert of every upload logged, 99.9%
+of the slow copies are an expert's first read since the load, and re-reads
+essentially never fault (Q18). Not rerun: the unpinned warm 2048 MiB case and
+EXP-0004's 256 MiB arm, whose second rep faulted more than its first, which
+first touches do not explain.
 
 **EXP-0006 narrows it for pinned runs:** every slow copy is pageable, and a
 larger share of pageable copies fault under profile pinning than under address

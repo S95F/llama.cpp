@@ -13,7 +13,7 @@ breaks every binary.
 | Link | PCIe 4.0 x8, `current` = `max` for both gen and width; 15.75 GB/s raw, **pinned copies measured at 12.8 GB/s** (EXP-0004) |
 | Copy engines | **1** (`asyncEngineCount`), `concurrentKernels = 1`, `pageableMemoryAccess = 0` (`device_query.json`, EXP-0004) |
 | CPU | AMD Ryzen 7 9700X, 8 cores / 16 threads |
-| RAM | 31.11 GiB total; 14 GiB free at the 2026-10-25 session start, 16.45 to 18.24 GiB during EXP-0004, 17.09 GiB available at the start of EXP-0005 and 19.67 to 21.14 GiB before its runs' evictions (rising through the session); EXP-0006 held 19966 to 20022 MiB available at every launch with a balloon |
+| RAM | 31.11 GiB total; 14 GiB free at the 2026-10-25 session start, 16.45 to 18.24 GiB during EXP-0004, 17.09 GiB available at the start of EXP-0005 and 19.67 to 21.14 GiB before its runs' evictions (rising through the session); EXP-0006 held 19966 to 20022 MiB available at every launch with a balloon, EXP-0007 19880 to 20028 (18957 to 18989 at its lower level), with 523 to 5852 MiB the lowest during a run |
 | OS | Windows 11 Pro 10.0.26300 |
 
 Queried with:
@@ -181,5 +181,16 @@ Recorded explicitly so no document implies these were tested.
   to `63b4b303b` via `5df437a57`), so check the base rather than assuming it.
   The 2026-10-31 fetch worked, and the merge to `a91eab67d` (`2ca33f0d7`, 120
   upstream commits) was done in-session at the user's request.
+- **`GGML_CUDA_REGISTER_HOST=1` is set in the user's environment** (Windows User
+  scope, `HKCU\Environment`, which was last written 2026-10-24 17:49 -06:00,
+  before EXP-0001), and it is the only `LLAMA`/`GGML` variable set there. Every
+  process that does not set it pins host experts: at the default cap, in
+  address order, whenever the MoE cache is on. Found by EXP-0007's pre-run
+  review. EXP-0004 to EXP-0007's timed harnesses set it explicitly for every arm.
+  `check-correctness.sh` (B3) did not before EXP-0007 and now exports 0. The
+  llama-bench scripts of EXP-0002 and EXP-0003 (B2) and of the merge check do
+  not set it, so they most likely ran pinned. Their processes' environments
+  were not recorded, so this is not certain. Set it explicitly, or unset it, in
+  every harness.
 - **Only one MoE model.** No second MoE architecture, expert count, or
   quantization has been tested.

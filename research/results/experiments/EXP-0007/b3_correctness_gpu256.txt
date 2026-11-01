@@ -1,0 +1,50 @@
+B3, EXP-0007 working tree on b2586549c (LLAMA_MOE_PREFETCH 1 and 2, LLAMA_MOE_COPY_LOG with prefill rows), NGEN=256, GGML_OP_OFFLOAD_MIN_BATCH=1, GGML_CUDA_REGISTER_HOST=0 exported by the script (inherited value: 1), PIN_PROFILE=C:/nsys/exp0007/profile_bcd.csv
+OUT=C:/nsys/exp0007/correctness256b
+
+-- cache-off 
+1350
+-- cache2048-lru LLAMA_MOE_CACHE_SAMPLE=0
+1350
+-- cache2048-auto 
+1350
+-- cache528-lru LLAMA_MOE_CACHE_SAMPLE=0
+1350
+-- cache528-auto 
+1350
+-- cache2048-s16 LLAMA_MOE_CACHE_SAMPLE=16
+1350
+-- cache528-dist0 LLAMA_MOE_CACHE_DIST=0
+1350
+-- cache256-auto 
+1350
+-- cache1024-pinned GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinprof GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinonline GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinonline15000 GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-prefetch LLAMA_MOE_PREFETCH=1
+1350
+-- cache2048-pinprof-prefetch GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinprof-prefetch2 GGML_CUDA_REGISTER_HOST=1
+1350
+
+== diff against cache-off ==
+  OK    cache1024-pinned
+  OK    cache2048-auto
+  OK    cache2048-lru
+  OK    cache2048-pinonline
+  OK    cache2048-pinonline15000
+  OK    cache2048-pinprof-prefetch
+  OK    cache2048-pinprof-prefetch2
+  OK    cache2048-pinprof
+  OK    cache2048-prefetch
+  OK    cache2048-s16
+  OK    cache256-auto
+  OK    cache528-auto
+  OK    cache528-dist0
+  OK    cache528-lru
+exit 0
