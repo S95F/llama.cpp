@@ -1,0 +1,133 @@
+commit  : 24c58282f (+ working tree:  M src/llama-moe-cache.cpp )
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+nsys    : NVIDIA Nsight Systems version 2025.6.3.541-256337736014v0
+target  : 19968 MiB available at launch
+runs    : on64x15k_w prof_r1 on64_r1 addr_r1 on128_r1 prof15k_r1 on64x15k_r1 on128x15k_r1 on128x15k_r2 on64x15k_r2 prof15k_r2 on128_r2 addr_r2 on64_r2 prof_r2 ood-addr_r1 ood-prof_r1 ood-on128_r1 ood-on128_r2 ood-prof_r2 ood-addr_r2
+started : 2026-11-01T02:58:43Z
+== on64x15k_w: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_ONLINE=64  -f moe-bench/prompt.txt
+evict: touched 20480 MiB in 4.9 s, available fell to 722 MiB; before {'avail': 21169, 'free': 491, 'standby_normal': 20457, 'standby_reserve': 81, 'standby_core': 121} after {'avail': 21237, 'free': 20452, 'standby_normal': 616, 'standby_reserve': 1, 'standby_core': 127}
+probe: 0/256 expert pages cached (0.0%), median 157 us, p90 228 us
+balloon: available 21237 MiB, target 19968, held 1216 MiB, locked yes, available now 20022 MiB
+lowest available 264 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0006/profile_bcd.csv  -f moe-bench/prompt.txt
+evict: touched 20736 MiB in 4.3 s, available fell to 574 MiB; before {'avail': 21267, 'free': 1577, 'standby_normal': 19445, 'standby_reserve': 78, 'standby_core': 126} after {'avail': 21309, 'free': 20710, 'standby_normal': 440, 'standby_reserve': 7, 'standby_core': 126}
+probe: 0/256 expert pages cached (0.0%), median 153 us, p90 216 us
+balloon: available 21313 MiB, target 19968, held 1344 MiB, locked yes, available now 19976 MiB
+lowest available 1839 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on64_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_ONLINE=64  -f moe-bench/prompt.txt
+evict: touched 20736 MiB in 4.3 s, available fell to 648 MiB; before {'avail': 21309, 'free': 2505, 'standby_normal': 18564, 'standby_reserve': 75, 'standby_core': 126} after {'avail': 21484, 'free': 20714, 'standby_normal': 584, 'standby_reserve': 6, 'standby_core': 140}
+probe: 2/256 expert pages cached (0.8%), median 154 us, p90 227 us
+balloon: available 21475 MiB, target 19968, held 1472 MiB, locked yes, available now 20000 MiB
+lowest available 2233 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr_r1: GGML_CUDA_REGISTER_HOST=1  -f moe-bench/prompt.txt
+evict: touched 20224 MiB in 4.2 s, available fell to 739 MiB; before {'avail': 20925, 'free': 2141, 'standby_normal': 18544, 'standby_reserve': 66, 'standby_core': 138} after {'avail': 20976, 'free': 20168, 'standby_normal': 593, 'standby_reserve': 4, 'standby_core': 138}
+probe: 5/256 expert pages cached (2.0%), median 160 us, p90 231 us
+balloon: available 20994 MiB, target 19968, held 1024 MiB, locked yes, available now 19966 MiB
+lowest available 1019 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on128_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_ONLINE=128  -f moe-bench/prompt.txt
+evict: touched 20224 MiB in 4.1 s, available fell to 709 MiB; before {'avail': 20915, 'free': 1865, 'standby_normal': 18774, 'standby_reserve': 83, 'standby_core': 138} after {'avail': 20937, 'free': 20197, 'standby_normal': 562, 'standby_reserve': 1, 'standby_core': 138}
+probe: 4/256 expert pages cached (1.6%), median 153 us, p90 218 us
+balloon: available 20935 MiB, target 19968, held 960 MiB, locked yes, available now 19967 MiB
+lowest available 2805 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof15k_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0006/profile_bcd.csv  -f moe-bench/prompt.txt
+evict: touched 20480 MiB in 4.3 s, available fell to 615 MiB; before {'avail': 21042, 'free': 654, 'standby_normal': 19149, 'standby_reserve': 1061, 'standby_core': 140} after {'avail': 20836, 'free': 20068, 'standby_normal': 808, 'standby_reserve': 25, 'standby_core': 140}
+probe: 1/256 expert pages cached (0.4%), median 158 us, p90 223 us
+balloon: available 21137 MiB, target 19968, held 1152 MiB, locked yes, available now 19983 MiB
+lowest available 776 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on64x15k_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_ONLINE=64  -f moe-bench/prompt.txt
+evict: touched 21248 MiB in 4.4 s, available fell to 686 MiB; before {'avail': 21872, 'free': 2095, 'standby_normal': 19188, 'standby_reserve': 437, 'standby_core': 141} after {'avail': 21951, 'free': 21209, 'standby_normal': 537, 'standby_reserve': 17, 'standby_core': 141}
+probe: 0/256 expert pages cached (0.0%), median 172 us, p90 253 us
+balloon: available 21862 MiB, target 19968, held 1856 MiB, locked yes, available now 20005 MiB
+lowest available 399 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on128x15k_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_ONLINE=128  -f moe-bench/prompt.txt
+evict: touched 21248 MiB in 4.1 s, available fell to 733 MiB; before {'avail': 21926, 'free': 2181, 'standby_normal': 19413, 'standby_reserve': 134, 'standby_core': 145} after {'avail': 21995, 'free': 21218, 'standby_normal': 590, 'standby_reserve': 2, 'standby_core': 145}
+probe: 3/256 expert pages cached (1.2%), median 154 us, p90 223 us
+balloon: available 21981 MiB, target 19968, held 1984 MiB, locked yes, available now 19998 MiB
+lowest available 476 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on128x15k_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_ONLINE=128  -f moe-bench/prompt.txt
+evict: touched 21760 MiB in 4.4 s, available fell to 580 MiB; before {'avail': 22316, 'free': 2848, 'standby_normal': 19234, 'standby_reserve': 60, 'standby_core': 126} after {'avail': 22340, 'free': 21725, 'standby_normal': 448, 'standby_reserve': 3, 'standby_core': 125}
+probe: 2/256 expert pages cached (0.8%), median 152 us, p90 221 us
+balloon: available 22348 MiB, target 19968, held 2368 MiB, locked yes, available now 19983 MiB
+lowest available 352 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on64x15k_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_ONLINE=64  -f moe-bench/prompt.txt
+evict: touched 21504 MiB in 4.3 s, available fell to 567 MiB; before {'avail': 22047, 'free': 2386, 'standby_normal': 19321, 'standby_reserve': 171, 'standby_core': 129} after {'avail': 22091, 'free': 21482, 'standby_normal': 442, 'standby_reserve': 2, 'standby_core': 129}
+probe: 0/256 expert pages cached (0.0%), median 161 us, p90 230 us
+balloon: available 21964 MiB, target 19968, held 1984 MiB, locked yes, available now 19969 MiB
+lowest available 315 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof15k_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0006/profile_bcd.csv  -f moe-bench/prompt.txt
+evict: touched 21504 MiB in 4.3 s, available fell to 738 MiB; before {'avail': 22212, 'free': 2296, 'standby_normal': 19643, 'standby_reserve': 118, 'standby_core': 111} after {'avail': 22241, 'free': 21473, 'standby_normal': 619, 'standby_reserve': 4, 'standby_core': 111}
+probe: 0/256 expert pages cached (0.0%), median 158 us, p90 220 us
+balloon: available 22246 MiB, target 19968, held 2240 MiB, locked yes, available now 20018 MiB
+lowest available 548 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on128_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_ONLINE=128  -f moe-bench/prompt.txt
+evict: touched 21504 MiB in 4.4 s, available fell to 721 MiB; before {'avail': 22206, 'free': 3202, 'standby_normal': 18756, 'standby_reserve': 110, 'standby_core': 112} after {'avail': 22239, 'free': 21485, 'standby_normal': 600, 'standby_reserve': 3, 'standby_core': 112}
+probe: 1/256 expert pages cached (0.4%), median 157 us, p90 227 us
+balloon: available 22238 MiB, target 19968, held 2240 MiB, locked yes, available now 19990 MiB
+lowest available 2378 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== addr_r2: GGML_CUDA_REGISTER_HOST=1  -f moe-bench/prompt.txt
+evict: touched 21248 MiB in 4.3 s, available fell to 690 MiB; before {'avail': 21920, 'free': 3005, 'standby_normal': 18719, 'standby_reserve': 49, 'standby_core': 112} after {'avail': 21946, 'free': 21229, 'standby_normal': 571, 'standby_reserve': 1, 'standby_core': 112}
+probe: 1/256 expert pages cached (0.4%), median 159 us, p90 237 us
+balloon: available 21932 MiB, target 19968, held 1920 MiB, locked yes, available now 20008 MiB
+lowest available 1120 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== on64_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_ONLINE=64  -f moe-bench/prompt.txt
+evict: touched 21248 MiB in 4.3 s, available fell to 604 MiB; before {'avail': 21830, 'free': 2517, 'standby_normal': 18986, 'standby_reserve': 140, 'standby_core': 113} after {'avail': 21870, 'free': 21227, 'standby_normal': 483, 'standby_reserve': 12, 'standby_core': 113}
+probe: 0/256 expert pages cached (0.0%), median 155 us, p90 228 us
+balloon: available 21867 MiB, target 19968, held 1856 MiB, locked yes, available now 20013 MiB
+lowest available 394 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== prof_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0006/profile_bcd.csv  -f moe-bench/prompt.txt
+evict: touched 20992 MiB in 4.0 s, available fell to 660 MiB; before {'avail': 21624, 'free': 2601, 'standby_normal': 18780, 'standby_reserve': 93, 'standby_core': 113} after {'avail': 21645, 'free': 20966, 'standby_normal': 536, 'standby_reserve': 1, 'standby_core': 113}
+probe: 1/256 expert pages cached (0.4%), median 153 us, p90 227 us
+balloon: available 21651 MiB, target 19968, held 1664 MiB, locked yes, available now 19974 MiB
+lowest available 1954 MiB
+stdout 4473 chars, </think> at -1 sha256 2ee5afca914f98ac
+== ood-addr_r1: GGML_CUDA_REGISTER_HOST=1 --ignore-eos -f research/results/experiments/EXP-0006/prompt_ood.txt
+evict: touched 20992 MiB in 4.3 s, available fell to 754 MiB; before {'avail': 21652, 'free': 2810, 'standby_normal': 18641, 'standby_reserve': 61, 'standby_core': 110} after {'avail': 21748, 'free': 20964, 'standby_normal': 636, 'standby_reserve': 1, 'standby_core': 110}
+probe: 2/256 expert pages cached (0.8%), median 151 us, p90 214 us
+balloon: available 21737 MiB, target 19968, held 1728 MiB, locked yes, available now 20007 MiB
+lowest available 917 MiB
+stdout 4514 chars, </think> at 313 sha256 22b47616c5541108
+== ood-prof_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0006/profile_bcd.csv --ignore-eos -f research/results/experiments/EXP-0006/prompt_ood.txt
+evict: touched 21248 MiB in 4.3 s, available fell to 588 MiB; before {'avail': 21765, 'free': 2342, 'standby_normal': 19139, 'standby_reserve': 128, 'standby_core': 112} after {'avail': 21844, 'free': 21222, 'standby_normal': 465, 'standby_reserve': 2, 'standby_core': 112}
+probe: 0/256 expert pages cached (0.0%), median 154 us, p90 222 us
+balloon: available 21832 MiB, target 19968, held 1856 MiB, locked yes, available now 19975 MiB
+lowest available 2249 MiB
+stdout 4514 chars, </think> at 313 sha256 22b47616c5541108
+== ood-on128_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_ONLINE=128 --ignore-eos -f research/results/experiments/EXP-0006/prompt_ood.txt
+evict: touched 20992 MiB in 4.2 s, available fell to 717 MiB; before {'avail': 21684, 'free': 2592, 'standby_normal': 18906, 'standby_reserve': 51, 'standby_core': 98} after {'avail': 21713, 'free': 20969, 'standby_normal': 609, 'standby_reserve': 3, 'standby_core': 98}
+probe: 0/256 expert pages cached (0.0%), median 154 us, p90 224 us
+balloon: available 21710 MiB, target 19968, held 1728 MiB, locked yes, available now 19993 MiB
+lowest available 3578 MiB
+stdout 4514 chars, </think> at 313 sha256 22b47616c5541108
+== ood-on128_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_ONLINE=128 --ignore-eos -f research/results/experiments/EXP-0006/prompt_ood.txt
+evict: touched 21248 MiB in 4.5 s, available fell to 518 MiB; before {'avail': 21734, 'free': 2718, 'standby_normal': 18847, 'standby_reserve': 35, 'standby_core': 97} after {'avail': 21768, 'free': 21052, 'standby_normal': 425, 'standby_reserve': 7, 'standby_core': 97}
+probe: 1/256 expert pages cached (0.4%), median 177 us, p90 247 us
+balloon: available 21652 MiB, target 19968, held 1664 MiB, locked yes, available now 20002 MiB
+lowest available 3492 MiB
+stdout 4514 chars, </think> at 313 sha256 22b47616c5541108
+== ood-prof_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0006/profile_bcd.csv --ignore-eos -f research/results/experiments/EXP-0006/prompt_ood.txt
+evict: touched 20992 MiB in 4.3 s, available fell to 699 MiB; before {'avail': 21641, 'free': 2630, 'standby_normal': 18812, 'standby_reserve': 69, 'standby_core': 98} after {'avail': 21712, 'free': 20971, 'standby_normal': 590, 'standby_reserve': 15, 'standby_core': 99}
+probe: 3/256 expert pages cached (1.2%), median 176 us, p90 250 us
+balloon: available 21709 MiB, target 19968, held 1728 MiB, locked yes, available now 19976 MiB
+lowest available 2358 MiB
+stdout 4514 chars, </think> at 313 sha256 22b47616c5541108
+== ood-addr_r2: GGML_CUDA_REGISTER_HOST=1 --ignore-eos -f research/results/experiments/EXP-0006/prompt_ood.txt
+evict: touched 20992 MiB in 4.1 s, available fell to 756 MiB; before {'avail': 21721, 'free': 2752, 'standby_normal': 18760, 'standby_reserve': 68, 'standby_core': 100} after {'avail': 21749, 'free': 20958, 'standby_normal': 654, 'standby_reserve': 2, 'standby_core': 100}
+probe: 5/256 expert pages cached (2.0%), median 175 us, p90 238 us
+balloon: available 21753 MiB, target 19968, held 1728 MiB, locked yes, available now 20020 MiB
+lowest available 2691 MiB
+stdout 4514 chars, </think> at 313 sha256 22b47616c5541108
+finished: 2026-11-01T03:49:20Z

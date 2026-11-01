@@ -1,0 +1,21 @@
+C:/nsys/exp0006/ood-on128_r1.sqlite: 1020 tokens, 37.85 ms/token (median 33.68)
+  per token: compute 12.90  h2d 13.83  d2h 0.12  idle 11.00  compute/h2d overlap 0.000 ms
+  shares: compute 34.1%  h2d 36.5%  d2h 0.3%  memset 0.0%  idle 29.1%  overlap_compute_h2d 0.0%
+  overlap / min(compute, h2d) = 0.00%
+  h2d 155.1 MiB/token (155.0 expert), 11.76 GB/s while copying, 4.30 GB/s over token time
+  by source kind MiB/token: {'pageable': 34.03895473106235, 'pinned': 121.03888669481465}
+  calls/token: {'n_h2d': 320.0882352941176, 'n_h2d_expert': 251.6, 'n_h2d_small': 68.48823529411764, 'n_d2h': 41, 'n_graph_launch': 40.85490196078431, 'n_kernel': 5.949019607843137}
+  host API ms/token: cudaGraphLaunch 1.02, cudaHostRegister 0.58, cudaMemcpyAsync 12.38, cudaStreamSynchronize 22.80
+  GPU idle ms/token while host in: cudaStreamSynchronize 2.05, cudaMemcpyAsync 7.48, cudaGraphLaunch 0.19, cudaLaunchKernel 0.00, no_api 0.70, expert_copy_slow 5.16, expert_copy_fast 1.62
+  host ms/token in expert copies: slow 5.39, fast 6.01 (3.2 slow copies/token)
+  app registered: registered 7940.28 MiB of host experts as pinned memory (10820.19 MiB left pageable) in 6501 ranges, 0.00 MiB refused
+  app prompt eval time: prompt eval time =    4155.25 ms /    79 tokens (   52.60 ms per token,    19.01 tokens per second)
+  app eval time: eval time =   38647.15 ms /  1023 runs   (   37.78 ms per token,    26.47 tokens per second)
+  app graphs reused: graphs reused =       1018
+  app ubatch <= 8:: ubatch <= 8: hits = 241163, misses = 86205, hit rate = 73.67%, uploaded = 159305.86 MiB
+  app large batches:: large batches: 7095 uploads of uncached experts, 7585.23 MiB
+  expert copies from pageable: n=56718, aggregate GPU 9.67 GB/s, host 3.47 GB/s, per-copy GPU median 8.89
+  expert copies from pageable/fast: n=53452, aggregate GPU 9.60 GB/s, host 6.87 GB/s, per-copy GPU median 8.78
+  expert copies from pageable/slow: n=3266, aggregate GPU 11.00 GB/s, host 0.39 GB/s, per-copy GPU median 12.95
+  expert copies from pinned: n=199914, aggregate GPU 12.61 GB/s, host 112.64 GB/s, per-copy GPU median 12.93
+  expert copies from pinned/fast: n=199914, aggregate GPU 12.61 GB/s, host 112.64 GB/s, per-copy GPU median 12.93

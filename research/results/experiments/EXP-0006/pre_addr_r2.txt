@@ -1,0 +1,3 @@
+evict: touched 21248 MiB in 4.3 s, available fell to 690 MiB; before {'avail': 21920, 'free': 3005, 'standby_normal': 18719, 'standby_reserve': 49, 'standby_core': 112} after {'avail': 21946, 'free': 21229, 'standby_normal': 571, 'standby_reserve': 1, 'standby_core': 112}
+probe: 1/256 expert pages cached (0.4%), median 159 us, p90 237 us
+balloon: available 21932 MiB, target 19968, held 1920 MiB, locked yes, available now 20008 MiB

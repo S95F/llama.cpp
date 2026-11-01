@@ -13,7 +13,7 @@ breaks every binary.
 | Link | PCIe 4.0 x8, `current` = `max` for both gen and width; 15.75 GB/s raw, **pinned copies measured at 12.8 GB/s** (EXP-0004) |
 | Copy engines | **1** (`asyncEngineCount`), `concurrentKernels = 1`, `pageableMemoryAccess = 0` (`device_query.json`, EXP-0004) |
 | CPU | AMD Ryzen 7 9700X, 8 cores / 16 threads |
-| RAM | 31.11 GiB total; 14 GiB free at the 2026-10-25 session start, 16.45 to 18.24 GiB during EXP-0004, 17.09 GiB available at the start of EXP-0005 and 19.67 to 21.14 GiB before its runs' evictions (rising through the session) |
+| RAM | 31.11 GiB total; 14 GiB free at the 2026-10-25 session start, 16.45 to 18.24 GiB during EXP-0004, 17.09 GiB available at the start of EXP-0005 and 19.67 to 21.14 GiB before its runs' evictions (rising through the session); EXP-0006 held 19966 to 20022 MiB available at every launch with a balloon |
 | OS | Windows 11 Pro 10.0.26300 |
 
 Queried with:
@@ -156,6 +156,12 @@ Recorded explicitly so no document implies these were tested.
   sets to the pagefile. They page back in during the next run (system-wide disk
   and paging counters include them), and available RAM drifted up 1.5 GiB over
   the session. Interactive apps may be sluggish for a while after a run.
+- **A balloon holds the launch headroom** (EXP-0006, `balloon.py`): it commits
+  and locks memory until available RAM reaches the target (19968 MiB), holds it
+  until the run ends, and is then released. It needs no admin rights. Its
+  pressure adds to the eviction's, so the desktop's processes page out further;
+  after a session of 21 runs, desktop apps and an idle ComfyUI server may page
+  back in slowly.
 - **Other GPU and RAM users.** An idle ComfyUI server and other processes held
   about 1.1 GiB of VRAM through EXP-0004 and 0005 (7051 or 7075 MiB free in
   EXP-0004's logs, 7051 in every EXP-0005 log). Steam, Battle.net (launchers,

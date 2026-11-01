@@ -1,0 +1,1361 @@
+{
+ "pairs": {
+  "on128 - addr": {
+   "end_to_end_mean_s": -1.0183003074999988,
+   "end_to_end_s": [
+    -1.665572601000001,
+    -0.37102801399999663
+   ],
+   "split_ms": {
+    "387-642": [
+     -2.7451897890624934,
+     -2.6287646914062464
+    ],
+    "643-1022": [
+     -4.44363581052631,
+     -4.46587636578947
+    ]
+   }
+  },
+  "on128 - prof": {
+   "end_to_end_mean_s": 2.730593383000002,
+   "end_to_end_s": [
+    1.8350487160000029,
+    3.6261380500000016
+   ],
+   "split_ms": {
+    "387-642": [
+     0.2318073437500061,
+     0.9016329843749986
+    ],
+    "643-1022": [
+     -0.9314085921052637,
+     -0.3618049894736828
+    ]
+   }
+  },
+  "on128x15k - prof15k": {
+   "end_to_end_mean_s": 7.003403883000001,
+   "end_to_end_s": [
+    7.211001973999998,
+    6.795805792000003
+   ],
+   "split_ms": {
+    "387-642": [
+     1.70728433203125,
+     1.925783238281248
+    ],
+    "643-1022": [
+     0.21813911052631596,
+     0.3396804921052592
+    ]
+   }
+  },
+  "on64 - addr": {
+   "end_to_end_mean_s": -0.506338223500002,
+   "end_to_end_s": [
+    -0.48990139500000396,
+    -0.5227750520000001
+   ],
+   "split_ms": {
+    "387-642": [
+     -1.7458771601562475,
+     -2.110366851562496
+    ],
+    "643-1022": [
+     -3.37767255263158,
+     -3.8512041236842123
+    ]
+   }
+  },
+  "on64 - prof": {
+   "end_to_end_mean_s": 3.242555466999999,
+   "end_to_end_s": [
+    3.010719922,
+    3.474391011999998
+   ],
+   "split_ms": {
+    "387-642": [
+     1.231119972656252,
+     1.420030824218749
+    ],
+    "643-1022": [
+     0.13455466578946584,
+     0.2528672526315745
+    ]
+   }
+  },
+  "on64x15k - prof15k": {
+   "end_to_end_mean_s": 6.2025015329999995,
+   "end_to_end_s": [
+    6.5199448429999975,
+    5.8850582230000015
+   ],
+   "split_ms": {
+    "387-642": [
+     1.8508571015625037,
+     1.525225851562503
+    ],
+    "643-1022": [
+     0.3842820947368395,
+     0.12027059999999778
+    ]
+   }
+  },
+  "ood-on128 - ood-addr": {
+   "end_to_end_mean_s": 0.2705830865000003,
+   "end_to_end_s": [
+    0.4528297640000005,
+    0.08833640900000006
+   ],
+   "split_ms": {
+    "387-642": [
+     -1.9012170546874998,
+     -2.089448695312498
+    ],
+    "643-1022": [
+     -3.4259979684210506,
+     -3.224325310526318
+    ]
+   }
+  },
+  "ood-on128 - ood-prof": {
+   "end_to_end_mean_s": -0.6444003665000011,
+   "end_to_end_s": [
+    -0.19519948300000323,
+    -1.093601249999999
+   ],
+   "split_ms": {
+    "387-642": [
+     -2.1714208671875,
+     -2.1475889101562515
+    ],
+    "643-1022": [
+     -2.3919817605263134,
+     -2.2174594263157914
+    ]
+   }
+  },
+  "ood-prof - ood-addr": {
+   "end_to_end_mean_s": 0.9149834530000014,
+   "end_to_end_s": [
+    0.6480292470000037,
+    1.181937658999999
+   ],
+   "split_ms": {
+    "387-642": [
+     0.27020381250000014,
+     0.05814021484375331
+    ],
+    "643-1022": [
+     -1.0340162078947372,
+     -1.0068658842105265
+    ]
+   }
+  },
+  "prof - addr": {
+   "end_to_end_mean_s": -3.748893690500001,
+   "end_to_end_s": [
+    -3.500621317000004,
+    -3.997166063999998
+   ],
+   "split_ms": {
+    "387-642": [
+     -2.9769971328124996,
+     -3.530397675781245
+    ],
+    "643-1022": [
+     -3.512227218421046,
+     -4.104071376315787
+    ]
+   }
+  }
+ },
+ "phases": {
+  "on128 - prof r1": {
+   "after_to_386_s": 0.16001401899999995,
+   "before_s": 2.689075014,
+   "registering_s": 0.55528909,
+   "total_s": 3.109785538,
+   "warm_s": -0.2945925849999999
+  },
+  "on128 - prof r2": {
+   "after_to_386_s": 0.38350486699999997,
+   "before_s": 3.044644714,
+   "registering_s": 0.552503374,
+   "total_s": 4.073985103,
+   "warm_s": 0.09333214800000007
+  },
+  "on128x15k - prof15k r1": {
+   "after_to_386_s": 1.0787574819999999,
+   "before_s": 4.712268125,
+   "registering_s": 1.3886439679999998,
+   "total_s": 7.699627226,
+   "warm_s": 0.5199576510000001
+  },
+  "on128x15k - prof15k r2": {
+   "after_to_386_s": 0.9965816319999999,
+   "before_s": 4.735083671,
+   "registering_s": 1.456276672,
+   "total_s": 7.810021071,
+   "warm_s": 0.6220790959999999
+  },
+  "on64 - prof r1": {
+   "after_to_386_s": 0.7514164149999999,
+   "before_s": 1.887569894,
+   "registering_s": 0.5632573139999999,
+   "total_s": 3.568541109,
+   "warm_s": 0.36629748599999995
+  },
+  "on64 - prof r2": {
+   "after_to_386_s": 0.7584484069999999,
+   "before_s": 1.935827684,
+   "registering_s": 0.587490921,
+   "total_s": 3.741384459,
+   "warm_s": 0.45961744699999996
+  },
+  "on64x15k - prof15k r1": {
+   "after_to_386_s": 1.880577111,
+   "before_s": 3.2551395889999997,
+   "registering_s": 1.716452813,
+   "total_s": 7.472016127,
+   "warm_s": 0.6198466140000001
+  },
+  "on64x15k - prof15k r2": {
+   "after_to_386_s": 1.5970712859999998,
+   "before_s": 3.113537352,
+   "registering_s": 1.753970934,
+   "total_s": 6.900740218,
+   "warm_s": 0.436160646
+  },
+  "ood-on128 - ood-prof r1": {
+   "after_to_386_s": -0.6448868219999999,
+   "before_s": 1.708511662,
+   "registering_s": 0.581658056,
+   "total_s": 0.18044608500000006,
+   "warm_s": -1.4648368109999998
+  },
+  "ood-on128 - ood-prof r2": {
+   "after_to_386_s": -0.633886832,
+   "before_s": 1.5261392599999999,
+   "registering_s": 0.586010132,
+   "total_s": 0.08584521700000004,
+   "warm_s": -1.392417343
+  }
+ },
+ "runs": {
+  "addr_r1": {
+   "copies_387_1022": {
+    "n_per_token": 409.2688679245283,
+    "pageable": {
+     "busy_gbps": 8.657836745818418,
+     "expert_per_token": 183.11477987421384,
+     "expert_slow_per_token": 1.6226415094339623,
+     "mean_kib": 513.6041042698783,
+     "n_per_token": 223.11477987421384,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.791059146996536,
+     "expert_per_token": 176.15408805031447,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 599.3652703050831,
+     "n_per_token": 186.15408805031447,
+     "under_4k_per_token": 7.0
+    },
+    "share_under_8k": 0.1148389327493805
+   },
+   "end_to_end_s": 60.207409083,
+   "memory": {
+    "decode_min_avail_mib": 1019.0,
+    "load_min_avail_mib": 2602.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 6.94230447,
+    "before_prompt": true,
+    "longest_ms": 0.386414,
+    "n": 50,
+    "sync_after_gpu_ms": 0.030208,
+    "sync_after_ms": 1061.331467,
+    "total_ms": 1.981874
+   },
+   "session_start_unix": 1793502390.986134,
+   "timeline": {
+    "387-1022": {
+     "ms": 45.181592542452826,
+     "slow_copies_per_token": 1.6226415094339623
+    },
+    "387-642": {
+     "ms": 44.0960670390625,
+     "slow_copies_per_token": 1.8671875
+    },
+    "643-1022": {
+     "ms": 45.91289393421052,
+     "slow_copies_per_token": 1.4578947368421054
+    }
+   },
+   "token3_s": 10.701358439
+  },
+  "addr_r2": {
+   "copies_387_1022": {
+    "n_per_token": 409.2688679245283,
+    "pageable": {
+     "busy_gbps": 9.053509249321666,
+     "expert_per_token": 183.11477987421384,
+     "expert_slow_per_token": 1.498427672955975,
+     "mean_kib": 513.6041042698783,
+     "n_per_token": 223.11477987421384,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.795658039273654,
+     "expert_per_token": 176.15408805031447,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 599.3652703050831,
+     "n_per_token": 186.15408805031447,
+     "under_4k_per_token": 7.0
+    },
+    "share_under_8k": 0.1148389327493805
+   },
+   "end_to_end_s": 59.970968311,
+   "memory": {
+    "decode_min_avail_mib": 1120.0,
+    "load_min_avail_mib": 5594.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 6.901655703,
+    "before_prompt": true,
+    "longest_ms": 0.307725,
+    "n": 50,
+    "sync_after_gpu_ms": 0.030208,
+    "sync_after_ms": 884.469738,
+    "total_ms": 1.748743
+   },
+   "session_start_unix": 1793503705.061503,
+   "timeline": {
+    "387-1022": {
+     "ms": 45.4528621336478,
+     "slow_copies_per_token": 1.498427672955975
+    },
+    "387-642": {
+     "ms": 44.35257884765625,
+     "slow_copies_per_token": 1.734375
+    },
+    "643-1022": {
+     "ms": 46.194105610526314,
+     "slow_copies_per_token": 1.3394736842105264
+    }
+   },
+   "token3_s": 10.36044157
+  },
+  "on128_r1": {
+   "copies_387_1022": {
+    "n_per_token": 469.29245283018867,
+    "pageable": {
+     "busy_gbps": 10.566346025997646,
+     "expert_per_token": 73.1745283018868,
+     "expert_slow_per_token": 2.268867924528302,
+     "mean_kib": 403.8570715937982,
+     "n_per_token": 113.1745283018868,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.009044396730248,
+     "expert_per_token": 286.0990566037736,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 506.74401921599537,
+     "n_per_token": 356.1179245283019,
+     "under_4k_per_token": 67.01886792452831
+    },
+    "share_under_8k": 0.22804301939893457
+   },
+   "end_to_end_s": 58.541836482,
+   "memory": {
+    "decode_min_avail_mib": 2805.0,
+    "load_min_avail_mib": 10433.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 19.297825168,
+    "before_prompt": false,
+    "longest_ms": 1.093177,
+    "n": 7104,
+    "sync_after_gpu_ms": 0.213496,
+    "sync_after_ms": 1.459263,
+    "total_ms": 550.468106
+   },
+   "session_start_unix": 1793502539.337424,
+   "timeline": {
+    "387-1022": {
+     "ms": 41.42160796069182,
+     "slow_copies_per_token": 2.268867924528302
+    },
+    "387-642": {
+     "ms": 41.35087725,
+     "slow_copies_per_token": 2.86328125
+    },
+    "643-1022": {
+     "ms": 41.46925812368421,
+     "slow_copies_per_token": 1.868421052631579
+    }
+   },
+   "token3_s": 9.78440647
+  },
+  "on128_r2": {
+   "copies_387_1022": {
+    "n_per_token": 469.29245283018867,
+    "pageable": {
+     "busy_gbps": 10.5296620485838,
+     "expert_per_token": 73.1745283018868,
+     "expert_slow_per_token": 2.300314465408805,
+     "mean_kib": 403.8570715937982,
+     "n_per_token": 113.1745283018868,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.007601104286604,
+     "expert_per_token": 286.0990566037736,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 506.74401921599537,
+     "n_per_token": 356.1179245283019,
+     "under_4k_per_token": 67.01886792452831
+    },
+    "share_under_8k": 0.22804301939893457
+   },
+   "end_to_end_s": 59.599940297,
+   "memory": {
+    "decode_min_avail_mib": 2378.0,
+    "load_min_avail_mib": 5655.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 20.059141691,
+    "before_prompt": false,
+    "longest_ms": 1.704549,
+    "n": 7104,
+    "sync_after_gpu_ms": 0.806618,
+    "sync_after_ms": 1.117053,
+    "total_ms": 544.247091
+   },
+   "session_start_unix": 1793503552.275427,
+   "timeline": {
+    "387-1022": {
+     "ms": 41.72645210220126,
+     "slow_copies_per_token": 2.300314465408805
+    },
+    "387-642": {
+     "ms": 41.72381415625,
+     "slow_copies_per_token": 2.921875
+    },
+    "643-1022": {
+     "ms": 41.728229244736845,
+     "slow_copies_per_token": 1.881578947368421
+    }
+   },
+   "token3_s": 10.334028323
+  },
+  "on128x15k_r1": {
+   "copies_387_1022": {
+    "n_per_token": 425.311320754717,
+    "pageable": {
+     "busy_gbps": 11.519767712910507,
+     "expert_per_token": 15.033018867924529,
+     "expert_slow_per_token": 1.2924528301886793,
+     "mean_kib": 171.3683457258364,
+     "n_per_token": 55.033018867924525,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.753364638826989,
+     "expert_per_token": 344.24056603773585,
+     "expert_slow_per_token": 0.0015723270440251573,
+     "mean_kib": 585.3328252323809,
+     "n_per_token": 370.27830188679246,
+     "under_4k_per_token": 23.037735849056602
+    },
+    "share_under_8k": 0.1482155136082337
+   },
+   "end_to_end_s": 56.457371883,
+   "memory": {
+    "decode_min_avail_mib": 476.0,
+    "load_min_avail_mib": 1904.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 20.140465039,
+    "before_prompt": false,
+    "longest_ms": 2.454224,
+    "n": 3420,
+    "sync_after_gpu_ms": 1.031,
+    "sync_after_ms": 1183.044119,
+    "total_ms": 197.532262
+   },
+   "session_start_unix": 1793502972.122909,
+   "timeline": {
+    "387-1022": {
+     "ms": 37.84497132232705,
+     "slow_copies_per_token": 1.2940251572327044
+    },
+    "387-642": {
+     "ms": 37.3371575859375,
+     "slow_copies_per_token": 1.5859375
+    },
+    "643-1022": {
+     "ms": 38.187077418421055,
+     "slow_copies_per_token": 1.0973684210526315
+    }
+   },
+   "token3_s": 10.595038346
+  },
+  "on128x15k_r2": {
+   "copies_387_1022": {
+    "n_per_token": 425.311320754717,
+    "pageable": {
+     "busy_gbps": 11.424429794326775,
+     "expert_per_token": 15.033018867924529,
+     "expert_slow_per_token": 1.3852201257861636,
+     "mean_kib": 171.3683457258364,
+     "n_per_token": 55.033018867924525,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.72660252993761,
+     "expert_per_token": 344.24056603773585,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 585.3328252323809,
+     "n_per_token": 370.27830188679246,
+     "under_4k_per_token": 23.037735849056602
+    },
+    "share_under_8k": 0.1482155136082337
+   },
+   "end_to_end_s": 56.61359893,
+   "memory": {
+    "decode_min_avail_mib": 352.0,
+    "load_min_avail_mib": 483.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 19.954107724,
+    "before_prompt": false,
+    "longest_ms": 3.846465,
+    "n": 3420,
+    "sync_after_gpu_ms": 1.031096,
+    "sync_after_ms": 1260.135424,
+    "total_ms": 188.450703
+   },
+   "session_start_unix": 1793503118.827167,
+   "timeline": {
+    "387-1022": {
+     "ms": 38.16710596069183,
+     "slow_copies_per_token": 1.3852201257861636
+    },
+    "387-642": {
+     "ms": 37.80073705859375,
+     "slow_copies_per_token": 1.7421875
+    },
+    "643-1022": {
+     "ms": 38.413922905263156,
+     "slow_copies_per_token": 1.144736842105263
+    }
+   },
+   "token3_s": 10.375713365
+  },
+  "on64_r1": {
+   "copies_387_1022": {
+    "n_per_token": 485.1933962264151,
+    "pageable": {
+     "busy_gbps": 10.599882464953668,
+     "expert_per_token": 89.41509433962264,
+     "expert_slow_per_token": 2.4040880503144653,
+     "mean_kib": 433.29259534310154,
+     "n_per_token": 129.41509433962264,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 11.793161114450843,
+     "expert_per_token": 269.85849056603774,
+     "expert_slow_per_token": 0.0015723270440251573,
+     "mean_kib": 478.08525411556735,
+     "n_per_token": 355.77830188679246,
+     "under_4k_per_token": 82.91981132075472
+    },
+    "share_under_8k": 0.2533418885680676
+   },
+   "end_to_end_s": 59.717507688,
+   "memory": {
+    "decode_min_avail_mib": 2233.0,
+    "load_min_avail_mib": 9398.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 16.197092514,
+    "before_prompt": false,
+    "longest_ms": 1.775244,
+    "n": 7392,
+    "sync_after_gpu_ms": 0.614409,
+    "sync_after_ms": 0.944444,
+    "total_ms": 547.748543
+   },
+   "session_start_unix": 1793502236.1432652,
+   "timeline": {
+    "387-1022": {
+     "ms": 42.460743292452825,
+     "slow_copies_per_token": 2.4056603773584904
+    },
+    "387-642": {
+     "ms": 42.35018987890625,
+     "slow_copies_per_token": 2.98828125
+    },
+    "643-1022": {
+     "ms": 42.53522138157894,
+     "slow_copies_per_token": 2.013157894736842
+    }
+   },
+   "token3_s": 10.501322105
+  },
+  "on64_r2": {
+   "copies_387_1022": {
+    "n_per_token": 485.1933962264151,
+    "pageable": {
+     "busy_gbps": 10.463379232600957,
+     "expert_per_token": 89.41509433962264,
+     "expert_slow_per_token": 2.2767295597484276,
+     "mean_kib": 433.29259534310154,
+     "n_per_token": 129.41509433962264,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 11.760523462804528,
+     "expert_per_token": 269.85849056603774,
+     "expert_slow_per_token": 0.0015723270440251573,
+     "mean_kib": 478.08525411556735,
+     "n_per_token": 355.77830188679246,
+     "under_4k_per_token": 82.91981132075472
+    },
+    "share_under_8k": 0.2533418885680676
+   },
+   "end_to_end_s": 59.448193259,
+   "memory": {
+    "decode_min_avail_mib": 2403.0,
+    "load_min_avail_mib": 394.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 16.145743968,
+    "before_prompt": false,
+    "longest_ms": 1.10737,
+    "n": 7392,
+    "sync_after_gpu_ms": 0.203298,
+    "sync_after_ms": 1.259664,
+    "total_ms": 564.700308
+   },
+   "session_start_unix": 1793503852.8382673,
+   "timeline": {
+    "387-1022": {
+     "ms": 42.3023723836478,
+     "slow_copies_per_token": 2.2783018867924527
+    },
+    "387-642": {
+     "ms": 42.24221199609375,
+     "slow_copies_per_token": 2.8671875
+    },
+    "643-1022": {
+     "ms": 42.3429014868421,
+     "slow_copies_per_token": 1.881578947368421
+    }
+   },
+   "token3_s": 10.514881929
+  },
+  "on64x15k_r1": {
+   "copies_387_1022": {
+    "n_per_token": 429.3018867924528,
+    "pageable": {
+     "busy_gbps": 10.777138354196364,
+     "expert_per_token": 23.99056603773585,
+     "expert_slow_per_token": 1.1556603773584906,
+     "mean_kib": 235.86056209764607,
+     "n_per_token": 63.990566037735846,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.606785930217953,
+     "expert_per_token": 335.2830188679245,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 577.792417324114,
+     "n_per_token": 365.311320754717,
+     "under_4k_per_token": 27.028301886792452
+    },
+    "share_under_8k": 0.1561332571529029
+   },
+   "end_to_end_s": 55.766314752,
+   "memory": {
+    "decode_min_avail_mib": 399.0,
+    "load_min_avail_mib": 903.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 15.862197724,
+    "before_prompt": false,
+    "longest_ms": 1516.99905,
+    "n": 2832,
+    "sync_after_gpu_ms": 1.090655,
+    "sync_after_ms": 1.449675,
+    "total_ms": 1681.406317
+   },
+   "session_start_unix": 1793502826.227314,
+   "timeline": {
+    "387-1022": {
+     "ms": 38.002029440251576,
+     "slow_copies_per_token": 1.1556603773584906
+    },
+    "387-642": {
+     "ms": 37.48073035546875,
+     "slow_copies_per_token": 1.48828125
+    },
+    "643-1022": {
+     "ms": 38.35322040263158,
+     "slow_copies_per_token": 0.9315789473684211
+    }
+   },
+   "token3_s": 10.131592314
+  },
+  "on64x15k_r2": {
+   "copies_387_1022": {
+    "n_per_token": 429.3018867924528,
+    "pageable": {
+     "busy_gbps": 11.26974607257691,
+     "expert_per_token": 23.99056603773585,
+     "expert_slow_per_token": 1.1336477987421383,
+     "mean_kib": 235.86056209764607,
+     "n_per_token": 63.990566037735846,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.671966657878704,
+     "expert_per_token": 335.2830188679245,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 577.792417324114,
+     "n_per_token": 365.311320754717,
+     "under_4k_per_token": 27.028301886792452
+    },
+    "share_under_8k": 0.1561332571529029
+   },
+   "end_to_end_s": 55.702851361,
+   "memory": {
+    "decode_min_avail_mib": 315.0,
+    "load_min_avail_mib": 8351.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 15.955360188,
+    "before_prompt": false,
+    "longest_ms": 1558.469741,
+    "n": 2832,
+    "sync_after_gpu_ms": 1.112505,
+    "sync_after_ms": 1.461037,
+    "total_ms": 1720.227392
+   },
+   "session_start_unix": 1793503265.6964285,
+   "timeline": {
+    "387-1022": {
+     "ms": 37.874781353773585,
+     "slow_copies_per_token": 1.1336477987421383
+    },
+    "387-642": {
+     "ms": 37.400179671875,
+     "slow_copies_per_token": 1.43359375
+    },
+    "643-1022": {
+     "ms": 38.194513013157895,
+     "slow_copies_per_token": 0.9315789473684211
+    }
+   },
+   "token3_s": 10.374246649
+  },
+  "on64x15k_w": {
+   "copies_387_1022": {
+    "n_per_token": 429.3018867924528,
+    "pageable": {
+     "busy_gbps": 11.025166496054199,
+     "expert_per_token": 23.99056603773585,
+     "expert_slow_per_token": 1.1462264150943395,
+     "mean_kib": 235.86056209764607,
+     "n_per_token": 63.990566037735846,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.645956223463008,
+     "expert_per_token": 335.2830188679245,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 577.792417324114,
+     "n_per_token": 365.311320754717,
+     "under_4k_per_token": 27.028301886792452
+    },
+    "share_under_8k": 0.1561332571529029
+   },
+   "end_to_end_s": 56.749932356,
+   "memory": {
+    "decode_min_avail_mib": 264.0,
+    "load_min_avail_mib": 333.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 16.740723393,
+    "before_prompt": false,
+    "longest_ms": 1570.870836,
+    "n": 2832,
+    "sync_after_gpu_ms": 1.081406,
+    "sync_after_ms": 1.449254,
+    "total_ms": 1766.468445
+   },
+   "session_start_unix": 1793501941.8483243,
+   "timeline": {
+    "387-1022": {
+     "ms": 37.87198800943396,
+     "slow_copies_per_token": 1.1462264150943395
+    },
+    "387-642": {
+     "ms": 37.35216246875,
+     "slow_copies_per_token": 1.46484375
+    },
+    "643-1022": {
+     "ms": 38.222186268421055,
+     "slow_copies_per_token": 0.9315789473684211
+    }
+   },
+   "token3_s": 10.911464857
+  },
+  "ood-addr_r1": {
+   "copies_387_1022": {
+    "n_per_token": 304.50943396226415,
+    "pageable": {
+     "busy_gbps": 8.687687541985508,
+     "expert_per_token": 125.76729559748428,
+     "expert_slow_per_token": 1.0550314465408805,
+     "mean_kib": 476.2911560496263,
+     "n_per_token": 165.76729559748426,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.778860516819885,
+     "expert_per_token": 128.74213836477986,
+     "expert_slow_per_token": 0.0015723270440251573,
+     "mean_kib": 588.8897247563464,
+     "n_per_token": 138.74213836477986,
+     "under_4k_per_token": 7.0
+    },
+    "share_under_8k": 0.1543466137926761
+   },
+   "end_to_end_s": 49.585486874,
+   "memory": {
+    "decode_min_avail_mib": 2629.0,
+    "load_min_avail_mib": 917.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 6.865128066,
+    "before_prompt": true,
+    "longest_ms": 0.271356,
+    "n": 50,
+    "sync_after_gpu_ms": 0.050495,
+    "sync_after_ms": 923.475004,
+    "total_ms": 1.85775
+   },
+   "session_start_unix": 1793504159.2826662,
+   "timeline": {
+    "387-1022": {
+     "ms": 36.798917970125785,
+     "slow_copies_per_token": 1.0566037735849056
+    },
+    "387-642": {
+     "ms": 35.487410359375,
+     "slow_copies_per_token": 1.12109375
+    },
+    "643-1022": {
+     "ms": 37.68245993947368,
+     "slow_copies_per_token": 1.013157894736842
+    }
+   },
+   "token3_s": 11.048130329
+  },
+  "ood-addr_r2": {
+   "copies_387_1022": {
+    "n_per_token": 304.50943396226415,
+    "pageable": {
+     "busy_gbps": 8.648060827748598,
+     "expert_per_token": 125.76729559748428,
+     "expert_slow_per_token": 1.0660377358490567,
+     "mean_kib": 476.2911560496263,
+     "n_per_token": 165.76729559748426,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.770962047078322,
+     "expert_per_token": 128.74213836477986,
+     "expert_slow_per_token": 0.0015723270440251573,
+     "mean_kib": 588.8897247563464,
+     "n_per_token": 138.74213836477986,
+     "under_4k_per_token": 7.0
+    },
+    "share_under_8k": 0.1543466137926761
+   },
+   "end_to_end_s": 49.226942015,
+   "memory": {
+    "decode_min_avail_mib": 2691.0,
+    "load_min_avail_mib": 5298.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 6.842358596,
+    "before_prompt": true,
+    "longest_ms": 0.754854,
+    "n": 50,
+    "sync_after_gpu_ms": 0.050464,
+    "sync_after_ms": 953.373332,
+    "total_ms": 3.33835
+   },
+   "session_start_unix": 1793504841.0269034,
+   "timeline": {
+    "387-1022": {
+     "ms": 36.62761661006289,
+     "slow_copies_per_token": 1.0676100628930818
+    },
+    "387-642": {
+     "ms": 35.48757123828125,
+     "slow_copies_per_token": 1.1328125
+    },
+    "643-1022": {
+     "ms": 37.39564717631579,
+     "slow_copies_per_token": 1.0236842105263158
+    }
+   },
+   "token3_s": 10.901189281
+  },
+  "ood-on128_r1": {
+   "copies_387_1022": {
+    "n_per_token": 327.7169811320755,
+    "pageable": {
+     "busy_gbps": 10.650970393634509,
+     "expert_per_token": 29.849056603773583,
+     "expert_slow_per_token": 1.8066037735849056,
+     "mean_kib": 265.69477928597155,
+     "n_per_token": 69.84905660377359,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.49495665002293,
+     "expert_per_token": 224.66037735849056,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 551.052586750933,
+     "n_per_token": 257.8679245283019,
+     "under_4k_per_token": 30.20754716981132
+    },
+    "share_under_8k": 0.21423225286429845
+   },
+   "end_to_end_s": 50.038316638,
+   "memory": {
+    "decode_min_avail_mib": 3923.0,
+    "load_min_avail_mib": 3578.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 18.785936187,
+    "before_prompt": false,
+    "longest_ms": 141.821498,
+    "n": 6501,
+    "sync_after_gpu_ms": 1.242363,
+    "sync_after_ms": 1.587116,
+    "total_ms": 586.750887
+   },
+   "session_start_unix": 1793504416.7421992,
+   "timeline": {
+    "387-1022": {
+     "ms": 33.98666829402516,
+     "slow_copies_per_token": 1.8066037735849056
+    },
+    "387-642": {
+     "ms": 33.5861933046875,
+     "slow_copies_per_token": 2.28515625
+    },
+    "643-1022": {
+     "ms": 34.25646197105263,
+     "slow_copies_per_token": 1.4842105263157894
+    }
+   },
+   "token3_s": 11.436164667
+  },
+  "ood-on128_r2": {
+   "copies_387_1022": {
+    "n_per_token": 327.7169811320755,
+    "pageable": {
+     "busy_gbps": 10.598208682362909,
+     "expert_per_token": 29.849056603773583,
+     "expert_slow_per_token": 1.7625786163522013,
+     "mean_kib": 265.69477928597155,
+     "n_per_token": 69.84905660377359,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.487461808364657,
+     "expert_per_token": 224.66037735849056,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 551.052586750933,
+     "n_per_token": 257.8679245283019,
+     "under_4k_per_token": 30.20754716981132
+    },
+    "share_under_8k": 0.21423225286429845
+   },
+   "end_to_end_s": 49.315278424,
+   "memory": {
+    "decode_min_avail_mib": 3878.0,
+    "load_min_avail_mib": 3492.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 18.210582465,
+    "before_prompt": false,
+    "longest_ms": 147.462118,
+    "n": 6501,
+    "sync_after_gpu_ms": 1.243996,
+    "sync_after_ms": 1.601373,
+    "total_ms": 593.034797
+   },
+   "session_start_unix": 1793504552.86356,
+   "timeline": {
+    "387-1022": {
+     "ms": 33.860096981132074,
+     "slow_copies_per_token": 1.7625786163522013
+    },
+    "387-642": {
+     "ms": 33.39812254296875,
+     "slow_copies_per_token": 2.19140625
+    },
+    "643-1022": {
+     "ms": 34.17132186578947,
+     "slow_copies_per_token": 1.4736842105263157
+    }
+   },
+   "token3_s": 11.031168941
+  },
+  "ood-prof_r1": {
+   "copies_387_1022": {
+    "n_per_token": 381.83490566037733,
+    "pageable": {
+     "busy_gbps": 10.140565669944602,
+     "expert_per_token": 88.46698113207547,
+     "expert_slow_per_token": 1.7861635220125787,
+     "mean_kib": 431.56931223609325,
+     "n_per_token": 128.46698113207546,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 11.530709692386738,
+     "expert_per_token": 166.04716981132074,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 415.2653104482382,
+     "n_per_token": 253.3679245283019,
+     "under_4k_per_token": 84.32075471698113
+    },
+    "share_under_8k": 0.3255877157222449
+   },
+   "end_to_end_s": 50.233516121,
+   "memory": {
+    "decode_min_avail_mib": 2249.0,
+    "load_min_avail_mib": 3526.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 7.020922416,
+    "before_prompt": true,
+    "longest_ms": 1.065285,
+    "n": 7299,
+    "sync_after_gpu_ms": 0.05072,
+    "sync_after_ms": 1177.309971,
+    "total_ms": 584.84861
+   },
+   "session_start_unix": 1793504285.158408,
+   "timeline": {
+    "387-1022": {
+     "ms": 36.28987082704403,
+     "slow_copies_per_token": 1.7861635220125787
+    },
+    "387-642": {
+     "ms": 35.757614171875,
+     "slow_copies_per_token": 2.19140625
+    },
+    "643-1022": {
+     "ms": 36.64844373157894,
+     "slow_copies_per_token": 1.513157894736842
+    }
+   },
+   "token3_s": 11.811810235
+  },
+  "ood-prof_r2": {
+   "copies_387_1022": {
+    "n_per_token": 381.83490566037733,
+    "pageable": {
+     "busy_gbps": 10.161007626971854,
+     "expert_per_token": 88.46698113207547,
+     "expert_slow_per_token": 1.7279874213836477,
+     "mean_kib": 431.56931223609325,
+     "n_per_token": 128.46698113207546,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 11.551145286543639,
+     "expert_per_token": 166.04716981132074,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 415.2653104482382,
+     "n_per_token": 253.3679245283019,
+     "under_4k_per_token": 84.32075471698113
+    },
+    "share_under_8k": 0.3255877157222449
+   },
+   "end_to_end_s": 50.408879674,
+   "memory": {
+    "decode_min_avail_mib": 2358.0,
+    "load_min_avail_mib": 5599.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 7.139907419,
+    "before_prompt": true,
+    "longest_ms": 6.650698,
+    "n": 7299,
+    "sync_after_gpu_ms": 0.051008,
+    "sync_after_ms": 1467.522493,
+    "total_ms": 600.854359
+   },
+   "session_start_unix": 1793504693.2126915,
+   "timeline": {
+    "387-1022": {
+     "ms": 36.04943242610063,
+     "slow_copies_per_token": 1.7279874213836477
+    },
+    "387-642": {
+     "ms": 35.545711453125,
+     "slow_copies_per_token": 2.1328125
+    },
+    "643-1022": {
+     "ms": 36.388781292105264,
+     "slow_copies_per_token": 1.4552631578947368
+    }
+   },
+   "token3_s": 12.210615408
+  },
+  "prof15k_r1": {
+   "copies_387_1022": {
+    "n_per_token": 420.99528301886795,
+    "pageable": {
+     "busy_gbps": 10.929102350302818,
+     "expert_per_token": 8.19811320754717,
+     "expert_slow_per_token": 0.9732704402515723,
+     "mean_kib": 106.02095566647094,
+     "n_per_token": 48.198113207547166,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.766222625308,
+     "expert_per_token": 351.0707547169811,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 592.9684285361811,
+     "n_per_token": 372.79716981132077,
+     "under_4k_per_token": 18.72641509433962
+    },
+    "share_under_8k": 0.13949423535870747
+   },
+   "end_to_end_s": 49.246369909,
+   "memory": {
+    "decode_min_avail_mib": 776.0,
+    "load_min_avail_mib": 1872.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 6.716404079,
+    "before_prompt": true,
+    "longest_ms": 0.981855,
+    "n": 4881,
+    "sync_after_gpu_ms": 0.030528,
+    "sync_after_ms": 2757.497172,
+    "total_ms": 261.672638
+   },
+   "session_start_unix": 1793502691.5415657,
+   "timeline": {
+    "387-1022": {
+     "ms": 37.02742784591195,
+     "slow_copies_per_token": 0.9732704402515723
+    },
+    "387-642": {
+     "ms": 35.62987325390625,
+     "slow_copies_per_token": 0.83203125
+    },
+    "643-1022": {
+     "ms": 37.96893830789474,
+     "slow_copies_per_token": 1.068421052631579
+    }
+   },
+   "token3_s": 11.083663598
+  },
+  "prof15k_r2": {
+   "copies_387_1022": {
+    "n_per_token": 420.99528301886795,
+    "pageable": {
+     "busy_gbps": 11.125935932239782,
+     "expert_per_token": 8.19811320754717,
+     "expert_slow_per_token": 1.0078616352201257,
+     "mean_kib": 106.02095566647094,
+     "n_per_token": 48.198113207547166,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 12.776332602906766,
+     "expert_per_token": 351.0707547169811,
+     "expert_slow_per_token": 0.0,
+     "mean_kib": 592.9684285361811,
+     "n_per_token": 372.79716981132077,
+     "under_4k_per_token": 18.72641509433962
+    },
+    "share_under_8k": 0.13949423535870747
+   },
+   "end_to_end_s": 49.817793138,
+   "memory": {
+    "decode_min_avail_mib": 548.0,
+    "load_min_avail_mib": 1967.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 6.946892275,
+    "before_prompt": true,
+    "longest_ms": 1.096233,
+    "n": 4881,
+    "sync_after_gpu_ms": 0.030495,
+    "sync_after_ms": 2892.618301,
+    "total_ms": 285.682972
+   },
+   "session_start_unix": 1793503412.0765798,
+   "timeline": {
+    "387-1022": {
+     "ms": 37.188994174528304,
+     "slow_copies_per_token": 1.0078616352201257
+    },
+    "387-642": {
+     "ms": 35.8749538203125,
+     "slow_copies_per_token": 0.8671875
+    },
+    "643-1022": {
+     "ms": 38.0742424131579,
+     "slow_copies_per_token": 1.1026315789473684
+    }
+   },
+   "token3_s": 11.389928644
+  },
+  "prof_r1": {
+   "copies_387_1022": {
+    "n_per_token": 479.08490566037733,
+    "pageable": {
+     "busy_gbps": 10.622539662424206,
+     "expert_per_token": 80.43396226415095,
+     "expert_slow_per_token": 2.1745283018867925,
+     "mean_kib": 418.71245683521335,
+     "n_per_token": 120.43396226415095,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 11.855464452342977,
+     "expert_per_token": 278.8490566037736,
+     "expert_slow_per_token": 0.0015723270440251573,
+     "mean_kib": 490.00222912885465,
+     "n_per_token": 358.6509433962264,
+     "under_4k_per_token": 76.80188679245283
+    },
+    "share_under_8k": 0.24380205974440267
+   },
+   "end_to_end_s": 56.706787766,
+   "memory": {
+    "decode_min_avail_mib": 1866.0,
+    "load_min_avail_mib": 1839.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 7.309837429,
+    "before_prompt": true,
+    "longest_ms": 0.595872,
+    "n": 7299,
+    "sync_after_gpu_ms": 0.0304,
+    "sync_after_ms": 1216.740318,
+    "total_ms": 596.727719
+   },
+   "session_start_unix": 1793502085.640881,
+   "timeline": {
+    "387-1022": {
+     "ms": 41.8848038490566,
+     "slow_copies_per_token": 2.1761006289308176
+    },
+    "387-642": {
+     "ms": 41.11906990625,
+     "slow_copies_per_token": 2.54296875
+    },
+    "643-1022": {
+     "ms": 42.40066671578948,
+     "slow_copies_per_token": 1.9289473684210525
+    }
+   },
+   "token3_s": 11.059143292
+  },
+  "prof_r2": {
+   "copies_387_1022": {
+    "n_per_token": 479.08490566037733,
+    "pageable": {
+     "busy_gbps": 10.61132453738708,
+     "expert_per_token": 80.43396226415095,
+     "expert_slow_per_token": 2.0676100628930816,
+     "mean_kib": 418.71245683521335,
+     "n_per_token": 120.43396226415095,
+     "under_4k_per_token": 40.0
+    },
+    "pinned": {
+     "busy_gbps": 11.853685346205665,
+     "expert_per_token": 278.8490566037736,
+     "expert_slow_per_token": 0.0015723270440251573,
+     "mean_kib": 490.00222912885465,
+     "n_per_token": 358.6509433962264,
+     "under_4k_per_token": 76.80188679245283
+    },
+    "share_under_8k": 0.24380205974440267
+   },
+   "end_to_end_s": 55.973802247,
+   "memory": {
+    "decode_min_avail_mib": 1954.0,
+    "load_min_avail_mib": 7598.0
+   },
+   "n_readbacks": 1024,
+   "register": {
+    "at_s": 7.252613044,
+    "before_prompt": true,
+    "longest_ms": 0.71018,
+    "n": 7299,
+    "sync_after_gpu_ms": 0.030496,
+    "sync_after_ms": 956.501697,
+    "total_ms": 616.103857
+   },
+   "session_start_unix": 1793504007.411959,
+   "timeline": {
+    "387-1022": {
+     "ms": 41.5797034418239,
+     "slow_copies_per_token": 2.069182389937107
+    },
+    "387-642": {
+     "ms": 40.822181171875,
+     "slow_copies_per_token": 2.3828125
+    },
+    "643-1022": {
+     "ms": 42.09003423421053,
+     "slow_copies_per_token": 1.8578947368421053
+    }
+   },
+   "token3_s": 10.781875376
+  }
+ }
+}

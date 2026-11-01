@@ -4,7 +4,25 @@ Prioritized optimization opportunities. Reordered after every experiment, not
 followed blindly. Each item carries an estimate of gain, complexity, risk and
 cost, and names the evidence that motivates it.
 
-Last reprioritized: 2026-10-31, after EXP-0005.
+Last reprioritized: 2026-10-31, after EXP-0006.
+
+**What EXP-0006 changed.** The online profile (R17) works as designed but is not
+a free substitute for a file profile. Warm it is within 1 ms of a file profile
+from the same kind of text, and it costs about 3 s per 1024-token run up front
+at the default cap (6-7 s at 15000 MiB): the passes before the registration are
+pageable, and registering takes 0.54-0.57 s. Where the profile does not match
+the text it is 6.2% faster warm (one out-of-domain prompt). The larger finding
+is about what is left after pinning: every remaining hard fault is a pageable
+copy, and under profile pinning 2.0 to 12% of the pageable expert copies fault,
+against 0.9% under address order (level 4: the pageable remainder is the cold
+tail, whose pages leave RAM between uses; Q18). Slow-copy idle stays at 1.6 to
+3.8 ms per token warm under profile pinning (2.6 under address order), which
+raises R12. Load-time registration is followed by 0.9 to 2.9 s of GPU idle
+before the prompt (R19). With the launch headroom held fixed and a warm-up run,
+warm reps of one arm agree within 0.32 ms and no run-position drift is
+detectable (R16, its reproducibility half); a drift half EXP-0005's size is not
+excluded, and the same arms ran 0.7 to 1.4 ms slower than in EXP-0005, so
+compare across sessions only with care.
 
 **What EXP-0005 changed.** Pinning near the Windows budget, the experts a
 selection profile uses most first, took the warm 2048 MiB token from 52.95 to
@@ -101,31 +119,62 @@ with run order), on available RAM, which rose 1.5 GiB through the session. The
 persistent-process run and the B2 reconciliation were not done. They move to
 OPEN_QUESTIONS.md Q12, the headroom control to R16.
 
-## Priority 1
-
 ### R17 - An online selection profile
 
+**EXP-0006, Adopt** (opt-in `LLAMA_MOE_PIN_ONLINE=<N>`). Warm (tokens 387-1022)
+within 1 ms of the file profile at both caps: on64 +0.65, on128 -0.16, on64x15k
++0.83, on128x15k +0.90 ms, slower in both rounds in three of four arms, with a
+deficit after the registration that fades by about token 640 (split post hoc;
+consistent with first touches, not shown directly). Over tokens 3-1022 it beats
+address order by about 1% (-0.47, -0.54 ms) and, at the default cap, trails the
+file profile by about 3.5 ms per token (2.7-3.2 s per 1024-token run end to
+end), mostly the pageable passes before the registration; at 15000 MiB by 7.05
+to 7.6 ms per token (6-7 s). On one out-of-domain prompt it is 6.2% faster than
+the file profile warm and 0.64 s ahead end to end. The register calls take
+0.54-0.59 s at the default cap; at 15000 MiB one token stalls for 1.4-1.8 s.
+KNOWLEDGE_BASE.md Finding 12.
+
+### R16 - Hold RAM headroom fixed (done in part)
+
+**EXP-0006, the reproducibility half holds.** With a balloon holding 19968 MiB
+available at every launch, a discarded warm-up run and a new arm set in ABBA
+order, reps
+agree within 0.8% warm and the slope of r1 - r2 against the rep gap is +0.011
+ms per position (95% CI -0.036 to +0.058; EXP-0005: 0.13). Several things
+changed at once, so the result is not attributed to the headroom alone. The
+prefill clause needs two or more levels: R16b.
+
+## Priority 1
+
+### R12 - Fault in each layer's missed experts with one batched prefetch
+
 | | |
 |---|---|
-| Motivated by | EXP-0005: profile pinning is 6.8 to 8.1% faster than address order but needs a trace file from a previous run; offline, counting a run's own first 64 or 128 tokens and pinning then leaves 5.5 to 7.6% or 2.8 to 4.2% of miss bytes pageable at 15000 MiB (file profile, held out: 2.1 to 5.7%) |
-| Hypothesis | Registering by selection count after the first N generated tokens (N about 64 to 128) reaches within 1 ms per token of the file profile, warm, at the same cap. |
-| Falsifiable by | The online arm more than 1 ms per token slower than the file profile on tokens 387 to 1022, or the mid-run registration (0.3 to 0.6 s for 5000 to 7300 ranges) costing more than it saves over a 1024-token generation. |
-| Expected gain | The file profile's -2.7 to -3.6 ms per token over address order, without a file. |
-| Complexity | Small. The cache already sees every selection (the trace writer); the ranking and registration code exists (`ranges_by_use`). Registration must not race uploads: do it between tokens, under the range table's lock. |
-| Risk | Low to medium: 0.3 to 0.6 s of registration in the middle of a generation; and a first request that is unrepresentative of later ones (a long-lived server should re-rank). |
-| Cost | Low. Re-uses EXP-0005's harness; needs R16's fixed headroom. |
+| Motivated by | Finding 9: a decode fault reads 64 KiB synchronously in about 175 us (0.37 GB/s), while the startup prefetch reads the same disk at 3 to 4 GB/s; `llama_prefetch_rows` exists and the MoE cache never calls it. EXP-0006 (Finding 12): under profile pinning 2.0 to 12% of the pageable expert copies are hard faults (0.9% under address order; level 4: the cold tail, Q18), and slow-copy idle stays at 1.6 to 3.8 ms per token warm |
+| Hypothesis | One `PrefetchVirtualMemory` call per layer over all missed expert ranges, issued right after the router read-back and before the copies, turns serial faults into a parallel read and halves slow-copy idle in cold runs. |
+| Falsifiable by | A CPU-only microbenchmark (scattered 576 to 840 KiB ranges of the GGUF, cold cache) showing batched prefetch no faster than faulting by touch; or in-situ slow-copy idle not falling. |
+| Expected gain | Cold 2048 MiB: slow-copy idle is 91.7 ms per token, about 10 at prefetch speed, so up to about -80 ms. Warm, with profile pinning (EXP-0006): slow-copy idle 3.5 ms per token at the default cap and 1.6 at 15000 MiB, so about 0.8 to 1.7 ms if prefetch halves it (1.6 to 3.5 at most). Also the online profile's pageable passes before its registration (75-92 ms per token). |
+| Complexity | Small; the helper exists. |
+| Risk | Low: prefetch is advisory and changes no data path. |
+| Cost | Low. The cold microbenchmark can use EXP-0005's `evict.py` (no admin rights; 0 to 7 of 256 probed pages cached after it). |
 
-### R16 - Hold RAM headroom fixed (R10's missing control)
+Raised to priority 1 by EXP-0006. Profile pinning removes most of the pageable
+bytes but not the hard faults. By hypothesis (level 4, Q18) what stays pageable
+is the experts selected rarely, whose pages leave RAM between uses; the fault
+attribution in the next experiment checks that first. Cheap to test, and it
+composes with every pinning order.
+
+### R14 - Shorten the per-layer host round trip
 
 | | |
 |---|---|
-| Motivated by | EXP-0005: launch-state eviction alone left reps 1.1 to 3.9% apart warm and r1 slower in every arm, correlated with the session's RAM drift (r = 0.79) and run position (r = 0.91); prefill slow copies sat in the file tail the load left unread (level 1; that available RAM sets how much stays unread is a level 4 hypothesis) |
-| Hypothesis | With a fixed balloon allocation held through each run (for example 0, 2, 4, 6 GiB, randomized order), reps of one arm agree within 2% warm, and prefill time and slow copies rise with the balloon. |
-| Falsifiable by | Reps still more than 2% apart at a fixed balloon; or prefill slow copies not depending on it. |
-| Expected gain | None by itself. It makes 2 to 3 ms differences (R13, R14, R17) measurable, and it tests whether EXP-0004's 13.4 s prefill regime is a RAM-shortfall effect. |
-| Complexity | Low: one more script next to `evict.py`; per-process counters (IO read bytes, working set) and standby and modified list sizes in typeperf. |
-| Risk | Low; the balloon must leave the desktop above the watchdog's floor. |
-| Cost | Low. Fold it into the next timing experiment. |
+| Motivated by | EXP-0004: sync, 32-byte read-back, plan, the pageable slot-map copy and the graph launch cost 65 to 86 us per layer, 2.6 to 3.4 ms per token; the slot map is never registered |
+| Hypothesis | Registering the slot-map buffer and dropping one of the two syncs per layer saves at least 1.5 ms per token. |
+| Falsifiable by | Less than 1 ms per token of change on the timeline. |
+| Expected gain | At most 2.6 to 3.4 ms (5% pageable, 7 to 9% of EXP-0005's 36.4 ms pinned token; its sync idle alone is 2.3 ms). |
+| Complexity | Small for the registration; dropping the scheduler's sync touches `ggml-backend.cpp`, which is shared by every backend. |
+| Risk | Medium: the sync orders the slot-map write against earlier reads. Needs B3. |
+| Cost | Low. |
 
 ## Priority 2
 
@@ -141,34 +190,38 @@ OPEN_QUESTIONS.md Q12, the headroom control to R16.
 | Risk | Medium to high: correctness of slot reuse, and upstream acceptance of a scheduling change. |
 | Cost | High. Run both gates first; they are cheap. |
 
-### R14 - Shorten the per-layer host round trip
+### R18 - A hybrid profile: the file profile at load, re-ranked online
 
 | | |
 |---|---|
-| Motivated by | EXP-0004: sync, 32-byte read-back, plan, the pageable slot-map copy and the graph launch cost 65 to 86 us per layer, 2.6 to 3.4 ms per token; the slot map is never registered |
-| Hypothesis | Registering the slot-map buffer and dropping one of the two syncs per layer saves at least 1.5 ms per token. |
-| Falsifiable by | Less than 1 ms per token of change on the timeline. |
-| Expected gain | At most 2.6 to 3.4 ms (5% pageable, 7 to 9% of EXP-0005's 36.4 ms pinned token; its sync idle alone is 2.3 ms). |
-| Complexity | Small for the registration; dropping the scheduler's sync touches `ggml-backend.cpp`, which is shared by every backend. |
-| Risk | Medium: the sync orders the slot-map write against earlier reads. Needs B3. |
+| Motivated by | EXP-0006: the online profile matches a same-domain file profile warm but pays about 3 s up front at the default cap (6-7 s at 15000 MiB); on an out-of-domain prompt the file profile kept only a 1.5% warm gain over address order and the online profile was 6.2% faster than it |
+| Hypothesis | Pinning the file profile at load and, after N passes, swapping its least selected experts for the run's own most selected ones keeps the file profile's start and reaches the online profile's warm speed out of domain. |
+| Falsifiable by | Warm out of domain more than 1 ms slower than the online profile, or in domain more than 1 ms slower than the file profile, or a whole-run cost above 1 s against the better of the two. |
+| Expected gain | Out of domain about 2 ms per token warm without the online profile's pageable start; in domain none. |
+| Complexity | Medium: unregistering a range while no copy reads from it (the stream is idle at the registration point), and the range table and edge split updated in place. Registering in chunks across passes would also spread the 15000 MiB stall (R19). |
+| Risk | Medium: unregister under WDDM is untested here; the swap must not race uploads. |
+| Cost | Low to measure once written; reuses EXP-0006's harness and prompts. |
+
+### R19 - The deferred residency cost of registration
+
+| | |
+|---|---|
+| Motivated by | EXP-0006: registering 7.66 GiB of evicted pages takes 2-3 ms, but a GPU-idle stream sync of 0.9 to 2.9 s follows every load-time registration before the prompt (at most 53 ms in arms that pin nothing at load); mid-run at 15000 MiB one token stalls 1.4 to 1.8 s, inside one register call (N = 64) or at the next sync (N = 128) |
+| Hypothesis | The cost is paging the non-resident registered pages into RAM (level 4; the balloon's pressure is the other candidate), in the register call or at the next submission. Prefetching the range before registering it (as the load's prefetch does) moves the cost off the critical path. |
+| Falsifiable by | The idle sync unchanged when the registered pages are resident first (no eviction, or a prefetch before registering). |
+| Expected gain | Time to first token: up to 1.2 s at the default cap (1.5 s on the story prompt), 2.9 s at 15000 MiB; the online profile's 15000 MiB stall. |
+| Complexity | Small to measure (a microbenchmark with `cudaHostRegister` on an evicted file mapping); the fix is a prefetch call. |
+| Risk | Low. |
 | Cost | Low. |
 
-### R12 - Fault in each layer's missed experts with one batched prefetch
+### R16b - Prefill against launch headroom (the rest of R16)
 
-| | |
-|---|---|
-| Motivated by | Finding 9: a decode fault reads 64 KiB synchronously in about 175 us (0.37 GB/s), while the startup prefetch reads the same disk at 3 to 4 GB/s; `llama_prefetch_rows` exists and the MoE cache never calls it |
-| Hypothesis | One `PrefetchVirtualMemory` call per layer over all missed expert ranges, issued right after the router read-back and before the copies, turns serial faults into a parallel read and halves slow-copy idle in cold runs. |
-| Falsifiable by | A CPU-only microbenchmark (scattered 576 to 840 KiB ranges of the GGUF, cold cache) showing batched prefetch no faster than faulting by touch; or in-situ slow-copy idle not falling. |
-| Expected gain | Cold 2048 MiB: slow-copy idle is 91.7 ms per token, about 10 at prefetch speed, so up to about -80 ms. Warm: at most 6.7 ms pageable, 3.9 at 42% pinned, 0.9 with profile pinning at 15000 MiB (EXP-0005). |
-| Complexity | Small; the helper exists. |
-| Risk | Low: prefetch is advisory and changes no data path. |
-| Cost | Low. The cold microbenchmark can use EXP-0005's `evict.py` (no admin
-rights; 0 to 7 of 256 probed pages cached after it). |
-
-Ranked below R13 and R14 because profile pinning (R11, done) already removes
-most of the faults it targets, and R12's large gain is only for cold or short
-generations on hosts that cannot pin.
+R16's reproducibility half is done (EXP-0006). Its prefill clause is not:
+whether prefill time and slow copies rise as the launch headroom falls needs two
+or more balloon levels. It may also explain why EXP-0006's arms ran 0.7 to 1.4
+ms slower warm than EXP-0005's (mostly slow-copy idle, at 0.2 to 1.7 GiB less
+headroom); the page cache is an untested alternative. Fold it into the next
+timing experiment as a second balloon level.
 
 ## Priority 3
 

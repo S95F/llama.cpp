@@ -1,0 +1,19 @@
+smoke: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_ONLINE=64, -n 160, no eviction, no tracing (log lines; the registration line interleaves with stdout)
+0.04.630.960 I impl:      CUDA0 MoE cache size =  2044.11 MiB for 18760.00 MiB of host experts
+0.04.630.966 I impl: 36 layers, q5_K:  1005 slots (10.9%)
+0.04.630.968 I impl:  1 layers, q6_K:    26 slots (10.2%)
+0.04.630.969 I impl:  3 layers, q6_K:    82 slots (10.7%)
+0.04.631.042 I pin_host_experts: pinning nothing until 64 small batches have run, then the experts they selected most
+0.28.003.627 I register_ranges: registered 14915.31 MiB of host experts as pinned memory (3845.16 MiB left pageable) in 2832 ranges
+0.28.003.635 I pin_online: pinned the experts most selected in 64 small batches in 163.9 ms
+0.34.570.375 I common_perf_print:    sampling time =      54.91 ms
+0.34.570.376 I common_perf_print:    samplers time =      18.46 ms /   206 tokens
+0.34.570.377 I common_perf_print:        load time =   11384.34 ms
+0.34.570.379 I common_perf_print: prompt eval time =   11383.94 ms /    46 tokens (  247.48 ms per token,     4.04 tokens per second)
+0.34.570.380 I common_perf_print:        eval time =   18474.57 ms /   159 runs   (  116.19 ms per token,     8.61 tokens per second)
+0.34.570.381 I common_perf_print:       total time =   29919.98 ms /   205 tokens
+0.34.570.382 I common_perf_print: unaccounted time =       6.56 ms /   0.0 %      (total - sampling - prompt eval - eval) / (total)
+0.34.570.382 I common_perf_print:    graphs reused =        158
+0.34.570.383 I common_perf_print:   graph reallocs =          0    /     0        (same size) / (changed size)
+0.34.579.736 I llama_moe_cache: ubatch <= 8: hits = 31036, misses = 19852, hit rate = 60.99%, uploaded = 36551.67 MiB
+0.34.579.740 I llama_moe_cache: large batches: 6315 uploads of uncached experts, 5707.74 MiB

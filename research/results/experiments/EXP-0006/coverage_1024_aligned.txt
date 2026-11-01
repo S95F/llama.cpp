@@ -1,0 +1,16 @@
+a: 1024 tokens, 40921 calls, simulated fills 123521, recorded 123521
+ood: 1024 tokens, 40921 calls, simulated fills 86205, recorded 86205
+cap 7964 MiB (address pins 7842, select 7963): pageable share of upload bytes
+   a    387-1022   220.8 MiB/token  address  50.7%  select  22.4%  online64  24.9%  online128  20.3%
+   a    3-1022     222.1 MiB/token  address  51.7%  select  22.4%  online64  28.1%  online128  29.1%
+   a    3-130      222.5 MiB/token  address  55.3%  select  22.2%  online64  60.0%  online128  99.0%
+   ood  387-1022   156.8 MiB/token  address  49.1%  select  34.6%  online64  15.4%  online128  11.6%
+   ood  3-1022     155.0 MiB/token  address  49.1%  select  34.0%  online64  20.4%  online128  22.0%
+   ood  3-130      156.7 MiB/token  address  50.1%  select  33.5%  online64  59.0%  online128  99.1%
+cap 15000 MiB (address pins 14946, select 15000): pageable share of upload bytes
+   a    387-1022   220.8 MiB/token  address  20.2%  select   2.3%  online64   6.7%  online128   4.2%
+   a    3-1022     222.1 MiB/token  address  20.5%  select   2.3%  online64  12.5%  online128  16.0%
+   a    3-130      222.5 MiB/token  address  21.6%  select   2.1%  online64  54.4%  online128  98.9%
+   ood  387-1022   156.8 MiB/token  address  21.8%  select   9.7%  online64   4.6%  online128   3.2%
+   ood  3-1022     155.0 MiB/token  address  21.8%  select   9.7%  online64  10.8%  online128  15.1%
+   ood  3-130      156.7 MiB/token  address  21.5%  select  10.1%  online64  55.1%  online128  99.1%

@@ -64,6 +64,10 @@ if [ -n "${PIN_PROFILE:-}" ]; then
     LLAMA_MOE_PIN_PROFILE="$PIN_PROFILE" run cache2048-pinprof "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
 fi
 
+# nor pinning in the middle of the generation, by the selections of its first small batches
+LLAMA_MOE_PIN_ONLINE=16 run cache2048-pinonline "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
+LLAMA_MOE_PIN_ONLINE=64 LLAMA_MOE_PIN_MIB=15000 run cache2048-pinonline15000 "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
+
 if [ -n "$BASE_BIN" ]; then
     run upstream-off  "$BASE_BIN" - --moe-cache-mib 0
     run upstream-2048 "$BASE_BIN" - --moe-cache-mib 2048

@@ -372,7 +372,17 @@ struct llama_moe_cache::impl {
 
     // host expert ranges this cache registered with the device driver (pinned), sorted, released in the dtor
     std::vector<std::pair<uintptr_t, uintptr_t>> pinned_ranges;
+    bool (*reg_host)(void *, size_t) = nullptr;
     void (*unreg_host)(void *) = nullptr;
+    std::vector<ggml_backend_buffer_type_t> pin_host_bufts; // experts in these buffers are pinned already
+    size_t pin_cap   = 0;
+    size_t pin_total = 0; // host expert bytes that could be pinned
+
+    // LLAMA_MOE_PIN_ONLINE: selections per layer and expert in the first online_n small batches, pinned by count after them
+    int64_t online_n      = 0;
+    int64_t online_passes = 0;
+    int32_t online_layer  = -1; // first cached layer, starts a pass
+    std::vector<std::vector<int64_t>> online_use;
 
     std::vector<device> devices;
     std::vector<group> groups;
@@ -669,7 +679,6 @@ struct llama_moe_cache::impl {
 
         // the first backend registry that exports the proc serves all its devices
         // (registration is portable); mixed-backend device sets are not handled
-        bool (*reg_host)(void *, size_t) = nullptr;
         for (const device & d : devices) {
             ggml_backend_reg_t reg = ggml_backend_dev_backend_reg(ggml_backend_get_device(d.backend));
             reg_host   = (bool (*)(void *, size_t)) ggml_backend_reg_get_proc_address(reg, "ggml_backend_register_host_buffer");
@@ -684,7 +693,7 @@ struct llama_moe_cache::impl {
 
         // experts already in a pinned host buffer (e.g. --load-mode none) must not be
         // registered again
-        std::vector<ggml_backend_buffer_type_t> host_bufts;
+        std::vector<ggml_backend_buffer_type_t> & host_bufts = pin_host_bufts;
         for (const device & d : devices) {
             ggml_backend_buffer_type_t buft = ggml_backend_dev_host_buffer_type(ggml_backend_get_device(d.backend));
             if (buft != nullptr) {
@@ -731,47 +740,107 @@ struct llama_moe_cache::impl {
             cap = (size_t) std::min<uint64_t>((uint64_t) mib*1024*1024, SIZE_MAX);
         }
 
-        // LLAMA_MOE_PIN_PROFILE=<trace in the LLAMA_MOE_CACHE_TRACE format>: pin the experts it selects most instead of whole tensors in address order
-        size_t total = 0;
+        pin_cap   = cap;
+        pin_total = 0;
         for (const auto & r : merged) {
-            total += r.second - r.first;
+            pin_total += r.second - r.first;
         }
+        if (pin_total == 0) {
+            return; // every expert is in a pinned host buffer already
+        }
+
+        // LLAMA_MOE_PIN_ONLINE=N: pin nothing yet, count the experts selected by the first N small batches, then pin the most selected (no trace file needed)
+        if (const char * env = getenv("LLAMA_MOE_PIN_ONLINE")) {
+            online_n = std::max<long long>(0, atoll(env));
+        }
+        if (online_n > 0) {
+            if (getenv("LLAMA_MOE_PIN_PROFILE") != nullptr) {
+                LLAMA_LOG_WARN("%s: LLAMA_MOE_PIN_ONLINE is set, LLAMA_MOE_PIN_PROFILE is ignored\n", __func__);
+            }
+            online_use = empty_use();
+            for (size_t il = 0; il < layers.size() && online_layer < 0; ++il) {
+                if (layers[il].ig >= 0) {
+                    online_layer = (int32_t) il;
+                }
+            }
+            LLAMA_LOG_INFO("%s: pinning nothing until %lld small batches have run, then the experts they selected most\n", __func__, (long long) online_n);
+            return;
+        }
+
+        // LLAMA_MOE_PIN_PROFILE=<trace in the LLAMA_MOE_CACHE_TRACE format>: pin the experts it selects most instead of whole tensors in address order
         if (const char * env = getenv("LLAMA_MOE_PIN_PROFILE")) {
-            std::vector<std::pair<uintptr_t, uintptr_t>> by_use = ranges_by_use(env, host_bufts, page, cap);
+            std::vector<std::pair<uintptr_t, uintptr_t>> by_use = ranges_by_use(env);
             if (!by_use.empty()) {
                 merged = std::move(by_use);
             }
         }
 
+        register_ranges(merged);
+    }
+
+    // register ranges in order, skipping those that do not fit under the cap or that the driver refuses, and log the result
+    void register_ranges(const std::vector<std::pair<uintptr_t, uintptr_t>> & ranges) {
         // other contexts must not upload across a range between its registration and its entry in the table
         std::lock_guard<std::mutex> lock(llama_moe_cache_pinned_mutex);
         size_t pinned = 0;
-        for (const auto & r : merged) {
+        for (const auto & r : pinned_ranges) {
+            pinned += r.second - r.first;
+        }
+        const size_t n_before = pinned_ranges.size();
+        size_t refused = 0;
+        for (const auto & r : ranges) {
             const size_t n = r.second - r.first;
-            if (pinned + n > cap) {
+            if (pinned + n > pin_cap) {
                 continue;
             }
             if (reg_host((void *) r.first, n)) {
                 pinned_ranges.push_back(r);
                 pinned += n;
+            } else {
+                refused += n;
             }
         }
-        llama_moe_cache_pinned.insert(llama_moe_cache_pinned.end(), pinned_ranges.begin(), pinned_ranges.end());
+        llama_moe_cache_pinned.insert(llama_moe_cache_pinned.end(), pinned_ranges.begin() + n_before, pinned_ranges.end());
         std::sort(llama_moe_cache_pinned.begin(), llama_moe_cache_pinned.end());
-        if (total > 0) {
-            LLAMA_LOG_INFO("%s: registered %.2f MiB of host experts as pinned memory (%.2f MiB left pageable) in %zu ranges\n",
-                __func__, pinned/1024.0/1024.0, (total - std::min(total, pinned))/1024.0/1024.0, pinned_ranges.size());
+        std::sort(pinned_ranges.begin(), pinned_ranges.end());
+        LLAMA_LOG_INFO("%s: registered %.2f MiB of host experts as pinned memory (%.2f MiB left pageable) in %zu ranges, %.2f MiB refused\n",
+            __func__, pinned/1024.0/1024.0, (pin_total - std::min(pin_total, pinned))/1024.0/1024.0, pinned_ranges.size(), refused/1024.0/1024.0);
+    }
+
+    // LLAMA_MOE_PIN_ONLINE: count the selections of a small batch, or pin by count once online_n batches are counted
+    // called between the read-back of the ids and the uploads, when the backend is idle
+    void pin_online(int32_t il, const std::vector<int32_t> & sel) {
+        if (il == online_layer && ++online_passes > online_n) {
+            const int64_t t0 = ggml_time_us();
+            register_ranges(ranges_by_count(online_use));
+            LLAMA_LOG_INFO("%s: pinned the experts most selected in %lld small batches in %.1f ms\n", __func__,
+                (long long) online_n, (ggml_time_us() - t0)/1000.0);
+            online_n = 0;
+            online_use.clear();
+            return;
+        }
+        auto & use = online_use[il];
+        for (int32_t e : sel) {
+            if (e >= 0 && e < (int32_t) use.size()) {
+                use[e]++;
+            }
         }
     }
 
-    // page ranges of the experts most selected in a trace (all tensors of an expert together), first fit within cap; empty if the trace has no selections
-    std::vector<std::pair<uintptr_t, uintptr_t>> ranges_by_use(const char * path, const std::vector<ggml_backend_buffer_type_t> & host_bufts, uintptr_t page, size_t cap) const {
+    // a zero count per expert of each cached layer
+    std::vector<std::vector<int64_t>> empty_use() const {
         std::vector<std::vector<int64_t>> use(layers.size());
         for (size_t il = 0; il < layers.size(); ++il) {
             if (layers[il].ig >= 0) {
                 use[il].assign(layers[il].experts[0]->ne[2], 0);
             }
         }
+        return use;
+    }
+
+    // page ranges of the experts most selected in a trace, see ranges_by_count; empty if the trace has no selections
+    std::vector<std::pair<uintptr_t, uintptr_t>> ranges_by_use(const char * path) const {
+        std::vector<std::vector<int64_t>> use = empty_use();
 
         std::ifstream in(path);
         if (!in) {
@@ -801,6 +870,13 @@ struct llama_moe_cache::impl {
             LLAMA_LOG_WARN("%s: no expert selections in the MoE pin profile '%s'\n", __func__, path);
             return {};
         }
+        LLAMA_LOG_INFO("%s: pinning the experts most selected in '%s' first (%zu selections)\n", __func__, path, n_sel);
+        return ranges_by_count(use);
+    }
+
+    // page ranges of the experts by selection count (all tensors of an expert together), ties and unselected experts by address, first fit within the cap, most selected first
+    std::vector<std::pair<uintptr_t, uintptr_t>> ranges_by_count(const std::vector<std::vector<int64_t>> & use) const {
+        const uintptr_t page = llama_moe_cache_page_size();
 
         struct unit {
             int64_t   use;
@@ -819,29 +895,47 @@ struct llama_moe_cache::impl {
             return a.use != b.use ? a.use > b.use : a.addr < b.addr;
         });
 
-        std::vector<std::pair<uintptr_t, uintptr_t>> ranges;
+        // each range with the rank of its expert
+        std::vector<std::pair<std::pair<uintptr_t, uintptr_t>, size_t>> ranges;
         size_t total = 0;
-        for (const unit & u : units) {
+        for (size_t k = 0; k < units.size(); ++k) {
+            const unit & u = units[k];
             size_t n = 0;
             const size_t n_before = ranges.size();
             for (const ggml_tensor * t : layers[u.il].experts) {
-                if (std::find(host_bufts.begin(), host_bufts.end(), ggml_backend_buffer_get_type(t->buffer)) != host_bufts.end()) {
+                if (std::find(pin_host_bufts.begin(), pin_host_bufts.end(), ggml_backend_buffer_get_type(t->buffer)) != pin_host_bufts.end()) {
                     continue;
                 }
                 const uintptr_t a    = (uintptr_t) t->data + u.e*t->nb[2];
                 const uintptr_t base = a & ~(page - 1);
                 const uintptr_t end  = (a + t->nb[2] + page - 1) & ~(page - 1);
-                ranges.push_back({ base, end });
+                ranges.push_back({ { base, end }, k });
                 n += end - base;
             }
-            if (total + n > cap) {
+            if (total + n > pin_cap) {
                 ranges.resize(n_before);
                 continue;
             }
             total += n;
         }
-        LLAMA_LOG_INFO("%s: pinning the experts most selected in '%s' first (%zu selections)\n", __func__, path, n_sel);
-        return llama_moe_cache_merge_ranges(std::move(ranges));
+
+        // merge the ranges that overlap or touch, then order them by their best ranked expert, so that if the driver refuses some (the pinned budget) they are the least selected
+        std::sort(ranges.begin(), ranges.end());
+        std::vector<std::pair<size_t, std::pair<uintptr_t, uintptr_t>>> merged;
+        for (const auto & r : ranges) {
+            if (!merged.empty() && r.first.first <= merged.back().second.second) {
+                merged.back().second.second = std::max(merged.back().second.second, r.first.second);
+                merged.back().first         = std::min(merged.back().first, r.second);
+            } else {
+                merged.push_back({ r.second, r.first });
+            }
+        }
+        std::sort(merged.begin(), merged.end());
+        std::vector<std::pair<uintptr_t, uintptr_t>> res;
+        for (const auto & m : merged) {
+            res.push_back(m.second);
+        }
+        return res;
     }
 
     ggml_backend_t backend(int32_t il) const {
@@ -954,6 +1048,10 @@ struct llama_moe_cache::impl {
         ids.resize(ggml_nelements(sel));
         ggml_backend_tensor_get_async(backend, sel, ids.data(), 0, ggml_nbytes(sel));
         ggml_backend_synchronize(backend);
+
+        if (online_n > 0 && ids.size() <= (size_t) 8*n_expert_used) {
+            pin_online(il, ids);
+        }
 
         size_t n_hit = 0;
         if (!g.slru.plan(il, ids.data(), ids.size(), fills, n_hit)) {

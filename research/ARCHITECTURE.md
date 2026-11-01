@@ -195,6 +195,41 @@ would copy the whole tensor in one piece. While any range is pinned
 instead. Not reached with this model, where every expert tensor starts its own
 split (122 splits in the prefill graph).
 
+### Online selection profile (EXP-0006)
+
+**`LLAMA_MOE_PIN_ONLINE=<N>`** builds the profile from the run itself, so no
+trace file is needed. At load `pin_host_experts` sets up the cap and the
+registration hook as usual but registers nothing. In `copy()`, after the router
+read-back has synchronized the stream and before the fills, `pin_online` adds
+the ids of every small batch (up to 8 tokens) to a per-(layer, expert) count. A
+pass starts at the first cached layer; at the start of pass N + 1 it ranks the
+counts with `ranges_by_count`, the same ranking `LLAMA_MOE_PIN_PROFILE` applies
+to a trace (`ranges_by_use` now only parses the file), and registers the result
+with `register_ranges`, which both modes share. Registration holds the range
+table's lock, and the stream is idle at that point, so no copy is in flight
+from a page whose state changes. Unselected experts fill the rest of the cap in
+address order, which makes long runs: 2832 ranges at 15000 MiB after 64 passes,
+registered in 164 ms (smoke run). `ranges_by_count` returns the merged ranges
+most selected first (a merged range takes the best rank of its experts), so if
+the driver refuses part of the budget, the least selected experts are the ones
+left pageable; the log line ends with the MiB refused. If
+`LLAMA_MOE_PIN_PROFILE` is also set, it is ignored with a warning. If every
+expert is already in a pinned host buffer, there is nothing to pin and online
+mode stays off. Nothing is ever unregistered before the destructor, so the
+first N passes decide for the whole life of the context.
+
+Measured costs (EXP-0006, model evicted before launch; level 1 for the timings):
+the register calls take 0.075-0.078 ms per range for N = 64 and 128 on prompt a
+(544-565 ms for 7104 to 7392 ranges), and 587-593 ms for 6501 ranges on the
+story prompt (one call 142-147 ms). `cudaHostRegister` on evicted pages can
+return fast: address order registers 7.66 GiB at load in 2-3 ms, and 0.9 to 2.9
+s of GPU idle follows at the next stream sync before the prompt. Mid-run at
+15000 MiB one token stalls 1.4 to 1.8 s: inside one register call (1.5-1.6 s)
+for N = 64, at the next stream sync (1.2-1.3 s) for N = 128. Level 4: the
+leading candidate is paging in the non-resident registered pages, the balloon's
+pressure the second; the mechanism is unknown. An untraced run without eviction
+logged 14.57 GiB registered in 164 ms.
+
 ### Telemetry (`6c9e79086`)
 
 - `stats_small` (ubatch <= 8), `stats_large`, `stats_copy` (experts read out of

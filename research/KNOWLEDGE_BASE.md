@@ -16,7 +16,8 @@ Provenance: findings 1 to 6 consolidate `moe-bench/RESULTS.md`, which is the
 primary record and holds the full tables. Section numbers below refer to it.
 Findings 7 and 8 come from EXP-0002 and 0003, findings 9 and 10 and the rewrite
 of Finding 4 from EXP-0004, Finding 11 and the rewritten correctness invariant
-from EXP-0005.
+from EXP-0005, Finding 12, Finding 11's online figures and three
+measurement-discipline entries from EXP-0006.
 Measurements exist on two bases: `78a8ae1` (RESULTS.md sections 1-11) and
 `d854d98b` (section 12, the current base). Where they differ, the `d854d98b`
 figure is the one to use.
@@ -458,8 +459,7 @@ because one of its reps was stopped at token 841):
 | profile order, default cap | 7943 MiB | 22.3% | 40.42 | -23.7% |
 | address order, 15000 MiB | 14946 MiB | 20.2% | 39.35 (387-841) | -26.5% (387-841) |
 | profile order, 15000 MiB | 14924 MiB | **2.3%** | **36.43** (387-841: 36.65) | **-31.2%** |
-| `--load-mode none` | about 15240 MiB (14.9 GiB) | 18.5% | 37.93 (387-841:
-38.21) | -28.4% |
+| `--load-mode none` | about 15240 MiB (14.9 GiB) | 18.5% | 37.93 (387-841: 38.21) | -28.4% |
 
 - **Profile order wins at the same MiB**: -3.55 ms (-8.1%) at the default cap,
   -2.69 ms (-6.8%) at 15000 MiB, the same sign in both rounds and in every
@@ -496,9 +496,96 @@ to 29.3%). At 15000 MiB the profile pins every expert its 765 tokens selected
 at least twice, but only 207 of the 606 it selected once (8126 of its 8525
 selected experts; all of them would need about 15650 MiB); at the default cap
 the cutoff is 16 selections, so the default-cap result depends more on the
-profile. With room to pin every expert, order would not matter. **Level 4:** an
-online profile from a run's own first 64 or 128 tokens would leave 5.5 to 7.6%
-or 2.8 to 4.2% pageable at 15000 MiB (offline, four traces; ROADMAP R17).
+profile. With room to pin every expert, order would not matter. An online
+profile from a run's own first 64 or 128 decode passes leaves 6.7% and 4.2%
+pageable at 15000 MiB on the run prompt, tokens 387-1022 (measured in EXP-0006;
+the level 4 estimate from four traces was 5.5 to 7.6% and 2.8 to 4.2%). Finding
+12 has what that costs and what it gains.
+
+## Finding 12: an online profile matches a matching file profile warm, pays up front, and wins warm out of domain
+
+**Level 1** (EXP-0006: 2048 MiB cache, 1024-token traced runs, two reps per arm
+in ABBA order, 19968 MiB available at every launch held by a balloon, a
+discarded warm-up run). Level 4 where marked.
+
+`LLAMA_MOE_PIN_ONLINE=<N>` counts the selections of the run's first N decode
+passes and registers the most selected experts at the start of pass N+1, up to
+the same cap as the other modes. ms per token, mean of two reps:
+
+| arm | pinned share, warm | 387-1022 | 3-1022 |
+|---|---:|---:|---:|
+| address order, default cap | 49.3% | 45.32 | 48.59 |
+| file profile, default cap | 77.7% | 41.73 | 44.53 |
+| online, N = 64 | 75.2% | 42.38 | 48.11 |
+| online, N = 128 | 79.8% | 41.57 | 48.05 |
+| file profile, 15000 MiB | 97.7% | 37.11 | 37.54 |
+| online, N = 64, 15000 MiB | 93.3% | 37.94 | 44.59 |
+| online, N = 128, 15000 MiB | 95.8% | 38.01 | 45.15 |
+| story: address order | 50.9% | 36.71 | 37.68 |
+| story: file profile | 65.5% | 36.17 | 37.56 |
+| story: online, N = 128 | 88.4% | **33.92** | 37.69 |
+
+- **Warm, it is within 1 ms of a file profile from the same kind of text**
+  (+0.65, -0.16, +0.83, +0.90 ms), slower in both rounds in three of the four
+  arms, partly a deficit after the registration that fades by about token 640
+  (split post hoc; consistent with first touches, not shown directly).
+- **It pays up front.** Every pass before the registration is pageable (75-92 ms
+  per token), and the register calls take 0.54-0.59 s at the default cap (the
+  registering pass 0.62-0.66 s). Over tokens 3-1022 it beats address order by
+  about 1% (-0.47, -0.54 ms) and trails the file profile by about 3.5 ms per
+  token, 2.7 to 3.2 s per 1024-token run end to end. At 15000 MiB it trails by
+  7.05 to 7.6 ms per token (6 to 7 s), with one token stalled for 1.4 to 1.8 s.
+- **Out of domain it wins warm.** On a children's story (one prompt, which
+  changes topic and register together) the file profile leaves 34.5% of the warm
+  bytes pageable against 22.3% on prompt a and gains 1.5% over address order
+  (7.9% on prompt a). The online profile leaves 11.6% and is 2.25 ms (6.2%)
+  faster than the file profile warm; over tokens 3-1022 the three story arms
+  tie, and end to end the online run is 0.64 s ahead of the file profile's
+  (break-even near token 1080 on decode alone, extrapolated) and 0.27 s behind
+  address order's.
+- **The pageable remainder of a profile faults more per byte.** Every slow copy
+  (an expert copy below 1.5 GB/s) is pageable. The share of pageable expert
+  copies that are slow is 0.9% under address order, 2.0% for the file profile
+  on the story, 2.7% at the default cap on prompt a and 12% at 15000 MiB. So
+  slow-copy idle does not fall with the pageable share: 3.48 ms per token for
+  the file profile against 2.59 for address order, which leaves 28 points more
+  pageable. **Level 4**: a profile pins the hot experts, so what stays pageable
+  is the cold tail, selected rarely, whose pages leave RAM between uses;
+  address order leaves whole layers pageable, hot experts included, and those
+  stay resident. Which experts fault was not identified.
+- **So the offline replay gives the share but not the milliseconds.** The replay
+  reproduces every arm's measured pageable share within 0.2 points (0.1 once a
+  one-pass offset in its windows was fixed). Converting share to ms with
+  EXP-0005's slopes overestimated every gain: by 0.1 to 0.35 ms for three of the
+  H1 arms and by 0.5 to 1.5 ms for H2, on128x15k and the story's file profile.
+  Two causes: the extra faults above, and passes before the registration slower
+  than the rebuild from EXP-0005's timelines assumed.
+- **Registration has a cost that can come later.** `cudaHostRegister` on evicted
+  pages can return fast (7.66 GiB in 2-3 ms in address order at load), but a
+  GPU-idle stream sync of 0.9 to 2.9 s follows every load-time registration
+  before the prompt (at most 53 ms in arms that pin nothing at load). Mid-run at
+  15000 MiB one token stalls 1.4 to 1.8 s, inside one register call for N = 64
+  (1.5-1.6 s) and at the next stream sync for N = 128 (1.2-1.3 s), with 1.3 to
+  1.6 million page faults and 1.5 to 2.1 GiB of disk reads. An untraced run
+  without eviction or balloon logged 14.57 GiB registered in 164 ms; whether a
+  stall followed was not measured. **Level 4**: paging in the non-resident
+  registered pages is the leading cause, the balloon's pressure the second; the
+  driver mechanism is unknown.
+- **Memory.** At the default cap it pins only experts the run uses, so it uses
+  less RAM: warm working set 16457-16539 MiB against the file profile's
+  17013-17025 and address order's 18289-18295. At 15000 MiB it uses more (warm
+  median available 465-774 MiB against 859-1060), because the pageable experts
+  it leaves are selected later and stay resident.
+- **Upload fragments are cheap.** Expert-level pinning splits neighbouring
+  experts' uploads at page edges: 67 to 84 pinned copies under 4 KiB per token
+  at the default cap (30 for the story's online profile, 19 to 27 at 15000 MiB;
+  7 under address order), about 0.2 ms of DMA and 0.1 ms of idle per token.
+
+**Limits.** One in-domain and one out-of-domain prompt, two reps, one headroom
+level. Five of the six runs at 15000 MiB had a warm median below 1 GiB
+available, so those comparisons are headroom-limited. The three arms repeated
+from EXP-0005 ran 0.7 to 1.4 ms slower here, mostly in slow-copy idle, at 0.2
+to 1.7 GiB less launch headroom; the cause was not tested.
 
 ---
 
@@ -588,7 +675,26 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
   and RAM drifted 1.5 GiB through one session, plausibly (not measured) as the
   evictions trimmed other processes. Reps differed by up to 3.9% warm and 28%
   in tokens 3-130, and r1 was slower than r2 in every arm. Hold headroom fixed
-  too (ROADMAP R16), and record available RAM before every run.
+  too, and record available RAM before every run.
+- **With a fixed launch headroom and a discarded warm-up run, reps agreed**
+  (EXP-0006). A balloon held 19968 MiB available at every launch: warm reps
+  within 0.8% (0.32 ms), and the slope of r1 - r2 against the rep gap fell from
+  0.13 to +0.011 ms per position (95% CI -0.036 to +0.058; a drift half
+  EXP-0005's size is not excluded). The arm set and order changed too and there
+  was no control, so neither the headroom nor the harness is shown to be the
+  cause. Check every guard the plan names: EXP-0006's warm-up went below the 300
+  MiB floor for about 5 s and the script checked only for a kill.
+- **Pageable share does not convert to milliseconds at one rate across pinning
+  orders** (EXP-0006, Finding 12). A profile's pageable remainder faults more
+  per byte (2.0 to 12% of its pageable copies against 0.9% under address order;
+  level 4: because it is the cold tail), so a slope taken from one session's
+  address-against-profile gap (EXP-0005: 0.125 and 0.163 ms per point) does not
+  transfer to other profiles or prompts; in EXP-0006 it overestimated every
+  gain.
+- **Align replay tokens to timeline tokens before scoring windows.** In a
+  `LLAMA_MOE_CACHE_TRACE` file, replay token 0 is the prompt's last-layer call
+  and replay token t is decode pass t, which is timeline token t. EXP-0006's
+  first coverage script was one pass early.
 - **ABBA cancels a linear drift, not a memory-state effect** that decays with
   token index. Report the per-round pair differences next to the means.
 - **System-wide paging and disk counters are not llama-only** after an eviction:

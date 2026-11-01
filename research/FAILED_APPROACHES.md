@@ -253,8 +253,10 @@ because each eviction trimmed other processes.
 effect when arms are not interleaved, and that ABBA averages away only if it is
 linear.
 
-**Guard:** hold RAM headroom fixed through each run (ROADMAP R16), record
-available RAM before every run, and report per-round pair differences.
+**Guard:** hold RAM headroom fixed, record available RAM before every run, and
+report per-round pair differences. EXP-0006 held the launch headroom (a balloon
+to 19968 MiB) with a warm-up run: warm reps within 0.8%, no detectable drift (a
+drift half EXP-0005's size is not excluded).
 
 ### Summing typeperf rows as one second each
 
@@ -266,6 +268,38 @@ as if every row were 1 s undercounted the mmap runs' disk reads 1.8 to 4.3x (the
 **Guard:** integrate each rate over the timestamp difference to its previous
 row (`analyze.py`), and calibrate the counter against a known read
 (`calib_disk_counter.txt`).
+
+### Converting the pageable share to milliseconds at one rate across orders
+
+Found by EXP-0006. The offline replay predicted every arm's pageable share to
+0.2 points, and EXP-0005's slopes turned share into time. Every gain was
+overestimated, by 0.5 to 1.5 ms per token in four cases: the online arms were
+predicted -2 and -1 ms against address order over the whole run and measured
+-0.47 and -0.54; on128x15k was predicted +0.3 ms against the file profile and
+measured +0.90; the file profile on the story was predicted about -1.3 ms
+against address order and measured -0.54. Under a profile 2.0 to 12% of the
+pageable copies are hard faults against 0.9% under address order, so a pageable
+byte costs more there (the cold tail as the reason is level 4, OPEN_QUESTIONS.md
+Q18). For the online arms the passes before the registration were also slower
+than the rebuild from EXP-0005's timelines assumed.
+
+**How it presents:** an exact share prediction that lends false confidence to
+the time prediction built on it.
+
+**Guard:** predict share and time separately, and fit the share-to-time rate
+per pinning order (or model the fault rate of what stays pageable).
+
+### Scoring a replay one pass early
+
+Found by EXP-0006's review. In a `LLAMA_MOE_CACHE_TRACE` file replay token 0 is
+the prompt's last-layer call (output pruning leaves one row) and replay token t
+is decode pass t. The first `coverage.py` took replay token t for timeline token
+t + 1, so its windows, its online pin sets and its registration point were one
+pass early. Here it moved the shares by at most 0.2 points, but a coverage
+figure for a short window, or a pin set from a few passes, would move more.
+
+**Guard:** align trace and timeline tokens by a known event (the registration
+pass, the prompt's single-row call) before scoring windows.
 
 ---
 
@@ -302,3 +336,16 @@ Upstream PR #30594 is already attacking this properly (profile prefilling and
 zero-upload inference). ROADMAP R9 says to **prefer the upstream solution** and
 revisit only if it stalls. Duplicating it would be both wasted work and a
 guaranteed upstream conflict.
+
+### An online profile where a matching file profile exists
+
+EXP-0006 (partial negative; the mode itself was adopted). Against a file profile
+from the same kind of text, `LLAMA_MOE_PIN_ONLINE` gains nothing warm (within 1
+ms, slower in both rounds in three of four arms) and costs about 3 s per
+1024-token run up front at the default cap (6-7 s at 15000 MiB): the passes
+before the registration are pageable, the register calls take 0.54-0.59 s at the
+default cap, and one token stalls for 1.4-1.8 s at 15000 MiB. Out of domain it
+was 6.2% faster than the file profile warm.
+
+**Revisit when:** no matching profile exists, or as part of a hybrid (ROADMAP
+R18) that starts from the file profile and re-ranks online.

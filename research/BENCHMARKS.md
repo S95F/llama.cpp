@@ -151,8 +151,10 @@ configuration and diffs against `--moe-cache-mib 0`. Configurations:
 `cache2048-lru`, `cache2048-auto`, `cache2048-s16`, `cache528-lru`,
 `cache528-auto`, `cache528-dist0`, `cache256-auto`, `cache1024-pinned`;
 `cache2048-pinprof` when `PIN_PROFILE=<trace>` is set (profile pinning at the
-default cap); and `upstream-off` and `upstream-2048` when a baseline build is
-given.
+default cap); `cache2048-pinonline` (online pinning after 16 passes, default
+cap) and `cache2048-pinonline15000` (after 64 passes, 15000 MiB), so the
+registration lands inside the 256 tokens; and `upstream-off` and
+`upstream-2048` when a baseline build is given.
 
 **Every configuration computes its experts on the GPU**
 (`GGML_OP_OFFLOAD_MIN_BATCH=1`, exported by the script). Without it, the cache-off
@@ -164,10 +166,10 @@ short of that.
 **Reference: all configurations byte-identical.** This is a pass/fail gate, not
 a measurement. Any difference is a bug.
 
-Last run EXP-0005 on `5df437a57` plus its changes: 9 of 9 OK against the
-reference (10 identical outputs), `PIN_PROFILE` set (`b3_correctness_gpu256.txt`).
-Before it, EXP-0002 on `d854d98b`: 8 of 8 OK at 64 tokens against the CPU
-reference.
+Last run EXP-0006 on `24c58282f` plus its changes: 11 of 11 OK against the
+reference, `PIN_PROFILE` set (`EXP-0006/b3_correctness_gpu256.txt`). Before it,
+EXP-0005 on `5df437a57`: 9 of 9; EXP-0002 on `d854d98b`: 8 of 8 at 64 tokens
+against the CPU reference.
 
 A baseline build of upstream master at `d854d98b` does **not** currently exist,
 so the two `upstream-*` rows were not run on the current base.
@@ -313,6 +315,50 @@ reference harness):
   to 5.5 s during a load. The counters are system-wide, so other processes'
   page-ins after an eviction land in them.
 
+Added by EXP-0006 (`research/results/experiments/EXP-0006/runs.sh` is now the
+reference harness):
+
+- **Hold the launch headroom fixed**: `balloon.py` locks memory until 19968 MiB
+  is available and holds it to the end of the run, with up to three attempts
+  (each after a new eviction); a run whose balloon missed the target by more
+  than 192 MiB is flagged. With it and a discarded warm-up run, warm reps agreed
+  within 0.8% and no run-position drift was detectable (a drift half EXP-0005's
+  size is not excluded; KNOWLEDGE_BASE.md, Measurement discipline). The eviction
+  stays.
+- **One benchmark process at a time, checked**: the script stops if another
+  `llama-completion.exe` is running, and the monitor follows the new PID only.
+- **Record the stdout of every run** (`out_<tag>.txt`, its sha256 in
+  `runs.json`) and check it is identical across arms of one prompt.
+- **Check the warm-up against every guard**, the 300 MiB floor too: EXP-0006's
+  warm-up went below it for about 5 s and the script checked only for a kill.
+- **Report 3-1022 next to 387-1022** for anything that pins mid-run: the
+  online profile's cost is in the early passes.
+- In the Nsight sqlite export, `CUPTI_ACTIVITY_KIND_MEMCPY.srcKind` is 1 for
+  pinned and 0 for pageable host memory (`ENUM_CUDA_MEM_KIND`).
+
+### Reference, base `24c58282f` plus EXP-0006, warm (tokens 387 to 1022)
+
+2048 MiB cache, mean of two reps (ABBA), model evicted and 19968 MiB available
+held at every launch. Prompt a unless marked; the story is `prompt_ood.txt`.
+
+| arm | ms/token | compute | DMA | idle | slow-copy idle | pinned share |
+|---|---:|---:|---:|---:|---:|---:|
+| address order, default cap | 45.32 | 12.99 | 22.19 | 10.02 | 2.59 | 49.3% |
+| profile order, default cap | 41.73 | 12.95 | 20.04 | 8.62 | 3.48 | 77.7% |
+| online, N = 64, default cap | 42.38 | 12.94 | 20.24 | 9.08 | 3.78 | 75.2% |
+| online, N = 128, default cap | 41.57 | 12.93 | 19.83 | 8.70 | 3.61 | 79.8% |
+| profile order, 15000 MiB | 37.11 | 12.89 | 18.20 | 5.89 | 1.57 | 97.7% |
+| online, N = 64, 15000 MiB | 37.94 | 12.90 | 18.50 | 6.42 | 1.83 | 93.3% |
+| online, N = 128, 15000 MiB | 38.01 | 12.91 | 18.26 | 6.71 | 2.17 | 95.8% |
+| story, address order | 36.71 | 12.94 | 15.88 | 7.77 | 1.69 | 50.9% |
+| story, profile order | 36.17 | 12.93 | 14.93 | 8.19 | 2.79 | 65.5% |
+| story, online, N = 128 | 33.92 | 12.92 | 13.44 | 7.45 | 2.86 | 88.4% |
+
+The three arms repeated from EXP-0005 ran 0.7 to 1.4 ms slower here, mostly in
+slow-copy idle, at 0.2 to 1.7 GiB less launch headroom; do not mix the two
+sessions' tables. Tokens 3-1022 and 3-130 are in
+`research/results/experiments/EXP-0006/analysis.md`.
+
 ### Reference, base `5df437a57`, warm (tokens 387 to 1022), EXP-0005
 
 2048 MiB cache, mean of two reps (ABBA), model evicted before every run,
@@ -364,6 +410,13 @@ Committed so far:
   `analysis.json`, the offline coverage (`coverage_*.json`), the budget and
   copy-edge tests, three B3 records and the review record. Captures in
   `C:\nsys\exp0005` stay outside git; `provenance.txt` has their sha256.
+- `research/results/experiments/EXP-0006/` - per-run balloon, paging, process
+  and low-memory records, timelines, logs and summaries for the 21 runs
+  (warm-up included), `runs.json`, `analysis.json`, `captures.json` (copy kinds,
+  registration costs), the two 1024-token traces and their coverage replays
+  (`coverage_1024.json` as written before the runs, `coverage_1024_aligned.json`
+  after the one-pass fix), the B3 record and the review records. Captures in
+  `C:\nsys\exp0006` stay outside git; `provenance.txt` has their sha256.
 
 **Gap: nothing from the pre-`research/` work was preserved.**
 `moe-bench/.gitignore` excludes `out/` and `*.csv`, so the `78a8ae1` reference

@@ -2,7 +2,56 @@
 
 Unresolved questions, missing evidence, and what it would take to settle each.
 Ordered by value, not by age. Q11 to Q14 are new from EXP-0004, Q15 to Q17 from
-EXP-0005.
+EXP-0005, Q18 and Q19 from EXP-0006.
+
+## Q18 - Why does the pageable remainder of expert-level pinning fault more per byte?
+
+**New, from EXP-0006.** Every slow copy (an expert copy below 1.5 GB/s, a hard
+fault) is pageable. The share of pageable expert copies that are slow is 0.9%
+under address order, 2.0% for the file profile on the story prompt, 2.7% at the
+default cap on prompt a, 3.1% for the online profile at N = 128, and at 15000
+MiB 12% for the file profile (4.7 to 9.2% for the online profiles). So slow-copy
+idle does not fall with the pageable share: 3.48 ms per token under the file
+profile against 2.59 under address order, which leaves 28 points more pageable.
+Level 4 hypothesis: a profile pins the hot experts, so its pageable remainder is
+the cold tail, selected rarely, whose pages leave RAM between uses; address
+order leaves whole layers pageable, hot experts included, and those stay
+resident. The copy records carry no host address, so which experts fault is not
+known.
+
+**To settle:** log the layer and expert of every copy with its host time (Q11's
+method), and count how often each slow copy's expert was selected before it
+faulted. Then test keeping the pageable experts resident (a batched prefetch,
+ROADMAP R12, or a touch) against the RAM it costs.
+
+**Why it matters:** slow-copy idle is 3.5 to 3.8 ms of a 42 ms warm token under
+profile pinning at the default cap, the largest piece left that is not DMA or
+compute (1.6 to 2.2 ms at 15000 MiB, below the 2.3 ms of sync idle), and it is
+one of the two reasons the offline share does not convert to milliseconds at one
+rate.
+
+## Q19 - Why does a GPU-idle sync of up to 2.9 s follow a load-time registration?
+
+**New, from EXP-0006.** `cudaHostRegister` over 7.66 GiB of evicted pages
+returned in 2-3 ms at load, but the next stream sync before the prompt is GPU
+idle for 0.9 to 1.1 s (address order), 1.0 to 1.5 s (file profile; 1.2 to 1.5 on
+the story) and 2.8 to 2.9 s (file profile at 15000 MiB); arms that pin nothing
+at load wait at most 53 ms there. Mid-run at 15000 MiB the online registration
+stalls one token for 1.4 to 1.8 s, with 1.3 to 1.6 million page faults and 1.5
+to 2.1 GiB of disk reads: inside one register call for N = 64 (1.5-1.6 s), at
+the next stream sync for N = 128 (1.2-1.3 s). An untraced run without eviction
+or balloon logged 14.57 GiB registered in 164 ms; whether a stall followed was
+not measured. Level 4: the cost is paging in the registered pages that are not
+resident; where it lands, and why, is not known. Other candidates: the balloon's
+memory pressure, or the load's prefetch still reading the file.
+
+**To settle:** a microbenchmark that registers an evicted file mapping and times
+the register call and the first submission, with and without a prefetch of the
+range first (ROADMAP R19).
+
+**Why it matters:** up to 2.9 s before the first token at 15000 MiB, and the
+online profile's mid-run stall. If a prefetch moves it off the critical path,
+it is a small fix.
 
 ## Q15 - How much do the small-cache hardware rows depend on CPU-computed layers?
 
@@ -24,6 +73,11 @@ statistics are similar across texts), but unmeasured.
 
 ## Q16 - Does prefill depend on available RAM, and what made EXP-0004's prefill slow?
 
+**Still open after EXP-0006**, which held one headroom level (19968 MiB) and so
+tested only R16's reproducibility half. Its repeated arms ran 0.7 to 1.4 ms
+slower warm than EXP-0005's, mostly in slow-copy idle, at 0.2 to 1.7 GiB less
+launch headroom; that may be the same effect, untested.
+
 **New, from EXP-0005.** With the model evicted before launch, prefill took 1.55
 to 3.02 s at 19.7 to 21.1 GiB available, and its slow copies sat in the file
 tail that the load's prefetch left unread. EXP-0004's pageable runs after other
@@ -34,24 +88,35 @@ available RAM through how much of the file's tail the load leaves unread; that
 alone does not explain EXP-0004, where all 40 layers faulted and runs after a
 pinned run at about the same RAM prefilled in 3.7 to 7.3 s).
 
-**To settle:** ROADMAP R16, a fixed balloon of 0 to 6 GiB per run, with per-layer
-fault positions at prefill.
+**To settle:** ROADMAP R16b, two or more balloon levels (0 to 6 GiB) with the
+EXP-0006 harness, with per-layer fault positions at prefill.
 
 **Why it matters:** it decides whether short requests on a host with less spare
 RAM pay 2 s or 13 s of prefill, and it is R10's missing control.
 
-## Q17 - Does a selection profile from one domain pin well for another?
+## Q17 - Does a selection profile from one domain pin well for another? SETTLED IN PART
 
-**New, from EXP-0005.** The profile (prompts b, c, d) was held out from the run
+**EXP-0006, for one prompt: worse, and the online profile recovers it.** On a
+children's story, answered outside the think block, the file profile left 34.5%
+of the warm upload bytes pageable against 22.3% on prompt a, and gained 1.5%
+over address order against 7.9% on prompt a. The online profile (N = 128) left
+11.6% and was 2.25 ms (6.2%) faster than the file profile warm. Part of the file
+profile's shortfall is not the share but extra hard faults in its pageable
+remainder (slow-copy idle 2.79 against 1.69 ms per token; Q18). The story
+changes topic and register together, so which of the two matters is not known,
+and it is one prompt with two reps.
+
+**Still to settle:** more out-of-domain prompts that separate topic from
+register (code, non-English, an answer without thinking on the profile's
+topic), at both caps.
+
+**From EXP-0005.** The profile (prompts b, c, d) was held out from the run
 prompt but shares its domain, and the run prompt is the best covered of four
 offline (2.1% pageable at 15000 MiB against 4.6 to 5.7%; 20.7% at the default
 cap against 26.8 to 29.3%).
 
-**To settle:** time a run prompt from another domain (code, non-English, chat
-without thinking) with the same profile, at both caps; and an online profile
-(ROADMAP R17), which adapts by construction.
-
-**Why it matters:** the default-cap gain (-8.1%) depends most on it.
+**Why it matters:** the default-cap gain (-8.1%) depends most on it, and it
+decides whether a hybrid profile (ROADMAP R18) is worth building.
 
 ## Q11 - Are the faults left in a warm run first touches or re-faults?
 
@@ -71,6 +136,11 @@ count how many slow copies hit an expert already copied earlier in the run.
 **Why it matters:** first touches are a startup cost that pinning, prefetch or a
 persistent process removes; re-faults are a residency problem that only pinning
 (R11) or more free RAM removes. It decides between R11 and R12 for warm runs.
+
+**EXP-0006 narrows it for pinned runs:** every slow copy is pageable, and a
+larger share of pageable copies fault under profile pinning than under address
+order (Q18). Level 4: they are the cold tail re-faulting. Same method to settle
+both.
 
 ## Q12 - What does a persistent process look like, and why does B2 disagree?
 

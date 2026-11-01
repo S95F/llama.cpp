@@ -1,0 +1,316 @@
+[
+ {
+  "key": "code-correctness",
+  "findings": [
+   {
+    "file": "src/llama-moe-cache.cpp",
+    "line": 916,
+    "severity": "minor",
+    "title": "Ranges are registered in address order, not by count, so if the driver refuses some, the most-selected experts are the ones dropped",
+    "problem": "ranges_by_count picks the experts by count, then returns `llama_moe_cache_merge_ranges(std::move(ranges))`, which sorts them by address (line 916). register_ranges registers them in that order: `for (const auto & r : ranges) { ... if (reg_host((void *) r.first, n)) { ... } }` (lines 788-797). A range the driver refuses is skipped quietly. The cap check is always met here, because ranges_by_count already kept the total under pin_cap. So the only thing that decides which experts get pinned is driver refusal, and that hits whatever is registered last, which means the highest addresses. Above the selected experts, ranges_by_count also fills the rest of the cap with zero-count experts in address order ('ties and unselected experts by address'). Those filler experts sit at low addresses, so they come early in the registration order.",
+    "failure_scenario": "The on64x15k and on128x15k arms ask for about 14924 MiB (the amount EXP-0005's prof15000 registered at load). KNOWLEDGE_BASE puts this host's pinned budget at 14848 to 15266 MiB, so the margin is about 0.3 GiB. Online mode now registers mid-run, after the CUDA_Host output and compute buffers and the driver's pageable staging buffers already hold part of that budget. If the budget runs out partway, the last ranges are refused. These are the highest addresses, so later layers lose their most-selected experts, while low-address experts with zero count stay pinned. The arm then measures address-order registration of a count-chosen set, not the online profile that H1 is about. The only sign is a lower 'registered X MiB' line, and no script compares it to the requested amount.",
+    "fix": "Register in priority order. One way: have ranges_by_count return the merged ranges sorted by the highest count they contain, then sort pinned_ranges after registering, as the code already does. Also log or count how many bytes the driver refused, so summarize.py can flag a run with refusals."
+   },
+   {
+    "file": "src/llama-moe-cache.cpp",
+    "line": 810,
+    "severity": "nit",
+    "title": "Warmup and probe decodes count as online passes, so outside this harness registration comes one pass early",
+    "problem": "pin_online counts every small ubatch that reaches online_layer: `if (il == online_layer && ++online_passes > online_n)`. This includes the warmup decode in common_init_from_params (common/common.cpp:1508-1541: a 1-2 token batch with zero input state, followed by llama_memory_clear), and also the 2-token probe in common_context_can_seq_rm that llama-server runs for non-recurrent models. online_passes is never reset when memory is cleared. The plan and the code comment describe the count as 'the first N decode passes'.",
+    "failure_scenario": "Running llama-cli, llama-completion or llama-server without --no-warmup and with LLAMA_MOE_PIN_ONLINE=64: pass 1 is the warmup batch, whose dummy input selects arbitrary experts. Registration then happens at generated token 64, not 65. The EXP-0006 harness and the B3 gate both pass --no-warmup, so their results are unaffected. Default users and any later experiment without that flag would get a skewed profile, and summarize.py would place the registration on the wrong token (it looks at token n + 1).",
+    "fix": "Start counting only once real decoding has begun, for example skip counting while cparams.warmup is set or until the first ubatch after a memory clear. Otherwise, write in EXP-0006.md and the code comment that warmup and probe batches count as passes."
+   },
+   {
+    "file": "src/llama-moe-cache.cpp",
+    "line": 754,
+    "severity": "nit",
+    "title": "Online mode still counts passes and logs 'pinned' when there is nothing to pin (--load-mode none)",
+    "problem": "The online branch starts whenever online_n > 0, even if `merged` is empty: pin_total == 0 when every expert tensor is in a pin_host_bufts (CUDA_Host) buffer. At pass N+1, register_ranges gets an empty list and, because pin_total == 0, prints no 'registered' line. pin_online still prints 'pinned the experts most selected in %lld small batches in %.1f ms'. Before this change, pinning with nothing to pin did nothing and logged nothing.",
+    "failure_scenario": "Running --load-mode none with GGML_CUDA_REGISTER_HOST=1 and LLAMA_MOE_PIN_ONLINE=64, with every CUDA_Host chunk granted: the log says experts were pinned at token 65 when nothing was. EXP-0006/summarize.py online_fields() would record online_n and online_ms for the run as if a registration had happened.",
+    "fix": "In pin_host_experts, return before the online branch when pin_total == 0, or have pin_online log only when register_ranges actually registered something."
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "severity": "minor",
+    "reason": "I confirmed each step in the working tree. ranges_by_count chooses experts by count and returns `llama_moe_cache_merge_ranges(std::move(ranges))`, which runs `std::sort(ranges...)` (line 297), so the result is in address order. In online mode nothing is pinned before the call, and the units were already first-fit under pin_cap, so the check `pinned + n > pin_cap` in register_ranges never trips. A refused `reg_host` is skipped and logged only at debug level (ggml-cuda.cu:5431). The zero-count fillers come after all selected experts in the count order and are sorted by address among themselves, so they sit at the lowest addresses and register early. If the driver refuses ranges partway, the ranges dropped are the highest addresses (late layers), whatever their counts. The risk is real on this host. KNOWLEDGE_BASE puts the budget at about 15.0 to 15.3 GiB. The arms ask for about 14.9 GiB of experts plus about 19 MiB of CUDA_Host buffers. The online registration also comes after the 18 MiB CUDA_Host compute buffer, whereas load-time registration came before it (EXP-0005 logs). Nothing records the bytes that were refused. The smoke run and EXP-0005 registered 14915 to 14946 MiB with no visible shortfall, so a refusal has not been observed yet, which is why this is minor and not major. Separately, logging refused bytes is cheap and is worth doing before the runs, because otherwise H1 cannot tell a refusal apart from a profile effect.",
+    "fix": "(1) In register_ranges, count refusals and append them after the existing text, so EXP-0005's regexes `\\(([\\d.]+) MiB left pageable\\)` and `left pageable\\) in (\\d+) ranges` still match. Add `size_t refused = 0;`. Change the registration to `if (reg_host((void *) r.first, n)) { pinned_ranges.push_back(r); pinned += n; } else { refused += n; }`. Change the log format to `...left pageable) in %zu ranges, %.2f MiB refused by the driver\\n` with `refused/1024.0/1024.0` added. (2) Register by priority. In ranges_by_count, iterate `for (size_t k = 0; k < units.size(); ++k)` and, next to each `ranges.push_back({ base, end })`, also do `rank.push_back({ base, k })`, using `std::vector<std::pair<uintptr_t, size_t>> rank;`. When an expert is dropped, call `rank.resize(n_before)` together with `ranges.resize(n_before)`. Then replace the return with: `auto merged = llama_moe_cache_merge_ranges(std::move(ranges)); std::sort(rank.begin(), rank.end()); std::vector<std::pair<size_t, size_t>> order; for (size_t i = 0, j = 0; i < merged.size(); ++i) { size_t best = SIZE_MAX; for (; j < rank.size() && rank[j].first < merged[i].second; ++j) { best = std::min(best, rank[j].second); } order.push_back({ best, i }); } std::sort(order.begin(), order.end()); std::vector<std::pair<uintptr_t, uintptr_t>> out; for (const auto & o : order) { out.push_back(merged[o.second]); } return out;`. register_ranges already sorts pinned_ranges and llama_moe_cache_pinned after registering, so the registration order is safe. Make summarize.py record the refused MiB, and have analyze.py flag any run where it is above 0."
+   },
+   {
+    "index": 1,
+    "valid": false,
+    "reason": "The behavior is real: in this tree common.cpp never calls llama_set_warmup, so the 1-2 token warmup decode uses n_expert_used = 8. It goes through get_slot_map and copy(), and with ids.size() <= 64 it is counted as a pass. Even so, it is not a problem worth fixing. The code documents what it counts as 'small batches', not decode passes: line 381 reads 'selections per layer and expert in the first online_n small batches' and line 749 reads 'count the experts selected by the first N small batches'. The reviewer's claim that the code comment says 'decode passes' is wrong. The plan's Design section says 'each small batch (up to 8 tokens) for N passes', which matches the code. The only places where the decode-pass mapping matters are summarize.py's n + 1 token and H1's wording. Both apply only to the harness and the B3 gate, and both pass --no-warmup (runs.sh:44, check-correctness.sh:40). The common_context_can_seq_rm probe returns early for a model with recurrent state (llama_n_rs_seq > 0), and this Qwen3.6 hybrid model has such state. Outside the harness, the effect is one dummy batch among 64 or more counted batches and a registration one pass earlier, which has no measurable consequence.",
+    "severity": "nit"
+   },
+   {
+    "index": 2,
+    "valid": true,
+    "severity": "nit",
+    "reason": "I confirmed the path. When every expert tensor is in a pin_host_bufts buffer, merged is empty and pin_total == 0, but the online branch still runs: it logs 'pinning nothing until N small batches have run...' and returns. pin_online then counts N passes and calls register_ranges(ranges_by_count(online_use)). ranges_by_count skips every tensor and returns an empty list. register_ranges prints nothing because pin_total == 0, while pin_online still logs 'pinned the experts most selected in %lld small batches in %.1f ms' although nothing was pinned. The reviewer's 'before this change ... logged nothing' holds only for the default path, because profile mode already logged in this case through ranges_by_use. The impact is small. EXP-0006 has no --load-mode none arm. On this host, with this model, one of the five CUDA_Host chunks always falls back to pageable memory (KNOWLEDGE_BASE), so pin_total > 0 there. The misleading log can still really happen with a smaller model or a host with more RAM, and the fix is one line.",
+    "fix": "In pin_host_experts, right after the loop that sums pin_total, add `if (pin_total == 0) { return; } // every expert is in a pinned host buffer already`. This also stops profile mode's misleading 'pinning the experts most selected in ...' line in that case."
+   }
+  ]
+ },
+ {
+  "key": "code-edge",
+  "findings": [
+   {
+    "file": "src/llama-moe-cache.cpp",
+    "line": 813,
+    "severity": "nit",
+    "title": "Online mode says it pinned experts even when there was nothing it could pin",
+    "problem": "pin_host_experts turns on online mode (lines 754-766) without checking pin_total. When every expert sits in an already-pinned host buffer, all tensors are in pin_host_bufts, so merged is empty and pin_total == 0. Online mode still counts N passes. At pass N+1, ranges_by_count skips every tensor and returns {}, and register_ranges prints nothing because of its `if (pin_total > 0)` check. pin_online then logs \"%s: pinned the experts most selected in %lld small batches in %.1f ms\" anyway. Earlier, the load-time line \"pinning nothing until %lld small batches have run, then the experts they selected most\" also promises pinning that cannot happen.",
+    "failure_scenario": "Run with --load-mode none (an EXP-0005 configuration), GGML_CUDA_REGISTER_HOST=1 and LLAMA_MOE_PIN_ONLINE=64. The log shows the 'pinning nothing until 64' line, then 'pin_online: pinned the experts most selected in 64 small batches in 0.x ms', and no 'registered ... MiB' line. EXP-0006 summarize.py online_fields() would record online_n, online_ms and reg_token_ms for a run that pinned nothing.",
+    "fix": "Turn on online mode only when there is something to pin, e.g. `if (online_n > 0 && pin_total > 0)`, or return early from pin_host_experts when merged is empty. Another option is to log the MiB actually added in pin_online instead of a fixed 'pinned' message."
+   },
+   {
+    "file": "src/llama-moe-cache.cpp",
+    "line": 749,
+    "severity": "nit",
+    "title": "New comment splits one sentence across two lines (AGENTS.md)",
+    "problem": "The new comment `// LLAMA_MOE_PIN_ONLINE=N: pin nothing yet, count the experts selected by the first N small batches, then pin the most selected` is followed by `// (a profile of the run itself, so no trace file is needed)`. That is one sentence wrapped onto a second line. AGENTS.md says: \"Do NOT split a line into multiple lines mid-sentence\". The other new comments (lines 381, 779, 807-808, 827, 838, 874) follow the rule.",
+    "failure_scenario": "No runtime effect. It is a convention violation in the diff that a reviewer would flag.",
+    "fix": "Join it into one line, e.g. `// LLAMA_MOE_PIN_ONLINE=N: pin nothing yet, count the experts selected by the first N small batches, then pin the most selected (no trace file needed)`."
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "severity": "nit",
+    "reason": "Confirmed in code. pin_host_experts computes pin_total (src/llama-moe-cache.cpp:743-747) and then turns on online mode at 751-766 without checking it. If every cached expert's buffer type is in pin_host_bufts, merged is empty and pin_total == 0. Online mode still counts N passes. At pass N+1, pin_online (810-816) calls register_ranges(ranges_by_count(online_use)). ranges_by_count skips every tensor (line 901), and register_ranges prints nothing because of `if (pin_total > 0)` (801). The log still says \"pinned the experts most selected in %lld small batches\" (813), and summarize.py online_fields() parses that line as a real online registration. One correction to the reviewer's scenario: with this model on this host, --load-mode none does NOT give pin_total == 0. The 19.3 GiB CUDA_Host request is larger than the ~15 GiB pinned budget, so one chunk falls back to a CPU buffer (ggml-cuda.cu:1343-1345). Each chunk is its own buffer (ggml-backend.cpp:100-115), so those tensors have the CPU buft, are not skipped, and register_ranges does print a 'registered ... MiB' line there. pin_total == 0 needs every host expert in a CUDA_Host chunk that succeeded, for example fewer host-expert layers (-ncmoe/-ot) that fit in the budget with --load-mode none. No EXP-0006 arm uses --load-mode none, so the planned runs are not affected. This is a misleading log in an edge configuration, with a one-line fix.",
+    "fix": "In pin_host_experts, right after the pin_total loop (after line 747) and before the LLAMA_MOE_PIN_ONLINE block, add:\n        if (pin_total == 0) {\n            return; // every expert is in a pinned host buffer already\n        }\nThen online_n stays 0, so copy() never counts or logs, and the profile path also stops logging \"pinning the experts most selected in ...\" when there is nothing to pin. register_ranges(merged) with empty merged was already a no-op."
+   },
+   {
+    "index": 1,
+    "valid": true,
+    "severity": "nit",
+    "reason": "Confirmed. src/llama-moe-cache.cpp:749-750 reads `// LLAMA_MOE_PIN_ONLINE=N: pin nothing yet, count the experts selected by the first N small batches, then pin the most selected` and then `// (a profile of the run itself, so no trace file is needed)`. The parenthetical continues the same sentence and has no terminator, so this is a mid-sentence split. AGENTS.md:84 says \"Do NOT split a line into multiple lines mid-sentence\". The neighbouring new comment at 768 is a longer single line, so the split is a wrap and not a separate statement. Lines 807-808 are two separate statements, so they are fine. No runtime effect.",
+    "fix": "Replace lines 749-750 with one line:\n        // LLAMA_MOE_PIN_ONLINE=N: pin nothing yet, count the experts selected by the first N small batches, then pin the most selected (no trace file needed)"
+   }
+  ]
+ },
+ {
+  "key": "harness",
+  "findings": [
+   {
+    "file": "research/results/experiments/EXP-0006/runs.sh",
+    "line": 100,
+    "severity": "major",
+    "title": "Nothing stops the session when the balloon cannot reach TARGET, so H4's fixed launch headroom can fail without a stop",
+    "problem": "balloon.py:47 computes `want = int(max(0.0, before - a.target) // a.chunk) * a.chunk`. When the RAM available after evict.py and probe.py is below TARGET, it holds 0 MiB. runs.sh:96-101 only waits for the output line and then copies it into pre_/info. It never checks `held` or `available now` against TARGET, so the run starts anyway. The margin is small: TARGET=19968, while EXP-0005's post-evict availability was 20242 to 21703 MiB (pre_addr7842_r1.txt: `after {'avail': 20242`). That is only 274 MiB above the target in the worst case. In EXP-0005 the availability also rose about 1.5 GiB over the session (STATE.md), so the low values came in the early r1 runs. The same gap exists when the lock fails: the balloon prints `locked no` and the session still continues.",
+    "failure_scenario": "The desktop holds a few hundred MiB more than it did in EXP-0005 (for example another Claude session or Discord grows). After evict, the first runs (addr_r1, prof_r1, on64_r1, ...) see under 19968 MiB. Each balloon prints `held 0 MiB` and those runs launch with less headroom than the later r2 runs. That brings back the r1-against-r2 confound that H4/R16 is meant to remove. Nobody sees it until runs.json is read after the 50-minute session.",
+    "fix": "After the balloon line appears, parse it and stop the session (touch $stop, exit 1) when `available now` is more than about 128 MiB from TARGET or `locked` is not yes. Also do a preflight before the loop: run evict.py once, and if the available RAM is below TARGET + 256, refuse to start or lower TARGET."
+   },
+   {
+    "file": "research/results/experiments/EXP-0006/runs.sh",
+    "line": 44,
+    "severity": "minor",
+    "title": "OOD arms can stop before 1023 decode passes: no --ignore-eos on a prompt that has never been run",
+    "problem": "ARGS has no `--ignore-eos`. In non-interactive mode llama-completion stops at the first end-of-generation token (tools/completion/completion.cpp:928: `if (!embd.empty() && llama_vocab_is_eog(vocab, embd.back()) && !(params.interactive)) { LOG(\" [end of text]\\n\"); break; }`). Prompt a is known to run all 1023 passes (EXP-0005 log: `1023 runs`). prompt_ood.txt is new and asks the model to \"end with a gentle moral\", and the summary windows assume tokens up to 1022.",
+    "failure_scenario": "Greedy decoding gives the same text in all 6 ood-* runs. If the model ends the story at, say, token 700, every OOD timeline has about 698 tokens. The 387-1022 window then covers only 387-698, so H3 is measured on a window unlike H1's. If the story ends before token 387, the warm window is None in all 6 runs and about 15 minutes of the session are wasted.",
+    "fix": "Add `--ignore-eos` to the ood-* arms only (or to all arms: greedy output for prompt a stays the same because it never chose EOS in 1023 tokens). Or do one short untraced smoke run of prompt_ood.txt first and confirm it reaches 1023 runs."
+   },
+   {
+    "file": "research/results/experiments/EXP-0006/monitor.py",
+    "line": 60,
+    "severity": "minor",
+    "title": "monitor attaches to the first llama-completion.exe in the snapshot, which can be another process",
+    "problem": "find_pid returns the first process whose image name matches and ignores th32ParentProcessID. The Toolhelp snapshot lists processes in creation order, so an older llama-completion.exe wins. During this review the probe `find_pid('python.exe')` returned a different, older python.exe (12760), not the calling one (67664). A llama-completion.exe (PID 69052, 15 GB working set) was also running on this machine. The monitor then samples that process, and on low memory it kills it (`taskkill /F /PID`). runs.sh:117 `wait $wd` waits for that process to exit, not for the benchmark.",
+    "failure_scenario": "The B3 gate or a leftover llama-completion.exe is still running when runs.sh starts a run. proc_<tag>.csv and the per-process summary columns then describe the wrong process. The 300 MiB kill guard no longer protects the traced run, and it may kill the other process instead. The harness also hangs at `wait $wd` until that process exits, while the balloon is still holding memory.",
+    "fix": "Have runs.sh refuse to start a run when `tasklist //FI \"IMAGENAME eq llama-completion.exe\"` already lists one. In monitor.py, match a process whose parent is nsys.exe, or skip PIDs that existed when the monitor started."
+   },
+   {
+    "file": "moe-bench/check-correctness.sh",
+    "line": 69,
+    "severity": "nit",
+    "title": "New online-pin gate arms can pass without the mid-run registration ever happening",
+    "problem": "run() sends stderr to /dev/null (line 40). The gate therefore records no proof that `pinned the experts most selected in N small batches` was logged. With N=64 the registration needs at least 66 generated tokens (pass N+1 = 65). NGEN can be overridden, and earlier B3 results were produced with other NGEN values (b3_correctness_ngen256.txt). If NGEN is set to 64 or less, or if every reg_host call fails, the cache2048-pinonline15000 arm is byte-identical without ever registering, and the gate reports OK.",
+    "failure_scenario": "Someone runs `NGEN=64 ./moe-bench/check-correctness.sh ...` for a quick check. Both online arms print OK, but the 64-batch arm never pinned anything mid-run, so the copy-edge rule after a late registration was not tested.",
+    "fix": "For the two online arms, send stderr to a file (or grep it) and fail the arm when the `pinned the experts most selected` line is missing. Or check that NGEN is greater than the largest N + 1 before running them."
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Confirmed in the code. balloon.py:47 computes `want = int(max(0.0, before - a.target) // a.chunk) * a.chunk`, so it holds 0 MiB when less than TARGET is available. runs.sh:96-101 only waits for the line and copies it, and no later step checks `held`, `available now` or `locked`. The margin data checks out against EXP-0005/info.txt. Post-evict availability was 20254 (off_r1) and 20242 (addr7842_r1) in the first two runs and rose to 21703 by off_r2. The worst case is 274 MiB above TARGET=19968, with the r1 runs lowest. The plan (EXP-0006.md:77-79) accepts a shortfall and only records it. But because the r1 runs sit closest to the target, the shortfall falls on exactly the r1/r2 comparison H4 tests. The harness runs in the background, so nobody sees the teed line live. An unlocked balloon (`locked no`) falls back to touching its pages, and those pages can still be trimmed and re-faulted under pressure, so its size is not fixed either. I lowered the severity from major to minor. A shortfall of a few hundred MiB leaves a launch-headroom spread far below EXP-0005's 1.5 GiB drift, and each run records the shortfall in balloon_<tag>.txt and runs.json. A check-and-stop costs a few lines. Right now about 20919 MiB is available without eviction, roughly 950 MiB of margin, so the problem is possible but not certain.",
+    "fix": "In runs.sh, directly after line 100 (`cat \"$OUT/balloon_$tag.txt\" | tee -a \"$OUT/pre_$tag.txt\"`), add:\n\n    bline=$(cat \"$OUT/balloon_$tag.txt\")\n    now=$(echo \"$bline\" | sed -n 's/.*available now \\([0-9]*\\) MiB.*/\\1/p')\n    if [ -z \"$now\" ] || [ \"$now\" -lt $((TARGET - 128)) ] || [ \"$now\" -gt $((TARGET + 192)) ] || ! echo \"$bline\" | grep -q 'locked yes'; then\n        echo \"balloon missed the $TARGET MiB target, stopping: $bline\" | tee -a \"$OUT/info.txt\"\n        exit 1\n    fi\n\nNo other process is running at this point, and the EXIT trap already touches $stop, so the balloon is released. Add a sentence to EXP-0006.md's Headroom paragraph to match. Replace 'If less is available, it holds nothing and records it.' with 'If it cannot reach the target within 128 MiB, or cannot lock, the session stops; rerun with a lower TARGET.'"
+   },
+   {
+    "index": 1,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Confirmed in the code. ARGS (runs.sh:44) has no --ignore-eos. tools/completion/completion.cpp:928 breaks on an end-of-generation token when not interactive. --ignore-eos exists (common/arg.cpp:2020). Prompt a is known safe: every EXP-0005 log shows `1023 runs` and none contains 'end of text'. prompt_ood.txt has never been run (no smoke file, nothing in EXP-0006.md), and it asks for a story that 'ends with a gentle moral', so an early EOS can happen. Prompt a's EXP-0001 output shows a long reasoning preamble, so an early stop is not likely. If one does happen, all six OOD runs stop at the same token, because the output is byte-identical across arms (B3). The H3 comparison would still be like for like, but its warm window would be short, or empty if the story ends before token 387. ood-on128 would never register if it ends before pass 129. The reviewer's 'unlike H1's window' point is a weak argument. The real cost is up to about 15 minutes of wasted runs, and a one-flag change prevents it. Limiting the flag to the OOD arms leaves the prompt-a arms identical to EXP-0005.",
+    "fix": "In runs.sh, inside the loop after `prompt=$(arm_prompt \"$arm\")`, add:\n\n    extra=()\n    case $arm in ood-*) extra=(--ignore-eos) ;; esac   # prompt_ood.txt never ran; keep 1023 passes\n\nThen change line 115 to `\"$BIN\" \"${ARGS[@]}\" \"${extra[@]}\" -f \"$prompt\" < /dev/null > ...`. Bash 5.3 handles an empty array under set -u. Also note in EXP-0006.md's Arms section that the ood-* arms run with --ignore-eos."
+   },
+   {
+    "index": 2,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Confirmed. find_pid (monitor.py:53-65) returns the first process with a matching image name. Toolhelp lists processes oldest first. I reproduced this: from PID 70060, `find_pid('python.exe')` returned 12760, the oldest python.exe. If another llama-completion.exe is running, the monitor samples that process. It may kill it with taskkill /F /PID (line 111), and the 300 MiB guard no longer protects the traced run. `wait $wd` (runs.sh:117) then blocks until that other process exits, while the balloon still holds memory. EXP-0005's watchdog matched by image name and killed every match, so the new single-PID logic introduced this. A second model process would ruin the run anyway, but nothing detects one now. Concurrent llama processes do happen on this machine: the reviewer saw a 15 GB llama-completion.exe running, and none is running now. The fix is a cheap preflight guard.",
+    "fix": "In runs.sh, as the first statement of the loop body (before evict.py), add:\n\n    if tasklist //FI \"IMAGENAME eq llama-completion.exe\" //NH | grep -qi llama-completion; then\n        echo \"another llama-completion.exe is running, stopping before $tag\" | tee -a \"$OUT/info.txt\"\n        exit 1\n    fi\n\nIn monitor.py, give find_pid a `skip` parameter and match only `e.szExeFile.lower() == image.lower() and e.th32ProcessID not in skip`. Have a helper collect the PIDs already running before the wait loop: `old = set(pids(a.image))`, the same snapshot loop returning every match. Then search with `find_pid(a.image, old)`. The monitor starts before nsys launches the benchmark, so the benchmark is never in `old`."
+   },
+   {
+    "index": 3,
+    "valid": false,
+    "severity": "nit",
+    "reason": "Not a real gap under any realistic use. NGEN defaults to 256 (check-correctness.sh:20). The recorded gate run (EXP-0006/b3_correctness_gpu256.txt) used NGEN=256 and both online arms passed. The claim that NGEN=64 leaves late registration untested is wrong. Prefill (46 tokens, 368 ids > 8*8) is not counted, and the N=16 arm registers at pass 17, which -n 64 reaches. Mid-run registration is skipped in both arms only for NGEN <= 17, which no one would use for a gate that has needed 256 tokens since EXP-0005. The other case, every reg_host failing, would not be caught by the proposed fix. pin_online logs 'pinned the experts most selected in ...' unconditionally after register_ranges, whether or not anything registered, so grepping for that line proves nothing there. The existing cache2048-pinprof arm likewise does not prove that pinning happened. The gate tests byte identity and was never meant to prove pinning took place."
+   }
+  ]
+ },
+ {
+  "key": "design",
+  "findings": [
+   {
+    "file": "research/experiments/EXP-0006.md",
+    "line": 23,
+    "severity": "major",
+    "title": "H3 would pass even if the prompt were in domain, so it cannot answer Q17",
+    "problem": "H3 says ood-on128 beats ood-prof warm at the default cap. But online N=128 is expected to beat the file profile at the default cap on any prompt. I re-ran EXP-0005's coverage.py logic offline with the same scoring window (tokens >= 128). Prompt a: on128 leaves 13.6% pageable, the file profile 20.1%. Held-out prompts b/c/d: on128 15.7-22.4%, the file profile 26.8-31.4%. The plan's own predictions already put on128 about 1.1 ms ahead of prof in domain (39.3 vs 40.42). So H3 passing says nothing about whether the profile transfers to another domain. The falsifier is also ambiguous: 'not faster ... in both rounds' can mean either round or both rounds. H3 also gives no expected magnitude.",
+    "failure_scenario": "The story prompt routes much like prompt a, so the file profile transfers fine. ood-on128 still comes out about 1 ms ahead of ood-prof in both rounds, as it would in domain. H3 'holds' and Q17 is recorded as 'the profile does not transfer, use online' with no evidence for it.",
+    "fix": "Restate H3 as a test of the difference between prompts, using data the arms already collect. Primary measure: the file profile's measured pageable share on 387-1022 (CUPTI pinned_share, which has no timing noise). Compare ood-prof against prof (EXP-0005: 22.3%) and set a threshold before the runs (e.g. >= +5 points means it does not transfer). Timing measure: (ood-prof - ood-on128) > (prof - on128) in both rounds, and the relative gain (ood-addr - ood-prof)/ood-addr against (addr - prof)/addr. Compare only within a prompt or in relative terms, because the generated text and the miss bytes differ between prompts."
+   },
+   {
+    "file": "research/results/experiments/EXP-0006/prompt_ood.txt",
+    "line": 1,
+    "severity": "major",
+    "title": "The 'out of domain' run will likely be the same thinking-scaffold text as the profile",
+    "problem": "The plan describes the profile as 'technical prose, C++ and a translation'. But EXP-0001's gen_prompt_b.txt and gen_prompt_d.txt both open with '<think>\\nHere's a thinking process:\\n\\n1.  **Understand/Analyze User Input:**' and run in bullet-point planning style; only c answers without thinking. Prompt a's own 1024-token run never leaves the thinking block: the stdout stored in C:/nsys/exp0005/prof15000_r2.sqlite (ProcessStreams) is 4473 chars and contains no '</think>'. So the warm window 387-1022 that is measured is markdown planning bullets, and N <= 128 online passes are the generic 'Analyze the request' part. A raw-completion children's-story prompt will most likely also produce bullet planning in <think> for all 1022 tokens. That changes the topic words but keeps the format, which the profile already covers. Q17's own 'To settle' lists 'chat without thinking' as an out-of-domain option. Nothing in runs.sh extracts the generated text, so nobody would notice.",
+    "failure_scenario": "ood-prof's pageable share comes out near prof's. H3 gets an answer, but for a topic change inside the thinking register, not for another domain. The write-up then generalises it to 'out of domain'.",
+    "fix": "Append an empty think block to prompt_ood.txt ('\\n\\n<think>\\n\\n</think>\\n\\n'). The completion tool tokenizes raw prompts with parse_special=true (tools/completion/completion.cpp:279), and prompt c's own output shows the model uses this form. The story is then generated as an answer. Also pull stdout from each capture's ProcessStreams table, as analyze_timeline.py does for stderr. Record where '</think>' falls, and hash the 1024-token text per prompt as the free byte-identity check EXP-0005 did by hand. This also matters because the online arms now register mid-run."
+   },
+   {
+    "file": "research/results/experiments/EXP-0006/runs.sh",
+    "line": 42,
+    "severity": "major",
+    "title": "H2's per-round test sits inside the run-position drift; round 2 favours addr",
+    "problem": "H2 is falsified if an online arm is 'not below address order over 3-1022 in both rounds', so each round has to win on its own. In the default order, addr runs at positions 1 and 14, on64 at 3 and 12, on128 at 4 and 11. In round 2, addr therefore runs 2-3 positions after the online arm. EXP-0005's whole-run drift was about 0.3-0.5 ms per position (off 58.86 to 53.54 over 11 positions; addr7842 47.71 to 44.48 over 9), so round 2 hands addr about 0.7-1.5 ms. The expected H2 margin is about that size. I built on64/on128 from EXP-0005's per-token timelines: off's tokens up to N, prof7842's tokens after, plus the 0.64 s registration. Against addr7842 (r1/r2) that gives on64 1.70/1.82 ms and on128 0.45/1.12 ms; on128's better warm share adds roughly 0.8 ms. Round 1 has the opposite problem: addr_r1 is the session's first run, and in EXP-0005 the first run (off_r1) had the largest early spread (27.5%). The plan gives no predicted H2 margin.",
+    "failure_scenario": "The balloon fails to remove the position drift (H4 fails). on128 then wins round 1 by about 2 ms and loses round 2 by about 0.3 ms. H2 is recorded as falsified because of run order, not because of the online profile.",
+    "fix": "Put addr next to each online arm in both rounds, e.g. round 1 'prof on64 addr on128 ...' and round 2 mirrored '... on128 addr on64 prof'. Use the ABBA mean as the primary decision, with sign consistency over the 128-token windows as EXP-0005 did. State the predicted margins (about 2 ms for on64, about 1.3-1.9 ms for on128). Make H2 conditional on H4: if position drift persists, H2 is undecided, not falsified. Add one discarded warm-up run at position 0."
+   },
+   {
+    "file": "research/experiments/EXP-0006.md",
+    "line": 33,
+    "severity": "major",
+    "title": "H4's 'r1 slower in every arm' falsifier almost never fires; R16's prefill clause is untested",
+    "problem": "Rep gaps in the default order are 13, 11, 9, 7, 5, 3, 1 (main block) and 5, 3, 1 (OOD block). The inner arms (on128x15k at 7/8, ood-on128 at 17/18) run back to back, so their r1-r2 is near zero with a random sign. One of them is enough to make 'r1 slower than r2 in every arm' fail, even with r1 slower in 9 of 10 arms (p about 0.01 under no drift). EXP-0005's evidence for drift was the correlation of r1-r2 with the gap between reps (r = 0.88, warm slope about 0.1 ms per position: off +1.40 at gap 11, none +0.41 at gap 1). The plan does not use that measure. Half the drift (addr at gap 13: about 0.7 ms, 1.6%) would pass both clauses. ROADMAP R16's second clause, 'prefill time and slow copies rise with the balloon', needs at least two headroom levels. The design has one, so R16 cannot be closed on H4.",
+    "failure_scenario": "The balloon removes half of the drift. Every arm stays within 2%, and on128x15k's adjacent reps come out r1 0.05 ms faster. H4 'holds' and R16 is marked done while position drift is still present.",
+    "fix": "Falsify H4 on the slope of r1-r2 (warm, and 3-130) against rep gap across the 10 arms, with EXP-0005's slope as the reference. For example, falsified if the slope exceeds half of EXP-0005's, or if r1 is slower in at least 8 of 10 arms. If R16's prefill clause is wanted, add 2 runs of an 'off' arm (pageable, safe at low headroom) at a second target such as 17408 MiB (EXP-0004's regime). Otherwise state that EXP-0006 tests only the drift half of R16."
+   },
+   {
+    "file": "research/experiments/EXP-0006.md",
+    "line": 77,
+    "severity": "major",
+    "title": "At 19968 MiB, the 15000 MiB online arms run close to the 300 MiB kill floor",
+    "problem": "The plan drops addr15k for headroom but has no estimate for prof15k, on64x15k or on128x15k. I took typeperf's in-run available RAM from EXP-0005 and shifted it to a 19968 MiB launch. prof15000 minimum: 1565 MiB at a 20845 launch (r1) and 2127 at 21354 (r2), which shifts to about 690-740 MiB. Its late median of 1934/2528 shifts to about 1060-1140 MiB. Relative to launch, addr15000 sat 1273-1790 MiB below prof15000 for 19 more points of pageable share, about 70-95 MiB per point. on64x15k is predicted at 5.5% pageable against 2.1%, so it should run about 0.25-0.3 GiB lower still: a minimum near 0.4-0.5 GiB against monitor.py's kill rule of under 300 MiB for 20 s. The watchdog minima quoted for EXP-0005 (1585/1246, and 116 for prof7842_r2) are load-time dips the prefetch causes; typeperf saw prof7842_r2's at +3.2 s. Those dips do not shift with headroom, so the decode-phase figures above are the relevant ones. The plan's +0.47 ms prediction for on64x15k uses EXP-0005's 0.163 ms/point slope, measured with 1.5-2.5 GiB free. Below 1 GiB, Windows trims the pageable working set and the slope gets steeper.",
+    "failure_scenario": "on64x15k_r2 is killed late in the session, as addr15000_r1 was, and loses its warm window. Or it completes under trimming and comes out more than 1 ms behind prof15k because of headroom, not ranking. H1 at 15000 is then falsified for the wrong reason.",
+    "fix": "Write the expected minimum and late median per 15k arm into the plan. Fix the rule for a killed run in advance (matched window, as in EXP-0005). Make the discarded warm-up run an on64x15k run under the balloon, which checks the floor before the 20 timed runs. Report each run's late available RAM next to its warm time so a headroom-driven loss can be seen."
+   },
+   {
+    "file": "research/results/experiments/EXP-0006/runs.sh",
+    "line": 94,
+    "severity": "minor",
+    "title": "A run whose balloon held nothing proceeds silently at a different headroom",
+    "problem": "balloon.py holds nothing if available RAM is below --target, and runs.sh only cats its line (lines 94-101) and launches anyway. summarize.py stores the balloon text but leaves it out of the table. The 19968 target has little margin: EXP-0005's lowest post-eviction available was 20242 MiB (addr7842_r1) and 20254 (off_r1, the first run), only 274-286 MiB above it. EXP-0005 also recorded 17500 MiB at that session's first eviction, before the smoke and B3 runs.",
+    "failure_scenario": "The session starts after a reboot or with a browser open. The first runs (addr_r1, prof_r1) launch at about 19.0 GiB with an empty balloon, recreating the r1 headroom confound H4 is meant to remove, and nothing in the table flags it.",
+    "fix": "In runs.sh, parse 'held N MiB' and 'available now'. If held is 0 or available is more than 128 MiB from the target, run evict.py again (up to 2-3 times, since each eviction trims more), then abort the run if it still misses. Add held MiB and available-at-launch columns to summarize.py's table."
+   },
+   {
+    "file": "research/experiments/EXP-0006.md",
+    "line": 38,
+    "severity": "minor",
+    "title": "Predictions mix scoring windows, and the OOD arms have none; two untimed traces would fix both",
+    "problem": "The warm predictions start from prof's measured 387-1022 share (22.3%; e.g. 40.42 - (22.3-13.6)*0.125 = 39.3) but take online's offline share on tokens 128-255. So the two are scored on different windows. The available traces are only 256 tokens long, while the measurement window is 387-1022. EXP-0005 found the file profile's share drifts by up to 4.4 points past token 255 (25.1% over 256-386). Online profiles, built from the request-restating first tokens, may drift differently. No offline prediction exists for ood-*. Routing does not depend on pinning (hit counters identical in all EXP-0005 runs), so one trace per prompt covers every arm.",
+    "failure_scenario": "on128 lands 0.5 ms off its prediction and nobody can tell whether the cause is the ranking, the window, or the headroom. H3 has no prior at all.",
+    "fix": "Add 2 untimed runs (no nsys, about 1.5 min each) with LLAMA_MOE_CACHE_TRACE at -n 1024, one for prompt a and one for prompt_ood. Rerun coverage.py scoring every arm on 387-1022 to get matched-window predictions for all 10 arms. That also gives a direct out-of-domain measure (file-profile pageable share on the OOD trace) and lets other N be checked offline for free."
+   },
+   {
+    "file": "research/results/experiments/EXP-0006/monitor.py",
+    "line": 75,
+    "severity": "minor",
+    "title": "Regrowth of other processes after each eviction is still not measured",
+    "problem": "EXP-0005 attributed the drift to evictions trimming other processes, but noted it was 'plausible but not measured', and its system-wide counters are not llama-only. monitor.py records only llama's working set, private bytes and PageFaultCount (soft plus hard). Its read_mib (ReadTransferCount) excludes mapped-file page-ins, as its own docstring says, so it does not capture llama's hard faults either. With launch availability fixed, any remaining drift has to come from other processes paging back in during the run, and neither tool records that.",
+    "failure_scenario": "H4 fails (drift persists at fixed launch headroom), and the write-up again cannot tell run position from other processes re-growing and competing for RAM and disk.",
+    "fix": "Add '\\\\Process(_Total)\\\\Working Set' and '\\\\Process(llama-completion)\\\\Working Set' to the typeperf list, or sum all processes' working sets in monitor.py once a second. Other-process regrowth is then total minus llama minus the balloon. Use the timeline's slow-copy count per window as the llama-side hard-fault measure."
+   },
+   {
+    "file": "research/results/experiments/EXP-0006/summarize.py",
+    "line": 87,
+    "severity": "nit",
+    "title": "Reference arms do not get the before- and after-registration windows",
+    "problem": "The (3, N) and (N+2, 386) windows are added only when the run's log has online_n, so prof and addr runs never get windows 3-64, 66-386, 3-128 or 130-386. H2's breakdown (cost of the passes before registration against address order on the same tokens) needs them for addr, and the after-registration window needs them for prof.",
+    "failure_scenario": "runs.json cannot answer 'what did passes 3-64 cost on64 compared with addr on the same tokens' without a separate pass over the timelines.",
+    "fix": "Always add (3,64), (66,386), (3,128) and (130,386) to WINDOWS for every run."
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "severity": "major",
+    "reason": "Confirmed. In EXP-0005/coverage_2048_runcaps.json at cap 7964, online N=128 leaves 1-0.8637 = 13.6% pageable on prompt a and 19.9/15.7/22.4% on b/c/d. The held-out file profile (select, covered_held) leaves 20.7% on a and 28.9/26.8/29.3% on b/c/d. So online N=128 beats the file profile on every prompt, in domain included. The plan's own predictions (EXP-0006.md:44-47) put on128 at 39.3 ms against prof's 40.42 on prompt a. H3 as written ('ood-on128 beats ood-prof warm', EXP-0006.md:23-28) would therefore hold whether or not the profile transfers, so it cannot answer Q17 ('Does a selection profile from one domain pin well for another?'). The falsifier is also ambiguous. 'Not faster ... in both rounds' can be read as either round or both rounds, while H1's falsifier says explicitly that the sign must agree in both rounds. The data needed for a real transfer test is already collected: CUPTI pinned_share per window, and the ood-prof/ood-addr pairs in analyze.py PAIRS.",
+    "fix": "Replace H3 in EXP-0006.md with: '**H3 (Q17, out of domain)** - the file profile transfers worse to a prompt unlike its own than to prompt a. At the default cap, ood-prof leaves at least 5 points more of the warm upload bytes pageable (tokens 387-1022, CUPTI 1 - pinned_share) than prof in this session (EXP-0005: 22.3%). The online profile's warm lead over the file profile is also larger on the OOD prompt: (ood-prof - ood-on128) > (prof - on128) on 387-1022 in both rounds. **Falsified by** ood-prof's pageable share within 5 points of prof's, or (ood-prof - ood-on128) <= (prof - on128) in either round. Also reported, in relative terms only because the text and miss bytes differ between prompts: (ood-addr - ood-prof)/ood-addr against (addr - prof)/addr.' In analyze.py, add these two difference-of-differences, per round and for the mean, next to PAIRS."
+   },
+   {
+    "index": 1,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Most of the evidence checks out. EXP-0001 gen_prompt.txt (a), gen_prompt_b.txt and gen_prompt_d.txt all open with '<think>\\nHere's a thinking ...' and continue as bullet-point planning. Only gen_prompt_c.txt has '<think>\\n\\n</think>'. The stdout in C:/nsys/exp0005/prof15000_r2.sqlite (ProcessStreams, contentId) is 4473 characters with no '</think>': prompt a's 1024 tokens never leave the thinking block. So the plan's description of the profile as 'technical prose, C++ and a translation' (EXP-0006.md:24) is inaccurate, and EXP-0005.md itself notes the shared scaffold. The completion tool tokenizes the raw prompt with parse_special=true (tools/completion/completion.cpp:279: common_tokenize(ctx, prompt, true, true)), so an explicit empty think block works. runs.sh writes nsys's console output to nsys_$tag.txt, which holds no generated text, and analyze_timeline.py extracts only stderr (lines 143-150). Nobody would see the register the OOD run generates in. The story prompt staying in thinking mode is likely but not proven, and the topic words would still change. So the test is weakened rather than void, and this is minor, not major.",
+    "fix": "(1) Make prompt_ood.txt end with an empty think block so the story is generated as an answer (the 'chat without thinking' option in Q17's To settle): the request line, then '\\n\\n<think>\\n\\n</think>\\n\\n'. Say in EXP-0006.md that the profile and prompt a are mostly thinking-register text, and that the OOD arm changes both topic and register. (2) In runs.sh, after analyze_timeline.py, save each run's stdout and hash it: \"$PY\" -c \"import sqlite3,sys,hashlib;c=sqlite3.connect(sys.argv[1]);n=dict(c.execute('select id,value from StringIds'));s=''.join(n[cid] for fid,cid in c.execute('select filenameId,contentId from ProcessStreams') if 'stdout' in n.get(fid,''));open(sys.argv[2],'w',encoding='utf-8').write(s);print('stdout', len(s), 'chars, </think> at', s.find('</think>'), 'sha256', hashlib.sha256(s.encode()).hexdigest()[:16])\" \"$CAP/$tag.sqlite\" \"$OUT/out_$tag.txt\" | tee -a \"$OUT/info.txt\". Check that every prompt-a run, and every OOD run, has the same hash. This is the 1024-token byte-identity check for the arms that register mid-run, which B3 covers only to 256 tokens."
+   },
+   {
+    "index": 2,
+    "valid": true,
+    "severity": "major",
+    "reason": "Confirmed. The default RUNS order (runs.sh:42) puts addr at positions 1 and 14, on64 at 3 and 12 and on128 at 4 and 11. In round 2, addr therefore runs 2-3 positions after the online arms, and in round 1, 2-3 before them. EXP-0005's runs.json shows a whole-run (3-1022) drift of off 58.86 -> 53.54 over 11 positions (0.48 ms/position), addr7842 47.71 -> 44.48 over 9 (0.36) and prof7842 43.13 -> 40.91 over 7 (0.32). A 2-3 position offset is therefore worth about 0.7-1.5 ms per round. H2's falsifier ('not below address order over tokens 3-1022 in both rounds', EXP-0006.md:20-21) reads as requiring a win in each round. A rough rebuild from EXP-0005 windows (off's 3-130 for the pre-registration passes, prof7842 after, plus registration) gives on128 - addr of about -0.5 to -1.7 ms. That margin is the same size as the per-round position bias, so round 2 can flip if H4 fails. H1's pairs are only 1-2 positions apart and are less exposed.",
+    "fix": "Reorder the main block so addr is next to each online arm in both rounds, e.g. RUNS default 'prof_r1 on64_r1 addr_r1 on128_r1 prof15k_r1 on64x15k_r1 on128x15k_r1 on128x15k_r2 on64x15k_r2 prof15k_r2 on128_r2 addr_r2 on64_r2 prof_r2 ood-addr_r1 ood-prof_r1 ood-on128_r1 ood-on128_r2 ood-prof_r2 ood-addr_r2', preceded by one discarded warm-up run. In EXP-0006.md, H2: decide on the ABBA mean of 3-1022 and require the same sign in every 128-token window of both rounds, as EXP-0005 did. State the expected margins (about -2 ms for on64 and -1 to -2 ms for on128 against addr). Add: 'If H4 is falsified (position drift persists), H2 is undecided, not falsified.'"
+   },
+   {
+    "index": 3,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Confirmed as a weak test. With the default order the rep gaps are 13, 11, 9, 7, 5, 3, 1 (main) and 5, 3, 1 (OOD), and two arms (on128x15k, ood-on128) run back to back. EXP-0005's r1-r2 rose with the gap: off +1.40 at gap 11, none +0.41 at gap 1, about 0.1 ms per position, r = 0.88. Half that drift would leave addr's warm spread near 0.65-0.8 ms on about 44 ms (under 2%) and the adjacent pairs near zero with a random sign. That passes both H4 clauses (EXP-0006.md:30-34) with drift still present. The finding overstates one thing: in EXP-0005 even the adjacent none pair had r1 slower, so the 'every arm' clause did fire there. ROADMAP R16's hypothesis also includes 'prefill time and slow copies rise with the balloon', and its falsifier includes 'prefill slow copies not depending on it'. EXP-0006 holds a single target (TARGET=19968), so that clause cannot be tested. Only the plan text needs to change, so minor.",
+    "fix": "In EXP-0006.md replace H4's falsifier with: 'Falsified by any arm's warm reps more than 2% apart; or a least-squares slope of (r1 - r2) against rep gap across the 10 arms (warm 387-1022, and 3-130 reported) above half of EXP-0005's (0.05 ms per position warm); or r1 slower than r2 in at least 8 of 10 arms.' Add: 'EXP-0006 holds one headroom level, so it tests only the reproducibility half of R16. The prefill clause (slow copies rising with the balloon) stays open.' Alternatively, add two 'off' runs at a second target (for example 17408 MiB) to test it."
+   },
+   {
+    "index": 4,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Largely confirmed. In EXP-0005's typeperf data, prof15000 started at 20845/21354 MiB available and reached a decode-phase minimum of 1565/2127 (rows 44/42 of 59/57) with a late-60% median of about 1905/2505. Shifted to a 19968 launch, that is a minimum of about 690-740 MiB and a median of about 1030-1120. Measured from launch, addr15000 sat about 1.0-1.8 GiB below prof15000 for about 18 points more pageable share (about 70-100 MiB per point). on64x15k's predicted 5.5% against 2.1-2.3% would therefore put it about 0.25-0.35 GiB lower, a minimum near 0.4-0.5 GiB against monitor.py's 300 MiB / 20 s kill rule. The plan drops addr15k for exactly this reason (EXP-0006.md:77-78) but gives no estimate for the other 15k arms. It also has no rule for a killed run, and the 0.163 ms/point slope comes from runs with 1.5-2.5 GiB free. The extrapolation is crude and the predicted minimum stays above the floor, so a kill is a risk, not a certainty. analyze.py already reports per-run lowest and warm-median available RAM, so that part of the fix exists. Minor.",
+    "fix": "In EXP-0006.md, add under Headroom: 'Expected at 19968 MiB launch (EXP-0005 shifted): prof15k minimum about 0.7 GiB, warm median about 1.05 GiB; on64x15k about 0.3 GiB lower; on128x15k about 0.05 GiB lower. If monitor.py kills a run, every comparison with that arm uses the matched window up to its last complete token, as EXP-0005 did, and a run whose warm median available RAM is below 1 GiB is flagged as headroom-limited.' In runs.sh, add a discarded first run 'on64x15k_w' under the balloon before the timed list. It checks the floor, and that registration still reaches about 14.9 GiB with the balloon's locked pages present (the smoke run had no balloon). Its 'registered X MiB' line and low_*.txt are checked before the timed runs go on."
+   },
+   {
+    "index": 5,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Confirmed. balloon.py computes want = max(0, before - target) // chunk * chunk (lines 46-47), so it holds 0 MiB when less than the target is available. runs.sh:94-101 only waits for the line, cats it and launches. EXP-0005's lowest post-eviction availability was 20254 (off_r1) and 20242 (addr7842_r1), 274-286 MiB above 19968, and the session's first eviction saw 17500 MiB available. A session's first runs can therefore start about 2 GiB below the target with no balloon, which recreates the r1 confound H4 targets. One part of the finding is wrong: analyze.py's per-run table does show 'avail before balloon | balloon MiB | avail at launch' (analyze.py:189-200), so the miss would be seen afterwards. Only summarize.py's live table leaves it out. The run would still be wasted or confounded.",
+    "fix": "In runs.sh, replace the single balloon launch with a checked retry: for try in 1 2 3; do rm -f \"$stop\" \"$OUT/balloon_$tag.txt\"; \"$PY\" \"$OUT/balloon.py\" --target \"$TARGET\" --out \"$OUT/balloon_$tag.txt\" --stop \"$stop\" & bl=$!; for _ in $(seq 1 120); do [ -s \"$OUT/balloon_$tag.txt\" ] && break; sleep 0.5; done; now=$(sed -n 's/.*available now \\([0-9]*\\) MiB.*/\\1/p' \"$OUT/balloon_$tag.txt\"); if [ -n \"$now\" ] && [ \"$now\" -ge $((TARGET - 128)) ] && [ \"$now\" -le $((TARGET + 128)) ]; then break; fi; touch \"$stop\"; wait $bl || true; echo \"balloon missed target: ${now:-?} MiB (try $try)\" | tee -a \"$OUT/pre_$tag.txt\"; \"$PY\" \"$E5/evict.py\" | tee -a \"$OUT/pre_$tag.txt\"; now=; done; then, if now is still empty, write 'headroom missed: $tag' to info.txt and skip (continue) the run. Optionally add 'held' and 'avail now' columns to summarize.py's --table."
+   },
+   {
+    "index": 6,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Confirmed. The plan's warm predictions (EXP-0006.md:44-47) are anchored on prof's measured 387-1022 share: 40.42 - (22.3 - 13.6) * 0.125 = 39.33 and 40.42 - (22.3 - 18.8) * 0.125 = 39.98. At 15000 they use 36.43 + (5.5 - 2.3) * 0.163 = 36.95. The online shares come from coverage.py's tokens >= 128 window of 256-token traces (coverage.py:282-306), so the two sides are scored on different windows. EXP-0005 recorded that the file profile's share drifts by up to 4.4 points after token 255 (prof7842 25.1% over 256-386, against 20.7% offline), and how online profiles drift is unknown. No offline prediction exists for the ood-* arms, so H3 has no prior or magnitude. The effect on the existing predictions is a few tenths of a ms, and two cheap trace runs fix both gaps, so minor.",
+    "fix": "Before the timed runs, add two untimed runs (no nsys) with LLAMA_MOE_CACHE_TRACE at -n 1024: one on moe-bench/prompt.txt and one on prompt_ood.txt. Add --score-from/--score-to to EXP-0005/coverage.py, replacing the hard-coded 'tokens >= 128' and skip_tokens, and score address, select (profile_bcd) and online N=64/128 on tokens 387-1022 at caps 7964 and 15000 for both traces. Put those matched-window shares in EXP-0006.md's prediction table for all 10 arms, ood-* included. Point analyze.py PREDICTED at the new JSON. The OOD trace also gives an offline transfer measure: the file profile's pageable share on the OOD trace against prompt a's."
+   },
+   {
+    "index": 7,
+    "valid": true,
+    "severity": "minor",
+    "reason": "Confirmed. monitor.py samples only the benchmark process (find_pid on llama-completion.exe; sample() returns WorkingSetSize, PrivateUsage, PageFaultCount and ReadTransferCount). Its docstring (lines 5-7) says mapped-file page-ins are not in read_mib, and PageFaultCount mixes soft and hard faults. typeperf in runs.sh:103-107 records only system-wide counters. EXP-0005 named other processes' regrowth after eviction as the likely drift cause but 'plausible but not measured', and ROADMAP R16 asks for per-process counters. If H4 fails, the harness again cannot separate position from other processes paging back in. A rough residual (RAM minus available, modified, llama's working set and the balloon) is possible, but pinned pages and shared pages blur it. A direct counter is a one-line addition.",
+    "fix": "In runs.sh, add \"\\\\Process(_Total)\\\\Working Set\" \"\\\\Process(llama-completion)\\\\Working Set\" to the typeperf counter list. In analyze.py's paging(), add other_ws_mib = _Total - llama - balloon held (from balloon_fields), reported at launch and as the warm median per run. Report the timeline's slow_per_token as the llama-side hard-fault measure next to it."
+   },
+   {
+    "index": 8,
+    "valid": false,
+    "severity": "nit",
+    "reason": "The code does what the finding says: summarize.py:85-87 adds (3,N) and (N+2,386) only when online_n is set. But this is not a pre-run problem. Every timeline_<tag>.json and log is saved, and summarize.py rebuilds runs.json from them on any re-invocation (summarize.py <tags>...), so the windows can be added after the runs at no cost. None of the hypotheses decide on these sub-windows: H2 uses 3-1022 and H1 uses 387-1022. No data is lost and no decision depends on it.",
+    "fix": "Optional, any time after the runs: change summarize.py to always include WINDOWS + [(3, 64), (66, 386), (3, 128), (130, 386)], and re-run summarize.py on all tags."
+   }
+  ]
+ }
+]

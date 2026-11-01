@@ -129,6 +129,20 @@ llama.cpp, Speculating Experts on Qwen3-30B-A3B), 8 to 15% of token time, are
 about half to most of the 17 to 18% that EXP-0004 bounds overlap at for this
 model (KNOWLEDGE_BASE.md Finding 10).
 
+**First consulted in EXP-0006 (2026-10-31)**, on deciding what to pin or keep
+from a profile of expert selections. All **level 3**, read once from the
+project pages, not checked by a second reader and not reproduced here:
+
+| work | mechanism | relevance here |
+|---|---|---|
+| MoE-Infinity, [GitHub](https://github.com/TorchMoE/MoE-Infinity), [arXiv 2401.14361v2](https://arxiv.org/html/2401.14361v2) | traces expert activation per request (an Expert Activation Matrix) and uses it to prefetch and to choose what stays cached | Closest published idea to an online profile: the request's own early activations steer what is kept. Built for serving, not for page pinning |
+| neurall's llama.cpp fork, [releases](https://github.com/neurall/llama.cpp/releases) | lifetime per-expert activation counts saved at server stop; `cudaHostRegister` pinning | A persistent file profile, the counterpart of `LLAMA_MOE_PIN_PROFILE` across sessions |
+| moe-l2, [PyPI 0.7.0](https://pypi.org/project/moe-l2/0.7.0/) | pins the top 100 experts per layer in advance, from a router map learned from gating traces | A per-layer quota where this project ranks globally under one cap |
+| GenerelSchwerz's llama.cpp wiki, [Notable Runs](https://github.com/GenerelSchwerz/llama.cpp/wiki/Notable-Runs) | partial pinning of host expert memory, measured runs | Anecdotal runs of the same kind of partial pinning |
+
+As far as these pages show, none of them reports how well a profile from one
+prompt domain transfers to another, which is what EXP-0006's H3 measures.
+
 The classical results the work leans on are textbook rather than cited:
 
 - **LRU thrash under cyclic access** - the standard pathological case for LRU,
