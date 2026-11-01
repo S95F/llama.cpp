@@ -5,15 +5,15 @@ Restart checkpoint. Read this first in every session.
 | | |
 |---|---|
 | Status | `READY` |
-| Iteration | 4 complete (EXP-0004). Iteration 5 not started |
-| Experiment ID | none active; next is EXP-0005 |
+| Iteration | 5 complete (EXP-0005). Iteration 6 not started |
+| Experiment ID | none active; next is EXP-0006 |
 | Phase | awaiting user authorization (`go`) |
 | Pause reason | n/a |
 | Branch | `moe-gpu-optimize` |
-| Last code commit | `dabb2b026` (`n_sample = 32`); EXP-0004 changed no llama.cpp code |
-| Upstream base | **`63b4b303b`**, through the user's merge `5df437a57` (2026-10-26); moved from `a4699400e`. B1 rebase check passed |
-| Build | binaries from 2026-10-26 08:40, current for this CUDA build: the merge touched only the hexagon and OpenCL backends |
-| Tree | clean after the iteration 4 commit |
+| Last code commit | the iteration 5 commit: `LLAMA_MOE_PIN_PROFILE`, uploads split at pinned-range edges, B3 on the GPU at 256 tokens |
+| Upstream base | `63b4b303b`, through the user's merge `5df437a57` (2026-10-26) |
+| Build | `llama.dll` 2026-10-31 19:07, current for this CUDA build (`llama-completion.exe` 17:46 links it dynamically) |
+| Tree | clean after the iteration 5 commit |
 
 ## Protocol
 
@@ -29,36 +29,43 @@ overrides the check.
 
 ## Last completed step
 
-**Iteration 4, EXP-0004, 2026-10-31: Adopt (measurement; no code change).**
-Answered OPEN_QUESTIONS.md Q6 with a CUDA timeline of every generated token
-(Nsight Systems, 15 traced runs, six cache/pinning arms, three 1024-token runs).
+**Iteration 5, EXP-0005, 2026-10-31: Adopt** the opt-in
+`LLAMA_MOE_PIN_PROFILE` and the upload split. R11, with R10 and R5 folded in.
+Twelve 1024-token traced runs at 2048 MiB: six arms, two reps each, ABBA, the
+model evicted before every run.
 
-- **The expert uploads never overlap compute**: 0 ns in every token. One stream
-  and two host waits per MoE layer make it so by construction.
-- **Finding 4 was wrong in its premise.** Its 3.4 to 5.5 GB/s were bytes over
-  whole-token time. The copies run at 12.8 GB/s pinned and 8.2 to 13 GB/s
-  pageable (slower while the host stages the next copy). Rewritten.
-- **A fresh 128-token run is mostly page faults**: 91.7 of 139.6 ms per token at
-  2048 MiB is the GPU idle while the host faults expert pages in from disk at
-  about 175 us per 64 KiB. They die away over about 400 tokens.
-- **Warm, a 2048 MiB token is 56.2 ms = 12.8 compute + 27.1 DMA + 0.1 read-back
-  + 16.1 host waits.** DMA is the largest part, so bytes still matter.
-- **Bounds** (Finding 10, projections): overlap can hide at most 9.4 ms (17%);
-  pinning every expert about 35 ms, but this host caps pinning near half of RAM,
-  so about 38 to 39 at the cap; the per-layer host round trip is 2.6 to 3.4 ms.
-- Pinning's gain is now split (Q3 in part): cold, 78 to 86% avoided faults; warm,
-  mostly the removal of staging contention.
-- Adversarially reviewed: one draft claim refuted and part of another, eight
-  corrected in all, before anything was written down (`review.json`); then every
-  figure in the written docs was checked against the raw results twice, and all
-  72 findings applied (`doc_check.json`, `doc_recheck.json`).
+- **Pinning near the budget, most-selected experts first, takes the warm token
+  from 52.95 to 36.43 ms (-31%).** Profile order beats address order at the same
+  MiB: -2.69 ms (-6.8%) at 15000 MiB (matched tokens 387-841), -3.55 ms (-8.1%)
+  at the default cap, the same sign in both rounds.
+- **The share left pageable is predictable offline**: the simulator replay plus
+  GGUF byte ranges match CUPTI to 0.1 points over the traces' tokens.
+- **Gain split at 98% pinned**: 86% DMA rate and fast-copy idle, 13% faults.
+- **Pinned budget about 15 GiB.** At that size the desktop nearly ran out of
+  memory: address order left 243 to 814 MiB available, and the watchdog killed
+  one run. Profile order left about 1.5 GiB more (1764 and 2336 MiB, median).
+- **`--load-mode none` is about 80% pinned**, not 100%: a 4 GiB chunk silently
+  falls back to pageable. It runs at 38.21 ms (matched window) and loads in 15 s.
+- **Copy-edge rule**: a copy that starts in a registered range and runs past it
+  fails. Expert-level pinning crashed until every upload was split at range
+  edges. The timed runs used a per-cache split; the process-wide table and the
+  scheduler fallback came from the review, for cases these runs never hit (a
+  second context, a declined tensor).
+- **R10 falsified in part**: eviction fixed the launch state (0 to 7 of 256
+  pages cached), but reps drifted with run position and available RAM
+  (inseparable in that design), which rose 1.5 GiB through the session. Tokens
+  3-130 are early, not cold.
+- **B3 was comparing CPU with GPU arithmetic.** With the cache off (or a group
+  with no slots) decode computes the experts on the CPU, and the text diverges
+  just after token 64. The gate now computes every expert on the GPU and runs
+  256 tokens: 10 of 10 byte-identical, profile pinning included. The knowledge
+  base's correctness invariant is rewritten.
+- Adversarially reviewed (`review.json`): eight of nine claims corrected, two
+  latent crash risks in the code fixed, confounds listed.
 
-**Hazard found: run order.** Pageable runs that followed a pinned run started
-partly warm (prefill 3.7 to 7.3 s instead of 13.4 to 13.8 s). That confounds the
-256 MiB arm and the long pageable runs, and it is why R10 comes first next.
-
-The standing rebase check passed on `5df437a57`: B1 at 2048 MiB reproduced
-`61.38% / 58033.62 MiB` exactly, so the committed traces stay valid.
+**Side effect for the user:** each eviction pushed other processes' memory to
+the pagefile, so desktop apps (and an idle ComfyUI) may page back in slowly for
+a while.
 
 ## Environment facts needed to run anything
 
@@ -88,45 +95,43 @@ ENVIRONMENT.md.
 
 ## Exact next action on `go`
 
-Start **EXP-0005: ROADMAP R11 - pin up to the WDDM cap, most-missed ranges
-first**, on **R10's controlled baseline**. Finding 10 bounds it at about
--17 to -18 ms per token warm at 2048 MiB (56.2 -> about 38 to 39, a projection),
-the largest bounded lever that this host allows.
+Start **EXP-0006: ROADMAP R17 - an online selection profile**, timed with
+**R16's fixed RAM headroom**.
 
-1. **R10 first, inside the same iteration.** Fix the page-cache state at the
-   start of every run and record the prefill time and prefill slow copies as a
-   coldness check (cold pageable is 13.4 to 13.8 s and about 6480 slow copies;
-   cold with 42% pinned 9.3 to 9.9 s and about 3600; take a cold reference for
-   each pinned size). For warm state, run a
-   discarded generation in the same process first, or alternate arms so each
-   follows the same kind of run. A truly cold arm needs the user to flush the
-   standby list with an admin tool; ask rather than skip it.
-2. **No code first.** The default pins layers 0 to 15 plus layer 16's gate and
-   down tensors (address order, first fit per tensor), about 49% of the warm
-   upload bytes for 42% of the expert bytes, because the lowest layers are the
-   least cacheable. At 15266 MiB address order leaves layer 32's up tensor and
-   layers 33 to 39 pageable, about 18% of the bytes; leaving the least-missed
-   layers pageable instead would leave about 13 to 14%. So compute first, from
-   EXP-0001's traces through the simulator (CPU only), the miss coverage of a
-   layer-level and an expert-level order at the same MiB.
-3. **Arms**, B7 timelines, 1024 tokens, warm window 387 to 1022: pinning off,
-   default (7842 MiB), `LLAMA_MOE_PIN_MIB=15000`, and `--load-mode none` as the
-   R5 comparison (it may fail to allocate; record that). Write the
-   frequency-order code only if step 2 says address order leaves something.
-4. **Watch free RAM**: 15 GiB locked of 31 leaves about 1.5 to 3 GiB. Abort an
-   arm if the desktop starts paging.
-5. A code change, if any, needs the B3 correctness gate.
+1. **Code (small).** While the cache runs with `GGML_CUDA_REGISTER_HOST=1` and a
+   new opt-in (for example `LLAMA_MOE_PIN_PROFILE=online:<N>`), count selections
+   per (layer, expert) over the first N generated tokens in `copy()`. Then, between
+   two tokens, unregister nothing and register by count up to the cap, using
+   `ranges_by_use`'s ranking on in-memory counts. Register under the range
+   table's lock, which already orders it against uploads. Offline it leaves
+   5.5 to 7.6% (N = 64) or 2.8 to 4.2% (N = 128) of miss bytes pageable at
+   15000 MiB (`coverage_2048_runcaps.json`, `online`).
+2. **B3** with the online mode (add a `cache2048-pinonline` arm).
+3. **Harness**: copy `research/results/experiments/EXP-0005/runs.sh`, and add a
+   balloon (a process holding a fixed allocation for the whole run; 2 to 4 GiB
+   would push available RAM below the watchdog's 300 MiB floor at 15000 MiB
+   pinned, where EXP-0005 left a median of 243 to 814 MiB (address order) and
+   1764 to 2336 MiB (profile order) without one; run the balloon arms at a lower
+   cap or keep the balloon inside that headroom) and per-process typeperf
+   counters (`\Process(llama-completion)\IO Read Bytes/sec`, `Working Set`) plus
+   `\Memory\Standby Cache*` and `\Memory\Modified Page List Bytes`.
+4. **Arms**, tokens 387-1022, ABBA or randomized, three reps if time allows:
+   address order 15000, file profile 15000 (EXP-0005's), online N = 64 and
+   N = 128 at 15000. Optionally the default cap, where order matters most.
+5. **Out-of-domain check (Q17)**: one arm pair on a code or non-English prompt,
+   with the file profile against the online one.
+6. Watch available RAM. At 15000 MiB pinned, address order went below 300 MiB.
 
-Hit rate and uploaded bytes do not change with pinning, so this experiment's
-claims rest on the timeline decomposition, with the rep-to-rep spread from step 1
-as its noise floor.
-
-Alternatives if the host cannot pin 15000 MiB: **R12** (batched prefetch of
-missed experts; small code change, gated by a CPU-only microbenchmark) or the two
-cheap gates of **R13** (Q13 concurrency microbenchmark; Q7 offline recall).
+If the user prefers no new code: R13's two cheap gates (Q13, a second-stream
+concurrency microbenchmark under WDDM; Q7, next-layer recall from the traces)
+decide whether overlap, bounded at about 9 ms of a 36 ms pinned token, is
+reachable at all.
 
 ## Pending benchmark commands
 
-None queued. `research/results/experiments/EXP-0004/long_runs.sh` is the current
-timeline harness and `research/results/experiments/EXP-0003/bench.sh` the B1
-harness.
+None queued. `research/results/experiments/EXP-0005/runs.sh` is the current
+timeline harness (eviction, probe, watchdog, typeperf, Nsight) and
+`research/results/experiments/EXP-0003/bench.sh` the B1 harness. Run the
+correctness gate with `PIN_PROFILE=C:/nsys/exp0005/profile_bcd.csv` to include
+profile pinning (the profile is EXP-0001's `trace_prompt_b/c/d.csv`
+concatenated).

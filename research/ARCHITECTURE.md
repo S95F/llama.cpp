@@ -152,12 +152,48 @@ driver staging buffer and blocks the host. Its DMA runs at full speed (12.9 to
 when it drops to 8.2 GB/s (EXP-0004; KNOWLEDGE_BASE.md Finding 4). The commit
 page-aligns each host expert tensor's range (`llama_moe_cache_page_size()`,
 `GetSystemInfo` on Windows and `sysconf(_SC_PAGESIZE)` elsewhere) and registers
-it with the backend's host register hook, keeping the registered spans in
-`pinned_spans` to release in the destructor.
+it with the backend's host register hook, keeping the registered ranges in
+`pinned_ranges` to release in the destructor.
 
 Opt-in via `GGML_CUDA_REGISTER_HOST=1`, capped at a quarter of system RAM because
 pinned pages compete with the OS, `LLAMA_MOE_PIN_MIB` overrides the cap, and any
-range the driver refuses simply stays pageable.
+range the driver refuses simply stays pageable. The log line gives the MiB
+pinned, the MiB left pageable and the number of ranges.
+
+### Profile-ordered pinning and split uploads (EXP-0005)
+
+**`LLAMA_MOE_PIN_PROFILE=<trace>`** replaces address order with selection order.
+`ranges_by_use` reads a `LLAMA_MOE_CACHE_TRACE` CSV
+(`call,layer,n_ids,n_hit,n_miss,ids`), counts selections per (layer, expert)
+over the small-batch rows only, and sorts the (layer, expert) units by count,
+ties by address. Under the cap it takes, first fit, the page-rounded slice of
+every expert tensor of each unit (gate, up and down together), then merges
+adjacent ranges. At the default cap that is 7299 ranges here, at 15000 MiB 4881,
+registered in 0.26 to 0.64 s. A profile it cannot read, or with no selections,
+logs a warning and falls back to whole tensors in address order.
+
+**Why every upload is split.** A host-to-device copy that starts in a registered
+range and runs past its end fails (KNOWLEDGE_BASE.md, the copy-edge rule).
+Expert tensors start off page boundaries, so the page-rounded range of a pinned
+expert covers the first partial page of its neighbour, and the cache fills and
+large-batch uploads copy runs of consecutive experts.
+`llama_moe_cache_set_async` therefore splits every host upload of expert data
+where it leaves a pinned range (required) and where it enters one (so the pinned
+part goes by DMA, not through staging). It uses a **process-wide, sorted table**
+of the ranges every MoE cache registered, under a mutex. A second context on the
+same model registers none of the first one's ranges (with a profile, nothing at
+all; in address order it goes on to pin the next whole tensors up to its own
+cap), because the pages are already registered, but still splits at the first
+context's ranges. A context without a cache uses it too. Registration holds the
+lock, so no upload can cross a range between its registration and its entry in
+the table, and the destructor unregisters its own ranges and removes them.
+
+**The scheduler's fallback.** When `sched_copy_experts` declines a host weight
+(the split's first node is not the `MUL_MAT_ID` that reads it), the scheduler
+would copy the whole tensor in one piece. While any range is pinned
+(`llama_moe_cache_has_pinned`), the callback uploads it through the split
+instead. Not reached with this model, where every expert tensor starts its own
+split (122 splits in the prefill graph).
 
 ### Telemetry (`6c9e79086`)
 
@@ -222,9 +258,13 @@ code changes. `set_tensor_async` has no stream argument, the scheduler creates
 no events here, and the only other host-to-device path (`cudaStreamPerThread` in
 buffer `set_tensor`) synchronizes the host.
 
-`GGML_CUDA_REGISTER_HOST=1` changes no code path, stream or graph eligibility. It
-only makes the registered expert ranges pinned, capped by default at RAM/4. The
-slot map is never registered, so the last copy of every layer stays pageable.
+`GGML_CUDA_REGISTER_HOST=1` changes no stream or graph eligibility, but while
+anything is pinned every expert upload, and the scheduler's whole-tensor
+fallback, goes through `llama_moe_cache_set_async`, split at pinned-range edges
+(no copy crosses one in address order; a profile adds 12 to 70 small copies per
+token). Otherwise it only makes the registered expert ranges pinned, capped by
+default at RAM/4. The slot map is never registered, so the last copy of every
+layer stays pageable.
 
 **What could legally overlap layer `il`'s upload without prediction:** the shared
 expert and its gate (they read only the FFN input; the routed+shared fused
@@ -280,6 +320,22 @@ attack neither and hide part of the traversal behind compute instead.
 
 The figures are from EXP-0004. The old "3.4 to 5.5 GB/s" on the staging line was
 uploaded bytes over whole-token time, not a rate of this stage.
+
+**`--load-mode none`** takes a different path: the loader reads the experts into
+a `CUDA_Host` buffer instead of mapping the file. The CUDA host buffer type caps
+a buffer at 4 GiB (`ggml_backend_cuda_host_buffer_type_get_max_size`), so 19275
+MiB becomes five chunks, and a chunk that `cudaMallocHost` refuses becomes a
+pageable CPU buffer, logged only at debug level. On this host the fourth chunk
+(layers 25 to 32, plus one tensor each of layers 24 and 33) fell back
+(EXP-0005). Its pageable experts sit in private memory, so they stage but never
+fault.
+
+**Where the experts are computed.** For a decode token, the experts of a cached
+layer are computed on the GPU from the cache bank. Those of an uncached layer
+(the cache off, or a group with no slots) are host weights, and the CUDA backend
+offloads an op on host weights only at a batch of `GGML_OP_OFFLOAD_MIN_BATCH`
+(default 32) or more, so the CPU computes them. That changes rounding, which is
+why B3 now sets the threshold to 1 (EXP-0005).
 
 ## Prefill bypass
 

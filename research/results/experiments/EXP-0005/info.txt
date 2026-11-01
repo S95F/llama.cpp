@@ -1,0 +1,55 @@
+commit  : 24bd57a1e (+ working tree:  M src/llama-context.cpp  M src/llama-moe-cache.cpp  M src/llama-moe-cache.h )
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+nsys    : NVIDIA Nsight Systems version 2025.6.3.541-256337736014v0
+runs    : off_r1 addr7842_r1 prof7842_r1 addr15000_r1 prof15000_r1 none_r1 none_r2 prof15000_r2 addr15000_r2 prof7842_r2 addr7842_r2 off_r2
+started : 2026-10-31T23:59:32Z
+== off_r1: GGML_CUDA_REGISTER_HOST=0 
+evict: touched 19456 MiB in 4.7 s, available fell to 766 MiB; before {'avail': 20202, 'free': 422, 'standby_normal': 19592, 'standby_reserve': 40, 'standby_core': 110} after {'avail': 20254, 'free': 19457, 'standby_normal': 652, 'standby_reserve': 3, 'standby_core': 110}
+probe: 3/256 expert pages cached (1.2%), median 151 us, p90 217 us
+lowest available 2727 MiB
+== addr7842_r1: GGML_CUDA_REGISTER_HOST=1 
+evict: touched 19712 MiB in 4.3 s, available fell to 539 MiB; before {'avail': 20140, 'free': 758, 'standby_normal': 19125, 'standby_reserve': 101, 'standby_core': 115} after {'avail': 20242, 'free': 19674, 'standby_normal': 417, 'standby_reserve': 1, 'standby_core': 119}
+probe: 0/256 expert pages cached (0.0%), median 159 us, p90 230 us
+lowest available 1776 MiB
+== prof7842_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0005/profile_bcd.csv 
+evict: touched 19968 MiB in 4.2 s, available fell to 754 MiB; before {'avail': 20664, 'free': 925, 'standby_normal': 19485, 'standby_reserve': 86, 'standby_core': 140} after {'avail': 20744, 'free': 19950, 'standby_normal': 623, 'standby_reserve': 3, 'standby_core': 141}
+probe: 3/256 expert pages cached (1.2%), median 151 us, p90 211 us
+lowest available 2784 MiB
+== addr15000_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 
+evict: touched 19968 MiB in 4.0 s, available fell to 610 MiB; before {'avail': 20546, 'free': 781, 'standby_normal': 19500, 'standby_reserve': 131, 'standby_core': 96} after {'avail': 20583, 'free': 19938, 'standby_normal': 520, 'standby_reserve': 1, 'standby_core': 96}
+probe: 2/256 expert pages cached (0.8%), median 158 us, p90 218 us
+run failed: addr15000_r1
+lowest available 205 MiB, KILLED: below 300 MiB for 20 s
+== prof15000_r1: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0005/profile_bcd.csv 
+evict: touched 20224 MiB in 4.2 s, available fell to 734 MiB; before {'avail': 20923, 'free': 354, 'standby_normal': 20376, 'standby_reserve': 54, 'standby_core': 102} after {'avail': 20955, 'free': 20191, 'standby_normal': 628, 'standby_reserve': 1, 'standby_core': 102}
+probe: 1/256 expert pages cached (0.4%), median 157 us, p90 216 us
+lowest available 1585 MiB
+== none_r1: GGML_CUDA_REGISTER_HOST=0 --load-mode none
+evict: touched 20480 MiB in 4.2 s, available fell to 512 MiB; before {'avail': 20958, 'free': 989, 'standby_normal': 19773, 'standby_reserve': 69, 'standby_core': 102} after {'avail': 20995, 'free': 20455, 'standby_normal': 408, 'standby_reserve': 1, 'standby_core': 102}
+probe: 0/256 expert pages cached (0.0%), median 159 us, p90 227 us
+lowest available 480 MiB
+== none_r2: GGML_CUDA_REGISTER_HOST=0 --load-mode none
+evict: touched 20736 MiB in 3.4 s, available fell to 650 MiB; before {'avail': 21348, 'free': 20450, 'standby_normal': 685, 'standby_reserve': 88, 'standby_core': 102} after {'avail': 21384, 'free': 20699, 'standby_normal': 543, 'standby_reserve': 9, 'standby_core': 102}
+probe: 0/256 expert pages cached (0.0%), median 155 us, p90 223 us
+lowest available 1005 MiB
+== prof15000_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0005/profile_bcd.csv 
+evict: touched 20736 MiB in 3.2 s, available fell to 739 MiB; before {'avail': 21475, 'free': 20276, 'standby_normal': 1018, 'standby_reserve': 39, 'standby_core': 103} after {'avail': 21476, 'free': 20706, 'standby_normal': 630, 'standby_reserve': 5, 'standby_core': 103}
+probe: 1/256 expert pages cached (0.4%), median 157 us, p90 232 us
+lowest available 1246 MiB
+== addr15000_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 
+evict: touched 20992 MiB in 3.9 s, available fell to 614 MiB; before {'avail': 21575, 'free': 1075, 'standby_normal': 20299, 'standby_reserve': 49, 'standby_core': 117} after {'avail': 21630, 'free': 20969, 'standby_normal': 502, 'standby_reserve': 1, 'standby_core': 119}
+probe: 3/256 expert pages cached (1.2%), median 158 us, p90 218 us
+lowest available 730 MiB
+== prof7842_r2: GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0005/profile_bcd.csv 
+evict: touched 20736 MiB in 4.3 s, available fell to 696 MiB; before {'avail': 21269, 'free': 685, 'standby_normal': 20413, 'standby_reserve': 139, 'standby_core': 115} after {'avail': 21469, 'free': 20718, 'standby_normal': 599, 'standby_reserve': 1, 'standby_core': 115}
+probe: 1/256 expert pages cached (0.4%), median 157 us, p90 226 us
+lowest available 116 MiB
+== addr7842_r2: GGML_CUDA_REGISTER_HOST=1 
+evict: touched 20992 MiB in 4.3 s, available fell to 669 MiB; before {'avail': 21642, 'free': 995, 'standby_normal': 20413, 'standby_reserve': 81, 'standby_core': 116} after {'avail': 21664, 'free': 20968, 'standby_normal': 545, 'standby_reserve': 2, 'standby_core': 116}
+probe: 7/256 expert pages cached (2.7%), median 155 us, p90 223 us
+lowest available 990 MiB
+== off_r2: GGML_CUDA_REGISTER_HOST=0 
+evict: touched 20992 MiB in 4.4 s, available fell to 689 MiB; before {'avail': 21644, 'free': 781, 'standby_normal': 20587, 'standby_reserve': 122, 'standby_core': 116} after {'avail': 21703, 'free': 20966, 'standby_normal': 580, 'standby_reserve': 2, 'standby_core': 116}
+probe: 3/256 expert pages cached (1.2%), median 154 us, p90 218 us
+lowest available 4024 MiB
+finished: 2026-11-01T00:27:42Z

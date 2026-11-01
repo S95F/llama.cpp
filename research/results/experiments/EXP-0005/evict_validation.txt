@@ -1,0 +1,5 @@
+== eviction validation 2026-10-31T23:51:20Z
+probe: 147/256 expert pages cached (57.4%), median 8 us, p90 218 us
+evict: touched 16896 MiB in 3.9 s, available fell to 701 MiB; before {'avail': 17500, 'free': 785, 'standby_normal': 16585, 'standby_reserve': 0, 'standby_core': 92} after {'avail': 17621, 'free': 16890, 'standby_normal': 605, 'standby_reserve': 0, 'standby_core': 92}
+probe: 256/256 expert pages cached (100.0%), median 3 us, p90 4 us
+probe: 0/256 expert pages cached (0.0%), median 156 us, p90 222 us

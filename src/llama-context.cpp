@@ -2789,11 +2789,13 @@ bool llama_context::sched_copy_experts(ggml_backend_t backend, const ggml_tensor
     auto & st = lctx->copy_experts;
 
     // the ids must be computed before the split starts, so only the first node of the split is considered
-    if (ggml_graph_n_nodes(graph) == 0) {
-        return false;
-    }
-    const ggml_tensor * node = ggml_graph_node(graph, 0);
-    if (node->op != GGML_OP_MUL_MAT_ID || node->src[0] != dst) {
+    const ggml_tensor * node = ggml_graph_n_nodes(graph) > 0 ? ggml_graph_node(graph, 0) : nullptr;
+    if (node == nullptr || node->op != GGML_OP_MUL_MAT_ID || node->src[0] != dst) {
+        // the scheduler would copy the whole tensor at once, which must not run across a pinned range
+        if (llama_moe_cache_has_pinned()) {
+            llama_moe_cache_set_async(backend, dst, src->data, 0, ggml_nbytes(src));
+            return true;
+        }
         return false;
     }
 
@@ -2842,8 +2844,7 @@ bool llama_context::sched_copy_experts(ggml_backend_t backend, const ggml_tensor
                 continue;
             }
             if (next < e) {
-                ggml_backend_tensor_set_async(backend, dst, (const uint8_t *) src->data + next*expert_size, next*expert_size, (e - next)*expert_size);
-                lctx->moe_cache->count_upload((e - next)*expert_size);
+                lctx->moe_cache->upload(backend, dst, (const uint8_t *) src->data + next*expert_size, next*expert_size, (e - next)*expert_size);
             }
             e   += n;
             next = e;
@@ -2854,9 +2855,10 @@ bool llama_context::sched_copy_experts(ggml_backend_t backend, const ggml_tensor
         const size_t padding = last < n_expert - 1 ? std::min<size_t>(expert_size, 512) : 0;
         const size_t size    = (last + 1 - next)*expert_size + padding;
         if (size > 0) {
-            ggml_backend_tensor_set_async(backend, dst, (const uint8_t *) src->data + offset, offset, size);
             if (lctx->moe_cache) {
-                lctx->moe_cache->count_upload(size);
+                lctx->moe_cache->upload(backend, dst, (const uint8_t *) src->data + offset, offset, size);
+            } else {
+                llama_moe_cache_set_async(backend, dst, (const uint8_t *) src->data + offset, offset, size);
             }
         }
 

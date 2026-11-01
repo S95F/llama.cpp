@@ -1,0 +1,8 @@
+register page 1: 0
+inside the registered page                 offset  4096 size  4096: cudaMemcpy 0, cudaMemcpyAsync 0
+starts in it, ends one byte past it        offset  4096 size  4097: cudaMemcpy 1, cudaMemcpyAsync 1
+starts in it, runs into the next page      offset  4096 size  8192: cudaMemcpy 1, cudaMemcpyAsync 1
+starts 512 B in, runs into the next page   offset  4608 size  4096: cudaMemcpy 1, cudaMemcpyAsync 1
+starts before it, ends inside it           offset     0 size  8192: cudaMemcpy 0, cudaMemcpyAsync 0
+starts before it, runs past it             offset     0 size 12288: cudaMemcpy 0, cudaMemcpyAsync 0
+pageable only                              offset  8192 size  8192: cudaMemcpy 0, cudaMemcpyAsync 0

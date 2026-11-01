@@ -1,0 +1,2 @@
+evict: touched 20992 MiB in 4.4 s, available fell to 689 MiB; before {'avail': 21644, 'free': 781, 'standby_normal': 20587, 'standby_reserve': 122, 'standby_core': 116} after {'avail': 21703, 'free': 20966, 'standby_normal': 580, 'standby_reserve': 2, 'standby_core': 116}
+probe: 3/256 expert pages cached (1.2%), median 154 us, p90 218 us

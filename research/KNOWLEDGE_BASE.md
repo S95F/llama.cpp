@@ -15,7 +15,8 @@ quoted as a fact.
 Provenance: findings 1 to 6 consolidate `moe-bench/RESULTS.md`, which is the
 primary record and holds the full tables. Section numbers below refer to it.
 Findings 7 and 8 come from EXP-0002 and 0003, findings 9 and 10 and the rewrite
-of Finding 4 from EXP-0004.
+of Finding 4 from EXP-0004, Finding 11 and the rewritten correctness invariant
+from EXP-0005.
 Measurements exist on two bases: `78a8ae1` (RESULTS.md sections 1-11) and
 `d854d98b` (section 12, the current base). Where they differ, the `d854d98b`
 figure is the one to use.
@@ -196,7 +197,19 @@ Cold, **78 to 86% of the gain is avoided page faults**; warm, most of it is the 
 rate, which is the removal of staging contention. What still needs a host with
 more RAM (OPEN_QUESTIONS.md Q3) is whether pinning pays when nothing faults.
 **Pinning is capped near half of RAM on Windows**: the driver charges pinned
-pages to a shared budget, so 15266 MiB (81%) is the most ever registered here.
+pages to a shared budget of **about 15 GiB here** (EXP-0005: `cudaMallocHost`
+refused at 15360 MiB after granting 14848 in 512 MiB chunks; 15243 to 15266 MiB
+were granted at other times). That is 81% of the expert bytes.
+
+**EXP-0005 split it again with 80% of the expert bytes pinned** (98% of warm
+upload bytes) (warm, tokens 387-1022, profile order at 14924 MiB against
+pageable): of the 16.52 ms saved, DMA plus fast-copy idle is 14.17 ms (86%) and
+slow-copy (fault) idle 2.08 ms (13%). Pinned copies ran at 12.75 to 12.85 GB/s
+(11.9 to 12.0 in prof7842); pageable ones at 8.5 to 8.9 GB/s in off, the
+address-order arms and none and 10.5 to 11.3 in the profile arms, although
+prof7842 makes more pageable copies per token (120, 49 MiB) than addr15000 (112,
+45 MiB) or none (107, 41 MiB). Which pages to pin mattered as much as how many:
+Finding 11.
 
 ## Finding 5: prompt processing is uncached by design
 
@@ -366,9 +379,12 @@ left pageable.
 **They behave like first touches and die away over about 400 tokens**: in the
 1024-token run, 2048 MiB pageable goes from 118.8 ms per token in tokens 3 to
 130 to 52.1 to 59.7 from token 387 on. So **a cold 128-token CLI generation is
-2.1 to 2.5x slower per token than tokens 387 to 1022 of the same
-configuration** (2.5x at 2048 MiB pageable, 2.1x at 586 MiB and with 42%
-pinned), and the decode of a short request is dominated by disk, not by PCIe.
+2.1 to 2.5x slower per token than tokens 387 to 1022 of the same configuration**
+(2.5x at 2048 MiB pageable, 2.1x at 586 MiB and with 42% pinned), and in
+EXP-0004's state (no eviction, 16.5 to 18 GiB available) the decode of a short
+request is dominated by disk, not by PCIe; after an eviction at 19.7 to 21.1 GiB
+available it is not (EXP-0005: DMA 26.1 ms against 15.2 ms slow-copy idle,
+pageable tokens 3-130).
 
 **Warm, DMA is the largest component (47 to 56%)**, compute 16 to 28%, idle 25 to
 29%. The faults never quite stop (2 to 5 per token late in a run, in bursts),
@@ -378,6 +394,20 @@ not known.
 **The OS keeps part of the model cached between processes** after a pinned run:
 pageable runs that followed one prefilled in 3.7 to 7.3 s instead of 13.4 to
 13.8 s. That is a measurement hazard (see "Measurement discipline").
+
+**EXP-0005 refines this** (level 1 for the observations, level 4 for the
+mechanism). Even with the model evicted before launch (0 to 7 of 256 probed
+pages cached), the load's whole-file prefetch read 19.05 to 20.38 GiB before
+prefill, and 19.5 to 20.8 GiB had been read in all before decode, so tokens
+3-130 were early, not cold: 0.04 to 1.47 GiB of disk reads, and the excess time
+there (pageable: slow-copy idle 15.22 against 3.00 ms warm) is not yet split
+between hard faults and soft (transition) faults, about 8600 per token pageable
+against 135 to 142 with no file-backed experts. Prefill took 1.55 to 3.02 s with
+37 to 604 slow copies at 19.7 to 21.1 GiB available, and the slow experts were
+the file's unread tail (layers 36 to 39). Hypothesis: prefill faults scale with
+available RAM through how much of the file the load leaves unread. It does not
+by itself explain EXP-0004's 13.4 s regime, where all 40 layers faulted (ROADMAP
+R16 tests it).
 
 ## Finding 10: bounds on the remaining levers, warm 2048 MiB
 
@@ -405,6 +435,70 @@ of token time, are about half to most of this ceiling.
 **So on this host the host's memory is the first lever and overlap the second**:
 faults and staging contention cost more than overlap could hide, and pinning
 also raises overlap's share.
+
+EXP-0005 measured the cap lever: 36.43 ms with profile order at 14924 MiB and
+39.35 with address order at 14946 MiB (matched window 387-841, where profile
+order is 36.65), against a pageable 52.95 (53.52 on 387-841) in that session.
+Profile order beat the projected 38 to 39 ms; address order about met it
+(39.35). In gain neither reached the projected 17 to 18 ms (16.52 and 14.17 ms).
+The projection was made against another session's 56.2 ms (Finding 11).
+
+## Finding 11: pin the experts a profile selects most, not whole tensors in address order
+
+**Level 1** (EXP-0005: 2048 MiB cache, 1024-token traced runs, two reps per arm
+in ABBA order, the model evicted before every run). Level 4 where marked.
+
+Warm, tokens 387-1022, ms per token (addr15000 on the matched window 387-841,
+because one of its reps was stopped at token 841):
+
+| arm | pinned | pageable share of upload bytes | ms/token | vs pageable |
+|---|---:|---:|---:|---:|
+| pageable | 0 | 100% | 52.95 | - |
+| address order, default cap (RAM/4) | 7842 MiB | 50.7% | 43.97 | -17.0% |
+| profile order, default cap | 7943 MiB | 22.3% | 40.42 | -23.7% |
+| address order, 15000 MiB | 14946 MiB | 20.2% | 39.35 (387-841) | -26.5% (387-841) |
+| profile order, 15000 MiB | 14924 MiB | **2.3%** | **36.43** (387-841: 36.65) | **-31.2%** |
+| `--load-mode none` | about 15240 MiB (14.9 GiB) | 18.5% | 37.93 (387-841:
+38.21) | -28.4% |
+
+- **Profile order wins at the same MiB**: -3.55 ms (-8.1%) at the default cap,
+  -2.69 ms (-6.8%) at 15000 MiB, the same sign in both rounds and in every
+  128-token window. `LLAMA_MOE_PIN_PROFILE=<trace>` counts selections per
+  (layer, expert) in a `LLAMA_MOE_CACHE_TRACE` file and pins expert slices, all
+  tensors of an expert together, most selected first. Address order pins whole
+  tensors from layer 0 up, so it leaves the top layers pageable whatever their
+  traffic.
+- **The offline replay reproduces the share left pageable** (a replay of the run
+  prompt's own routing over tokens 16-255, not a prediction for unseen text).
+  Replaying the EXP-0001 traces through the simulator and mapping each miss to
+  its GGUF byte range gives the measured share to 0.1 points over the traces'
+  255 tokens. Over tokens 387-1022 it drifts by up to 3.1 points.
+- **At about 15 GiB pinned the desktop is near its limit.** Address order left
+  243 and 814 MiB available (median, warm), and one rep was killed at 205 MiB.
+  Profile order left 1764 and 2336 MiB. The pageable experts it leaves are the
+  rarely selected ones, so fewer of them are in the working set at any point.
+  This is cumulative, not a lower fault rate.
+- **Profile order at the default cap does not match address order at 1.9x the
+  memory**: +1.35 ms (+3.4%), driven by a tail of slow pageable copies.
+- **Costs**: registration takes 0.26 to 0.64 s for 4881 to 7299 ranges, against
+  3 to 4 ms for 50 to 96 whole-tensor ranges. Splitting copies at range edges
+  adds 12 to 70 small copy calls per token, about 1% of a token.
+- **It needs the copy split** (Architectural facts: the copy-edge rule), because
+  every expert tensor starts off a page boundary, and neighbouring experts share
+  a page.
+- **`--load-mode none` is about 80% pinned, not 100%** (Architectural facts),
+  and loads in 15 s instead of 6.3 to 7.5.
+
+**Limits.** One run prompt. The profile is held out by prompt but shares its
+domain, and the run prompt is the best covered of the four offline (2.1%
+pageable at 15000 MiB against 4.6 to 5.7%; at the default cap 20.7% against 26.8
+to 29.3%). At 15000 MiB the profile pins every expert its 765 tokens selected
+at least twice, but only 207 of the 606 it selected once (8126 of its 8525
+selected experts; all of them would need about 15650 MiB); at the default cap
+the cutoff is 16 selections, so the default-cap result depends more on the
+profile. With room to pin every expert, order would not matter. **Level 4:** an
+online profile from a run's own first 64 or 128 tokens would leave 5.5 to 7.6%
+or 2.8 to 4.2% pageable at 15000 MiB (offline, four traces; ROADMAP R17).
 
 ---
 
@@ -435,7 +529,24 @@ Level 2 unless marked. Detail in ARCHITECTURE.md.
   about lines 611-627), more than the free RAM here, and **the MoE cache never
   prefetches**: `llama_prefetch` and `llama_prefetch_rows` have no caller there.
 - **At 256 and 586 MiB one layer gets no cache slots** and runs its MoE on the
-  CPU, which costs about 2 ms per token of GPU idle (level 1).
+  CPU, which costs about 2 ms per token of GPU idle (level 1). 528 MiB too
+  (EXP-0005).
+- **With the cache off, decode computes the experts on the CPU** (level 1,
+  EXP-0005). They are host weights, and the CUDA backend offloads an op on host
+  weights only at a batch of 32 or more (`GGML_OP_OFFLOAD_MIN_BATCH`, default
+  32). `GGML_OP_OFFLOAD_MIN_BATCH=1` computes them on the GPU instead, uploading
+  the selected experts each token.
+- **The copy-edge rule** (level 1, EXP-0005, cudart 12.6): a host-to-device copy
+  that starts in a `cudaHostRegister`'d range and runs past its end fails with
+  `cudaErrorInvalidValue`, synchronous or async. A copy that starts in pageable
+  memory and ends inside or runs through a registered range succeeds. Expert
+  tensors start off page boundaries, so pinning single experts needs every
+  upload split at the ranges' edges (`llama_moe_cache_set_async`).
+- **The CUDA host buffer type caps a buffer at 4 GiB, and a chunk that
+  `cudaMallocHost` refuses silently becomes a pageable CPU buffer** (level 1 for
+  the effect, level 2 for the code). The failure is logged only at debug level,
+  and the multi-buffer keeps the `CUDA_Host` name. `--load-mode none` asks for
+  19275 MiB in five chunks; here the fourth (layers 25 to 32) fell back.
 
 ## Measurement discipline
 
@@ -468,7 +579,24 @@ Level 1, all learned the hard way. FAILED_APPROACHES.md has the detail.
 - **Page-cache state carries over between processes.** A pageable run after a
   pinned run starts partly warm (prefill 3.7 to 7.3 s instead of 13.4 to 13.8 s,
   and up to 60% fewer page faults). Record the prefill time with every timed run
-  as a coldness check, and order runs by cache state, not only by arm.
+  together with available RAM; it is not a coldness check by itself (EXP-0005:
+  cold-evicted pageable runs prefilled in 2.1 to 3.0 s at 19.7 to 21.1 GiB
+  available), and order runs by cache state, not only by arm.
+- **Evicting the model before launch is not enough** (EXP-0005). `evict.py`
+  (memory pressure, no admin rights) makes the launch state reproducibly cold,
+  but the load's prefetch then refills the cache as far as available RAM allows,
+  and RAM drifted 1.5 GiB through one session, plausibly (not measured) as the
+  evictions trimmed other processes. Reps differed by up to 3.9% warm and 28%
+  in tokens 3-130, and r1 was slower than r2 in every arm. Hold headroom fixed
+  too (ROADMAP R16), and record available RAM before every run.
+- **ABBA cancels a linear drift, not a memory-state effect** that decays with
+  token index. Report the per-round pair differences next to the means.
+- **System-wide paging and disk counters are not llama-only** after an eviction:
+  trimmed processes page back in during the run (0.10 to 0.65 GiB of reads in
+  tokens 387-1022 of a run with no file-backed experts).
+- **typeperf stalls for up to 5.5 s while a model loads.** Integrate each rate
+  over its real interval; summing rows as 1 s each undercounted disk reads 1.8
+  to 4.3x.
 - **Bytes over token time is not a link rate.** It folds compute, faults, staging
   and syncs into one number; Finding 4 read it as a link rate for three
   iterations. Measure copies on a timeline instead.
@@ -526,10 +654,27 @@ identical to the last digit across the two bases.
 
 ## Correctness invariant
 
-**Level 1.** The cache only moves expert weights into VRAM; the kernels and the
-values are unchanged, so generation must be bit-identical.
-`moe-bench/check-correctness.sh` greedily decodes the same prompt under every
-configuration and diffs. All configurations agree byte for byte on both bases:
-policy on and off, above and below the crossover, host page pinning, and (on
-`78a8ae1`) upstream master with and without the cache. Any experiment that
-changes output is a bug, not a trade-off.
+**Level 1. Rewritten by EXP-0005.** The cache only moves expert weights into
+VRAM, so **with every expert computed on the same device**, generation must be
+bit-identical. `moe-bench/check-correctness.sh` greedily decodes 256 tokens
+under every configuration with `GGML_OP_OFFLOAD_MIN_BATCH=1`, so that every
+expert is computed on the GPU, and diffs. On `5df437a57` plus EXP-0005, all ten
+configurations agree byte for byte:
+- the cache off;
+- every eviction policy at 528 and 2048 MiB, and 256 MiB;
+- whole-tensor pinning, and profile pinning at the default cap.
+
+The reference also equals what the default 2048 MiB cache generates. Any
+experiment that changes this output is a bug, not a trade-off.
+
+**What the earlier statement got wrong.** It compared every configuration with
+the cache off at 64 tokens. With the cache off (and in a cache group with no
+slots) decode runs the experts on the CPU, whose rounding differs from CUDA's.
+At 256 tokens the cache-off text diverges from every cache configuration a few
+tokens after token 64 (byte 535, where 64 tokens end at byte 524), and 528 MiB
+diverges from 2048 MiB at about token 110. So "byte-identical with the cache
+off" held only for short outputs. Comparisons between policies at one cache size
+are unaffected, because they compute the same layers on the same device. But
+hardware rows at 256 to 586 MiB decode a different text than 2048 MiB after
+about 100 tokens, so their hit rates are not over the same routing
+(OPEN_QUESTIONS.md Q15).

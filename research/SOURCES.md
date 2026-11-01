@@ -19,6 +19,8 @@ any of them.
 | #30112 | multi-GPU expert cache | Merged. Cannot be exercised here - one GPU |
 | `c49edf096` | CUDA: fuse FFN gate/up matmuls and GLU in MMQ | In the `78a8ae1`..`d854d98b` range. **Suspected** cause of the router top-8 perturbation between the two bases (level 4 - intermediate commits were not built) |
 | `a55c16e4e` | ggml-cuda: fuse qwen MRoPE + set-rows | Same range, same suspicion, same confidence |
+| `ggml_backend_cuda_host_buffer_type_get_max_size`, `ggml_cuda_host_malloc` | The CUDA host buffer type caps a buffer at 4 GiB, and a failed `cudaMallocHost` falls back to a pageable CPU buffer, logged at debug level | Why `--load-mode none` ends up about 80% pinned here (EXP-0005). Level 2 for the code, level 1 for the effect |
+| `GGML_OP_OFFLOAD_MIN_BATCH` (`ggml-cuda.cu`, default 32) | Ops on host weights are offloaded to the GPU only at this batch size or above | With the cache off, decode computes the experts on the CPU; B3 sets it to 1 so every configuration computes on the GPU (EXP-0005) |
 
 ## Open upstream PRs surveyed before writing code
 
@@ -68,11 +70,11 @@ Status of each on this machine, so that none is mistaken for untried-but-easy.
 |---|---|
 | MoE expert offloading | In use (`-ncmoe`), level 1, the basis of everything here |
 | Adaptive GPU caching / eviction policies | **The main line of work.** EXP-0000, level 1 |
-| Pinned memory | Implemented, measured, **confounded** (Finding 4). ROADMAP R4 |
+| Pinned memory | Implemented and measured (Findings 4 and 11). Near the Windows budget (about 15 GiB), pinning the experts a selection profile uses most takes a warm token from 52.95 to 36.43 ms, 6.8% better than address order (EXP-0005). Whether it pays where nothing faults: ROADMAP R4 |
 | Zero-copy access | **Not investigated.** No measurement, no code. OPEN_QUESTIONS.md Q5 |
 | PCIe DMA / async transfers | Measured by EXP-0004 (BENCHMARKS.md B7): copies run at 12.8 GB/s pinned and 8.2 to 13 GB/s pageable, and never overlap compute (one stream, two host waits per MoE layer). Q6 settled; a copy stream is ROADMAP R13 |
 | Expert activation prediction / prefetch | Previous-token prefetch **rejected on trace evidence** (31 to 37% overlap). Learned prediction untried, Q7 |
-| Reducing redundant copies | The staging copy is the one identified; see pinning |
+| Reducing redundant copies | The staging copy is the one identified; pinning removes it for 98% of the warm upload bytes in EXP-0005 |
 | Constrained PCIe x4/x8 | x8 only, **cannot be varied on this hardware** |
 | Overlapping CPU exec, GPU compute, transfers | **Measured: none** (EXP-0004). Overlap could hide at most 9.4 ms of a warm 56.2 ms token (KNOWLEDGE_BASE.md Finding 10). #30966 is the upstream angle; ROADMAP R13 |
 | Multi-GPU / heterogeneous placement | **Impossible here** - one GPU. ROADMAP R8 |

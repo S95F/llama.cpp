@@ -30,5 +30,5 @@ log, which remains the primary record for everything before EXP-0001.
 - Raw results go to `results/`, are machine-readable, and are **never silently
   overwritten**.
 - Negative results are kept with their cause and their revisit conditions.
-- Correctness is a gate, not a trade-off: the cache must not change generated
-  output.
+- Correctness is a gate, not a trade-off: with every expert computed on the
+  same device, the cache must not change generated output (BENCHMARKS.md B3).

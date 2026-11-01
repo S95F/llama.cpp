@@ -146,18 +146,28 @@ reads more bytes, which is the upstream arm, inflating the ratio.
 ./moe-bench/check-correctness.sh "$MODEL" [baseline_build/bin]
 ```
 
-Greedily decodes the same prompt under each configuration and diffs against
-`--moe-cache-mib 0`. Configurations: `cache2048-lru`, `cache2048-auto`,
-`cache2048-s16`, `cache528-lru`, `cache528-auto`, `cache528-dist0`,
-`cache256-auto`, `cache1024-pinned`, plus `upstream-off` and `upstream-2048`
-when a baseline build is given.
+Greedily decodes 256 tokens (`NGEN`) of the same prompt under each
+configuration and diffs against `--moe-cache-mib 0`. Configurations:
+`cache2048-lru`, `cache2048-auto`, `cache2048-s16`, `cache528-lru`,
+`cache528-auto`, `cache528-dist0`, `cache256-auto`, `cache1024-pinned`;
+`cache2048-pinprof` when `PIN_PROFILE=<trace>` is set (profile pinning at the
+default cap); and `upstream-off` and `upstream-2048` when a baseline build is
+given.
 
-**Reference: all configurations byte-identical on both bases.** This is a
-pass/fail gate, not a measurement. Any difference is a bug.
+**Every configuration computes its experts on the GPU**
+(`GGML_OP_OFFLOAD_MIN_BATCH=1`, exported by the script). Without it, the cache-off
+reference and any cache group with no slots compute their experts on the CPU,
+whose output diverges from the GPU's within about 65 to 110 tokens (EXP-0005).
+The 64-token gate used before EXP-0005 passed only because it stopped just
+short of that.
 
-Last run EXP-0002 on `d854d98b`: 8 of 8 OK, including the two cases added there
-(`cache528-dist0` for the use-count-only victim, `cache256-auto` for a cache
-small enough to starve a group of slots).
+**Reference: all configurations byte-identical.** This is a pass/fail gate, not
+a measurement. Any difference is a bug.
+
+Last run EXP-0005 on `5df437a57` plus its changes: 9 of 9 OK against the
+reference (10 identical outputs), `PIN_PROFILE` set (`b3_correctness_gpu256.txt`).
+Before it, EXP-0002 on `d854d98b`: 8 of 8 OK at 64 tokens against the CPU
+reference.
 
 A baseline build of upstream master at `d854d98b` does **not** currently exist,
 so the two `upstream-*` rows were not run on the current base.
@@ -220,7 +230,10 @@ Policies implemented: `lru`, `slru50`, `slru-ramp`, `lfu`, `s3fifo`, `belady`,
 the policy is fully deterministic and the agreement should be exact. **Below the
 crossover exact agreement is not expected**: the C++ uses a small LCG where the
 simulator uses Python's RNG, so the two draw different slot samples. EXP-0000
-measured that residual on hardware at 0.7 to 0.8 points.
+measured that residual on hardware at 0.7 to 0.8 points. At 256 to 586 MiB there
+is a second difference: a cache group with no slots runs on the CPU, so hardware
+decodes a different text than the 2048 MiB traces from about token 110
+(EXP-0005, OPEN_QUESTIONS.md Q15).
 
 **Re-validate after every rebase.** The traces are base-specific even though the
 simulator is not: upstream's own commits can change the router's top-8 and
@@ -264,12 +277,17 @@ reference harnesses. nsys is at
 Rules learned in EXP-0004:
 
 - **Quote a warm window** (tokens 387 to 1022 of a 1024-token run) for steady
-  state. The first 128 tokens of a fresh process are dominated by page faults.
+  state. In EXP-0004's state (no eviction, 16.5 to 18 GiB available) the first
+  128 tokens of a fresh process were dominated by page faults; after an eviction
+  (EXP-0005) they are early, not cold.
 - **Record the prefill time** as a coldness check. Cold, the 46-token prompt
   prefills in 13.4 to 13.8 s with pageable experts (about 6480 slow copies) and
-  9.3 to 9.9 s with 42% pinned (about 3600); 3.7 to 7.3 s pageable means an
-  earlier run left the model partly cached. Record a cold reference for each
-  pinned size.
+  9.3 to 9.9 s with 42% pinned (about 3600), at 16.5 to 18 GiB available and no
+  eviction; there, 3.7 to 7.3 s pageable meant an earlier run had left the model
+  partly cached. After an eviction at 19.7 to 21.1 GiB available (EXP-0005),
+  pageable prefill took 2.1 to 3.0 s and 42% pinned 2.5 to 3.0 s, so a fast
+  prefill does not by itself mean an earlier run left the model partly cached.
+  Record a cold reference for each pinned size.
 - **Tracing costs +0.6 to +2.2% per token** in the 128-token runs (unmeasured
   in the warm regime), host-side; it lands in GPU idle.
 - Tokens 1 and 2 are excluded: token 1 runs eagerly and token 2 captures the
@@ -277,7 +295,42 @@ Rules learned in EXP-0004:
   2048 MiB). Every 256th token re-captures and runs most graphs eagerly.
 - `graph:host-only` gives graph spans, not the kernels inside them.
 
-### Reference, base `5df437a57`, warm (tokens 387 to 1022)
+Added by EXP-0005 (`research/results/experiments/EXP-0005/runs.sh` is now the
+reference harness):
+
+- **Evict the model before every run** (`evict.py`, no admin rights) and record
+  residency with `probe.py` (0 to 7 of 256 pages cached is cold). Record
+  available RAM before each run, and hold it fixed if reps must agree within
+  3% (ROADMAP R16); eviction alone did not.
+- **Tokens 3-130 are early, not cold**, after an eviction: the load's prefetch
+  re-reads most of the file. Their figures are indicative only.
+- **Run arms in ABBA order and report the per-round pair differences**, not only
+  the means; ABBA does not cancel a memory-state effect that decays with token
+  index.
+- **A watchdog** stops a run if available RAM stays below 300 MiB for 20 s. At
+  about 15 GiB pinned it fired once.
+- **Integrate typeperf rates over the real row intervals**; rows stall for up
+  to 5.5 s during a load. The counters are system-wide, so other processes'
+  page-ins after an eviction land in them.
+
+### Reference, base `5df437a57`, warm (tokens 387 to 1022), EXP-0005
+
+2048 MiB cache, mean of two reps (ABBA), model evicted before every run,
+19.7 to 21.1 GiB available before eviction:
+
+| arm | ms/token | compute | DMA | idle | pinned share |
+|---|---:|---:|---:|---:|---:|
+| pageable | 52.95 | 13.02 | 26.86 | 12.95 | 0% |
+| address order, default cap (7842 MiB) | 43.97 | 12.96 | 22.69 | 8.20 | 49.3% |
+| profile order, default cap (7943 MiB) | 40.42 | 12.96 | 20.08 | 7.26 | 77.7% |
+| address order, 15000 MiB (387-841) | 39.35 | 12.92 | 20.12 | 6.18 | 79.8% |
+| profile order, 15000 MiB | 36.43 | 12.89 | 18.23 | 5.19 | 97.7% |
+| `--load-mode none` | 37.93 | 12.89 | 19.71 | 5.21 | 81.5% |
+
+Read-back is 0.1 ms in every arm. Full tables in
+`research/results/experiments/EXP-0005/analysis.md`.
+
+### Reference, base `5df437a57`, warm (tokens 387 to 1022), EXP-0004
 
 | arm | ms/token | compute | DMA | read-back | idle |
 |---|---:|---:|---:|---:|---:|
@@ -306,6 +359,11 @@ Committed so far:
   (`timeline_*.json`), the app logs, the decomposition, paging counters, the
   analysis scripts and the review record. The nsys captures themselves (30 files, 482 MB)
   stay outside git; `provenance.txt` has their sha256.
+- `research/results/experiments/EXP-0005/` - per-run eviction and probe records,
+  paging counters, timelines and logs for the 12 pinning runs, `runs.json` and
+  `analysis.json`, the offline coverage (`coverage_*.json`), the budget and
+  copy-edge tests, three B3 records and the review record. Captures in
+  `C:\nsys\exp0005` stay outside git; `provenance.txt` has their sha256.
 
 **Gap: nothing from the pre-`research/` work was preserved.**
 `moe-bench/.gitignore` excludes `out/` and `*.csv`, so the `78a8ae1` reference

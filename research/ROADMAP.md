@@ -4,7 +4,19 @@ Prioritized optimization opportunities. Reordered after every experiment, not
 followed blindly. Each item carries an estimate of gain, complexity, risk and
 cost, and names the evidence that motivates it.
 
-Last reprioritized: 2026-10-31, after EXP-0004.
+Last reprioritized: 2026-10-31, after EXP-0005.
+
+**What EXP-0005 changed.** Pinning near the Windows budget, the experts a
+selection profile uses most first, took the warm 2048 MiB token from 52.95 to
+36.43 ms (-31%): 12.9 compute + 18.2 DMA + 5.2 idle. Address order at the same
+MiB was 7.3% slower (39.35 against 36.65 ms, matched window 387-841; profile
+order is 6.8% faster). On this host the memory lever is now mostly spent, so the
+remaining time is the DMA itself and the host's per-layer waits. Overlap (R13)
+and the round trip (R14) are what is left. R17 makes the profile gain usable
+without a trace file. R10's fixed launch state did not make runs agree, and the
+r1 - r2 gaps track both the rise in available RAM (r = 0.79) and the time
+between reps (r = 0.91), which this design cannot separate; holding RAM fixed
+(R16) has to come with the next timing experiment.
 
 **What EXP-0004 changed.** The policy work (R1 to R6) cut uploaded bytes on the
 premise that compute hides behind the copy. It does not: nothing overlaps, and a
@@ -58,71 +70,70 @@ one-constant change. KNOWLEDGE_BASE.md Finding 7.
 mechanism and the bounds below all come from it. KNOWLEDGE_BASE.md Findings 4, 9
 and 10.
 
+### R11 - Pin up to the budget, most-selected experts first
+
+**EXP-0005, Adopt** (opt-in `LLAMA_MOE_PIN_PROFILE`, plus the upload split at
+pinned-range edges that expert-level pinning requires). Warm, tokens 387-1022:
+off 52.95 ms, address order 15000 MiB 39.35 (matched window 387-841), profile
+order 14924 MiB **36.43**. Profile against address order is -2.69 ms (-6.8%) at
+15000 MiB and -3.55 ms (-8.1%) at the default cap, the same sign in both rounds.
+The offline coverage model replays the pageable share to 0.1 points over its
+traces' window. The budget is about 15 GiB, and at that size the desktop ran
+nearly out of memory in address order (median 243 and 814 MiB available, warm);
+the watchdog stopped one rep at 205 MiB. KNOWLEDGE_BASE.md Finding 11.
+
+### R5 - `--load-mode none` against capped in-place pinning
+
+**Settled as an arm of EXP-0005.** It does not pin the full 18.3 GiB. The CUDA
+host buffer type caps buffers at 4 GiB, and a chunk that `cudaMallocHost`
+refuses silently falls back to pageable memory, so it ran about 80% pinned. Warm
+38.21 ms on the matched window: 1.14 ms faster than address order at 15000 MiB,
+1.56 ms slower than profile order, and a 15 s load instead of 6.3 to 7.5 s.
+
+### R10 - A controlled baseline (done in part)
+
+**EXP-0005, falsified in part.** Evicting the model by memory pressure before
+every run made the launch state reproducibly cold (0 to 7 of 256 probed pages
+cached), but reps still differed by up to 3.9% warm and 28% in tokens 3-130, and
+r1 was slower than r2 in every arm. The page cache refills from the load's
+whole-file prefetch, and how far it gets depends, by hypothesis (confounded
+with run order), on available RAM, which rose 1.5 GiB through the session. The
+persistent-process run and the B2 reconciliation were not done. They move to
+OPEN_QUESTIONS.md Q12, the headroom control to R16.
+
 ## Priority 1
 
-### R10 - A controlled baseline: page-cache state, persistent process, B2
+### R17 - An online selection profile
 
 | | |
 |---|---|
-| Motivated by | EXP-0004: pageable runs after a pinned run started partly warm (prefill 3.7 to 7.3 s instead of 13.4 to 13.8 s); a cold 128-token run is 2.1 to 2.5x slower per token than warm; the traced CLI is 10 to 36% slower per token than B2 at 2048 MiB |
-| Hypothesis | With the cache state fixed at the start of each run - cold (standby list flushed) or warm (a discarded generation first, in the same process) - repeated timelines agree within 3%, and an untraced run reconciles with `llama-bench` at the same configuration. |
-| Falsifiable by | Reps of one arm differing by more than 3% under a fixed state, or the B2 gap surviving the same process, flags and token window. |
-| Expected gain | None by itself. It is what makes R11 to R14 measurable at the 10% level. |
-| Complexity | Low: a warm-up generation in one process (`llama-server` with two requests, or the bench harness), and the prefill time plus prefill slow copies (about 6480 when cold and pageable, about 3600 cold with 42% pinned) recorded as a coldness check. |
-| Risk | Low. Flushing the standby list needs an admin tool, so a cold arm needs the user. |
-| Cost | Low. Fold it into EXP-0005 as its first step rather than spend an iteration on it. |
+| Motivated by | EXP-0005: profile pinning is 6.8 to 8.1% faster than address order but needs a trace file from a previous run; offline, counting a run's own first 64 or 128 tokens and pinning then leaves 5.5 to 7.6% or 2.8 to 4.2% of miss bytes pageable at 15000 MiB (file profile, held out: 2.1 to 5.7%) |
+| Hypothesis | Registering by selection count after the first N generated tokens (N about 64 to 128) reaches within 1 ms per token of the file profile, warm, at the same cap. |
+| Falsifiable by | The online arm more than 1 ms per token slower than the file profile on tokens 387 to 1022, or the mid-run registration (0.3 to 0.6 s for 5000 to 7300 ranges) costing more than it saves over a 1024-token generation. |
+| Expected gain | The file profile's -2.7 to -3.6 ms per token over address order, without a file. |
+| Complexity | Small. The cache already sees every selection (the trace writer); the ranking and registration code exists (`ranges_by_use`). Registration must not race uploads: do it between tokens, under the range table's lock. |
+| Risk | Low to medium: 0.3 to 0.6 s of registration in the middle of a generation; and a first request that is unrepresentative of later ones (a long-lived server should re-rank). |
+| Cost | Low. Re-uses EXP-0005's harness; needs R16's fixed headroom. |
 
-### R11 - Pin up to the WDDM cap, most-missed ranges first
+### R16 - Hold RAM headroom fixed (R10's missing control)
 
 | | |
 |---|---|
-| Motivated by | Finding 10: pinning every expert bounds a warm 2048 MiB token at about 35 ms, and the WDDM cap at about 38 to 39 (from 56.2; projections); Finding 4's sweep measured +88% at 81% pinned; cold, 78 to 86% of pinning's gain is avoided page faults |
-| Hypothesis | Pinning about 15000 MiB cuts the warm 2048 MiB token from 56.2 to 42 ms or less, and cold short runs by more than 40%; choosing ranges by miss frequency beats address order at the same pinned MiB. |
-| Falsifiable by | A warm token above 46.6 ms (the 42% figure) at about 15000 MiB, or frequency order not beating address order in page faults plus DMA per token. |
-| Expected gain | About -17 to -18 ms per token warm at 2048 MiB (-30 to -32%; a projection), more cold. |
-| Complexity | **None for the cap** (`LLAMA_MOE_PIN_MIB`). Small for the ordering, in `pin_host_experts`. |
-| Risk | Medium at the machine level: 15 GiB locked of 31 leaves about 1.5 to 3 GiB free, so watch the desktop and the free RAM. Partial pinning slows the unpinned layers a little (194.7 against 181.7 us/MiB). |
-| Cost | Low. |
-
-**Check before writing the ordering code:** `pin_host_experts` pins tensor
-ranges in address order, first fit per tensor (the expert tensors are separate
-ranges and never merge). EXP-0004 found that the default 7842 MiB pins layers 0
-to 15 plus layer 16's gate and down tensors and covers about 49% of the warm
-upload bytes for 42% of the expert bytes, because the lowest layers are the
-least cacheable (Finding 8; layer 0 hits 1.84%). So address order tracks miss
-frequency at the bottom but not at the tail: at 15266 MiB it leaves layer 32's
-up tensor and layers 33 to 39 pageable, about 18% of the warm upload bytes,
-while leaving the least-missed layers pageable instead would leave about 13 to
-14%. Ordering experts within layers could add to that. Both need
-per-(layer, expert) miss counts from EXP-0001's traces through the simulator;
-measure that coverage before writing code.
-
-R5 (`--load-mode none`) belongs in the same experiment as a comparison arm: it
-pins the full 18.3 GiB, which the WDDM budget suggests may not even allocate
-here.
+| Motivated by | EXP-0005: launch-state eviction alone left reps 1.1 to 3.9% apart warm and r1 slower in every arm, correlated with the session's RAM drift (r = 0.79) and run position (r = 0.91); prefill slow copies sat in the file tail the load left unread (level 1; that available RAM sets how much stays unread is a level 4 hypothesis) |
+| Hypothesis | With a fixed balloon allocation held through each run (for example 0, 2, 4, 6 GiB, randomized order), reps of one arm agree within 2% warm, and prefill time and slow copies rise with the balloon. |
+| Falsifiable by | Reps still more than 2% apart at a fixed balloon; or prefill slow copies not depending on it. |
+| Expected gain | None by itself. It makes 2 to 3 ms differences (R13, R14, R17) measurable, and it tests whether EXP-0004's 13.4 s prefill regime is a RAM-shortfall effect. |
+| Complexity | Low: one more script next to `evict.py`; per-process counters (IO read bytes, working set) and standby and modified list sizes in typeperf. |
+| Risk | Low; the balloon must leave the desktop above the watchdog's floor. |
+| Cost | Low. Fold it into the next timing experiment. |
 
 ## Priority 2
-
-### R12 - Fault in each layer's missed experts with one batched prefetch
-
-| | |
-|---|---|
-| Motivated by | Finding 9: a decode fault reads 64 KiB synchronously in about 175 us (0.37 GB/s), while the startup prefetch reads the same disk at 3 to 4 GB/s; `llama_prefetch_rows` exists and the MoE cache never calls it |
-| Hypothesis | One `PrefetchVirtualMemory` call per layer over all missed expert ranges, issued right after the router read-back and before the copies, turns serial faults into a parallel read and halves slow-copy idle in cold runs. |
-| Falsifiable by | A CPU-only microbenchmark (scattered 576 to 840 KiB ranges of the GGUF, cold cache) showing batched prefetch no faster than faulting by touch; or in-situ slow-copy idle not falling. |
-| Expected gain | Cold 2048 MiB: slow-copy idle is 91.7 ms per token, about 10 at prefetch speed, so up to about -80 ms. Warm: at most 6.7 ms pageable, 3.9 at 42% pinned, less after R11. |
-| Complexity | Small; the helper exists. |
-| Risk | Low: prefetch is advisory and changes no data path. |
-| Cost | Low, but the cold microbenchmark needs the user to flush the standby list. |
-
-Ranked below R11 because R11 also removes most of the faults it targets on the
-pinned share, and R12's large gain is only for cold or short generations.
 
 ### R13 - A copy stream with next-layer prediction
 
 | | |
 |---|---|
-| Motivated by | Finding 10: overlap can hide at most 9.4 ms per token now (17%) and about 9 of about 35 after full pinning (26%); the two closest studies measure 8 to 15% of token time from prefetch alone, the wider literature +5 to +34% tokens per second, about 5 to 25% of token time (SOURCES.md) |
+| Motivated by | Finding 10: overlap can hide at most 9.4 ms per token pageable (17%) and about 9 of about 35 after full pinning (26%); EXP-0005's profile-pinned token is 36.4 ms, of which 18.2 is DMA serialized with 12.9 of compute. The two closest studies measure 8 to 15% of token time from prefetch alone, the wider literature +5 to +34% tokens per second, about 5 to 25% of token time (SOURCES.md) |
 | Hypothesis | Uploading layer `il+1`'s predicted experts on a second stream during split `S(il)` hides at least 4 ms per token warm. |
 | Falsifiable by | Gate 1: a microbenchmark where a pinned host-to-device copy on a second stream does not run concurrently with a kernel under WDDM with one copy engine. Gate 2: next-layer recall below about 70% (Q7 offline from the traces for selection-based predictors; the router-on-current-hidden-state predictor needs a hidden-state dump). |
 | Expected gain | 4 to 7 ms per token, bounded at 9.4. |
@@ -137,10 +148,27 @@ pinned share, and R12's large gain is only for cold or short generations.
 | Motivated by | EXP-0004: sync, 32-byte read-back, plan, the pageable slot-map copy and the graph launch cost 65 to 86 us per layer, 2.6 to 3.4 ms per token; the slot map is never registered |
 | Hypothesis | Registering the slot-map buffer and dropping one of the two syncs per layer saves at least 1.5 ms per token. |
 | Falsifiable by | Less than 1 ms per token of change on the timeline. |
-| Expected gain | At most 2.6 to 3.4 ms (5% now, about 10% of a pinned token). |
+| Expected gain | At most 2.6 to 3.4 ms (5% pageable, 7 to 9% of EXP-0005's 36.4 ms pinned token; its sync idle alone is 2.3 ms). |
 | Complexity | Small for the registration; dropping the scheduler's sync touches `ggml-backend.cpp`, which is shared by every backend. |
 | Risk | Medium: the sync orders the slot-map write against earlier reads. Needs B3. |
 | Cost | Low. |
+
+### R12 - Fault in each layer's missed experts with one batched prefetch
+
+| | |
+|---|---|
+| Motivated by | Finding 9: a decode fault reads 64 KiB synchronously in about 175 us (0.37 GB/s), while the startup prefetch reads the same disk at 3 to 4 GB/s; `llama_prefetch_rows` exists and the MoE cache never calls it |
+| Hypothesis | One `PrefetchVirtualMemory` call per layer over all missed expert ranges, issued right after the router read-back and before the copies, turns serial faults into a parallel read and halves slow-copy idle in cold runs. |
+| Falsifiable by | A CPU-only microbenchmark (scattered 576 to 840 KiB ranges of the GGUF, cold cache) showing batched prefetch no faster than faulting by touch; or in-situ slow-copy idle not falling. |
+| Expected gain | Cold 2048 MiB: slow-copy idle is 91.7 ms per token, about 10 at prefetch speed, so up to about -80 ms. Warm: at most 6.7 ms pageable, 3.9 at 42% pinned, 0.9 with profile pinning at 15000 MiB (EXP-0005). |
+| Complexity | Small; the helper exists. |
+| Risk | Low: prefetch is advisory and changes no data path. |
+| Cost | Low. The cold microbenchmark can use EXP-0005's `evict.py` (no admin
+rights; 0 to 7 of 256 probed pages cached after it). |
+
+Ranked below R13 and R14 because profile pinning (R11, done) already removes
+most of the faults it targets, and R12's large gain is only for cold or short
+generations on hosts that cannot pin.
 
 ## Priority 3
 
@@ -218,18 +246,6 @@ group arithmetic barely resolves.
 
 Blocked on acquiring a smaller MoE model. Recorded in OPEN_QUESTIONS.md as Q3.
 
-### R5 - Benchmark `--load-mode none` against capped in-place pinning
-
-| | |
-|---|---|
-| Motivated by | RESULTS.md section 9: this comparison is explicitly still open |
-| Hypothesis | Capped in-place pinning beats `--load-mode none` on this machine, because the latter pins the full 18.3 GiB and reads the whole file at startup. |
-| Falsifiable by | `--load-mode none` matching or beating it. |
-| Expected gain | None new; it tells us whether the pinning commit duplicates an existing upstream option, which decides its upstream value. |
-| Complexity | None - it is an existing flag. |
-| Risk | Medium at the machine level: pinning 18.3 GiB of 31.11 GiB may drive the host into swap, and EXP-0004's reading of the WDDM budget (about half of RAM) suggests the allocation may simply fail. Check free RAM first and be ready to abort. |
-| Cost | Low. Run it as an arm of R11. |
-
 ## Priority 4 - not yet justified
 
 ### R15 - Staging-contention microbenchmark
@@ -237,9 +253,13 @@ Blocked on acquiring a smaller MoE model. Recorded in OPEN_QUESTIONS.md as Q3.
 EXP-0004 found pageable DMA at 8.2 GB/s while the host stages the next copy and
 13 GB/s when it does not. A microbenchmark (pageable and pinned DMA with and
 without a concurrent host `memcpy`) would say whether host memory bandwidth or
-the driver's staging path is the cause. Bounded at about 8 ms per token at
-2048 MiB pageable today, but R11 removes most of it, leaving about 1.5 ms on the
-bytes still pageable at the cap. Mainly explanatory.
+the driver's staging path is the cause. Bounded at about 8 ms per token at 2048
+MiB pageable today, but R11 removes most of it, leaving about 1.5 ms on the
+bytes still pageable at the cap. Mainly explanatory. EXP-0005 adds a second
+thing to explain: pageable copies ran at 8.5 to 8.9 GB/s in off, the
+address-order arms and none, and 10.5 to 11.3 in the profile arms. Their count
+does not explain it: prof7842 (22.3% of warm upload bytes pageable) has more
+than addr15000 (20.2%) or none (18.5%), which ran at 8.5 to 8.9.
 
 ### R9 - Populate the cache from the prefill
 
@@ -271,6 +291,8 @@ Rejected with evidence; see FAILED_APPROACHES.md before reviving any of these.
 - Full LFU everywhere.
 - Timing policy changes with `llama-completion -v`.
 - Reading uploaded bytes over token time as a link rate.
+- Expert-level pinning without splitting copies at the pinned ranges' edges
+  (the driver rejects a copy that starts in a registered range and runs past it).
 
 S3-FIFO is a partial exception: rejected as a whole-cache policy, but its
 admission idea survives as R2 candidate 3.

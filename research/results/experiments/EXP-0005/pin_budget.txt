@@ -1,0 +1,2 @@
+pin_budget: cudaMallocHost gave 14848 MiB in 512 MiB chunks in 1.8 s before error 2; available 21416 -> 6333 MiB
+pin_budget: cudaMallocHost gave 12288 MiB in 4096 MiB chunks in 2.6 s before error 2; available 21392 -> 8946 MiB

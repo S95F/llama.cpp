@@ -1,0 +1,930 @@
+[
+ {
+  "scope": "exp-a",
+  "findings": [
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "Nine skeptics each attacked one draft",
+    "problem": "review.json does not have nine skeptics. It has five, and they attacked nine claims: skeptic 0 took C1 and C2, skeptic 1 took C3 and C4, skeptic 2 took C5 and C6, skeptic 3 took C7 and C8, and skeptic 4 took C9. There are also only eight adjudications (C1, C2 and C4-C9). C3 was confirmed by its skeptic and never adjudicated, so 'an adjudicator resolved each' is also wrong.",
+    "fix": "Five skeptics attacked nine draft claims (C1-C9), and an adjudicator resolved the eight they corrected against the raw data",
+    "evidence": "review.json: len(skeptics)=5 and len(adjudications)=8. The verdict ids per skeptic are [C1,C2], [C3,C4], [C5,C6], [C7,C8], [C9]. The adjudication ids are C1, C2, C4, C5, C6, C7, C8, C9. C3 is 'confirmed'. The rest are 'corrected'.",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "but reps still drifted with the",
+    "problem": "The full sentence is '...but reps still drifted with the session's free RAM.' It names free RAM as the cause of the drift. The doc's own R10 section says 'Position and headroom cannot be separated'. There, the time between reps correlates more strongly with r1-r2 (r=0.91) than the RAM change does (r=0.79), and the two correlate with each other at r=0.86.",
+    "fix": "but reps still drifted through the session, with run position and free RAM, which this design cannot separate",
+    "evidence": "review.json critic, first confound issue: 'time gap vs r1-r2 r=0.91; dAvail vs r1-r2 r=0.79; gap vs dAvail r=0.86. Position and RAM headroom cannot be separated'. The R10 section of EXP-0005.md says the same.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "An offline model replays those shares exactly",
+    "problem": "Inside the window the traces cover (tokens 16-255), the replay matches CUPTI to 0.1 points, not exactly. prof7842 is predicted at 20.7% and measured at 20.6/20.6. addr15000 is predicted at 21.3% and measured at 21.4/21.4. The doc's own coverage section says 'matches CUPTI to 0.1 points'.",
+    "fix": "An offline model replays those shares to within 0.1 points",
+    "evidence": "review.json critic (overclaim on C3): measured tokens 16-255 against predicted are 53.8/53.8 vs 53.8, 20.6/20.6 vs 20.7, 21.4/21.4 vs 21.3 and 2.1/2.1 vs 2.1. analysis.json predicted shares are 53.815, 20.65, 21.348 and 2.075%.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "The win needs every host upload split where it crosses into or out of",
+    "problem": "Only the split where a copy leaves a pinned range is required. cross_copy.txt shows the driver accepts copies that start before a registered range and end inside it or run past it. The split where a copy enters a range is optional: the code does it so that the pinned part goes by DMA, and its effect was never measured on its own. The code-change table says this correctly ('where a copy leaves one (required)'). The summary sentence states both halves as necessary, but its 'because' clause justifies only the exit split.",
+    "fix": "The win needs every host upload split where it leaves a pinned range, because the driver rejects a copy that starts in registered memory and runs past it (the code also splits where a copy enters one, so that its pinned part goes by DMA; that split is not required, and its benefit was not measured separately).",
+    "evidence": "cross_copy.txt: 'starts before it, ends inside it ... cudaMemcpy 0, cudaMemcpyAsync 0' and 'starts before it, runs past it ... 0'. Only the cases that start in the registered page and run past it return 1. In review.json, code reviewer 1 has a nit that the split on entry is 'not require[d]' by the driver.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "slow-copy idle is 2.10 against 0.88 ms.",
+    "problem": "Wrong window. The bullet compares prof7842 and addr15000 on matched tokens 387-841 (the 1.35 ms gap). 2.10 and 0.88 ms are the 387-1022 means, where addr15000_r1 covers only 387-841. On the matched window, slow-copy idle is 2.18 against 0.91 ms.",
+    "fix": "slow-copy idle is 2.18 against 0.91 ms on the same tokens.",
+    "evidence": "analysis.md, table for tokens 387-841: prof7842 slow-copy idle 2.18, addr15000 0.91. The 387-1022 table gives 2.10 and 0.88. The C2 adjudication in review.json lists 'matched: ... slow-copy idle (2.18 vs 0.91 ms, mean over 387-1022: 2.10 vs 0.88)'.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "available RAM fell to 0.5-0.8 GiB, then freed it",
+    "problem": "Unit rounding. Eviction left 512-766 MiB available, which is 0.50-0.75 GiB. The upper end of 0.8 only comes out if 766 is divided by 1000. The review flagged this same MiB/1000-as-GiB error elsewhere in the draft.",
+    "fix": "available RAM fell to 0.50-0.75 GiB (512-766 MiB), then freed it",
+    "evidence": "pre_*.txt / info.txt 'available fell to' values: 766, 539, 754, 610, 734, 512, 650, 739, 614, 696, 669 and 689 MiB, so 512-766 MiB. 766/1024 = 0.748 GiB.",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "- **H2 holds**: 39.35 ms for address order (matched window) and 36.43 for",
+    "problem": "The sentence sets two windows side by side. 39.35 is address order on 387-841, and 36.43 is profile order on 387-1022. On the matched window, profile order is 36.65. On 387-1022, address order is 39.17. Both versions satisfy H2's 42 ms threshold, but the pairing reads as a like-for-like comparison.",
+    "fix": "- **H2 holds**: 39.35 ms for address order and 36.65 for profile order on the matched window 387-841 (36.43 for profile order over 387-1022)",
+    "evidence": "analysis.md: tokens 387-841 give addr15000 39.35 and prof15000 36.65. Tokens 387-1022 give addr15000 39.17* and prof15000 36.43.",
+    "severity": "inconsistency"
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "fix": "Five skeptics attacked nine draft claims (C1-C9), one or two each; the eight they corrected went to adjudication, one per",
+    "reason": "Confirmed. review.json has 5 skeptics, with verdict ids [C1,C2], [C3,C4], [C5,C6], [C7,C8] and [C9], and 8 adjudications (C1, C2, C4-C9). C3 was 'confirmed' by its skeptic and has no adjudication. The proposed fix is not a drop-in, though. The quote ends at 'draft', and the next line ('claim, and an adjudicator resolved each against the raw data.') stays, so the proposed text would leave a duplicated, broken sentence. With the refined replacement the line reads: 'Five skeptics attacked nine draft claims (C1-C9), one or two each; the eight they corrected went to adjudication, one per claim, and an adjudicator resolved each against the raw data.' That is consistent with the following 'One claim was confirmed; eight were corrected, none refuted.'"
+   },
+   {
+    "index": 1,
+    "valid": true,
+    "fix": "but reps still drifted with run position and, inseparably in this design, with the",
+    "reason": "The problem is real. The summary names only free RAM, but the doc's R10 section (lines 416-418) and the review.json critic say 'Position and RAM headroom cannot be separated'. Gap vs r1-r2 is r=0.91, dAvail vs r1-r2 is r=0.79, and gap vs dAvail is r=0.86, so position is the stronger correlate. The proposed fix is not a drop-in: the quote ends at 'with the', the next line 'session's free RAM.' remains, and the result would be garbled. The refined replacement reads, with the remaining text: '...but reps still drifted with run position and, inseparably in this design, with the session's free RAM.'"
+   },
+   {
+    "index": 2,
+    "valid": true,
+    "fix": "An offline model replays those shares to within 0.1 points",
+    "reason": "Confirmed by recomputing from timeline_<arm>_r{1,2}.json (h2d_by_src_kind, tokens 16-255) against analysis.json predicted_pageable_share. addr7842 is 53.818 measured vs 53.815 predicted, prof7842 20.586 vs 20.650, addr15000 21.359 vs 21.348, and prof15000 2.082 vs 2.075. The largest gap is 0.064 points, so the match is not 'exact'. The doc's own coverage section says 'matches CUPTI to 0.1 points'. The fix is a clean drop-in: the next line 'over the tokens its traces cover, and within 3.1 points over the warm window.' still reads correctly, and 3.1 = 53.8 - 50.7 is consistent."
+   },
+   {
+    "index": 3,
+    "valid": true,
+    "fix": "The code splits host uploads at both edges of a pinned range, but only one split is required: the win needs every upload split where it runs out of",
+    "reason": "The problem is real. cross_copy.txt shows the driver rejects only copies that start in the registered page and run past it. 'starts before it, ends inside it' and 'starts before it, runs past it' both give cudaMemcpy 0, cudaMemcpyAsync 0. The code comment in the diff (llama_moe_cache_set_async) says the entry split is 'so that its pinned part goes by DMA', and the doc's code-change table marks only the exit split '(required)'. A review.json code-reviewer nit says the entry split is one 'the driver does not require', adds sub-page copies, and should be measured. No arm isolates it. The proposed fix is not a drop-in: the quote ends at 'into or out of', and the next line ('a pinned range, because the driver rejects ... runs past it.') stays, so the proposed text would duplicate the clause. With the refined replacement the text reads: 'The code splits host uploads at both edges of a pinned range, but only one split is required: the win needs every upload split where it runs out of a pinned range, because the driver rejects a copy that starts in registered memory and runs past it.'"
+   },
+   {
+    "index": 4,
+    "valid": true,
+    "fix": "slow-copy idle is 2.18 against 0.91 ms on the same tokens.",
+    "reason": "Confirmed. The bullet explains the 1.35 ms gap 'on matched tokens' (387-841). analysis.md's 387-841 table gives slow-copy idle prof7842 2.18 and addr15000 0.91. The quoted 2.10 and 0.88 are the 387-1022 values, and there addr15000_r1 covers only 387-841. The C2 adjudication's problems text gives 'matched: 20.26 vs 20.12 ... slow-copy idle (2.18 vs 0.91 ms, mean over 387-1022: 2.10 vs 0.88)'. Its corrected_text carried the 387-1022 pair over by mistake. The fix is a correct drop-in."
+   },
+   {
+    "index": 5,
+    "valid": true,
+    "fix": "available RAM fell to 0.50-0.75 GiB (512-766 MiB), then freed it",
+    "reason": "Confirmed. The 'available fell to' values in pre_*.txt and info.txt for the 12 runs are 766, 539, 754, 610, 734, 512, 650, 739, 614, 696, 669 and 689 MiB, so 512-766 MiB. In GiB (MiB/1024) that is 0.50-0.748, so the upper end rounds to 0.7, not 0.8. 0.8 only results from 766/1000. The fix is a correct drop-in and matches the touched range 19456-20992 MiB in the same sentence."
+   },
+   {
+    "index": 6,
+    "valid": false,
+    "fix": "",
+    "reason": "No factual error. Both numbers are correct for the windows they denote, and the text labels the address figure '(matched window)'. H2 is a per-arm threshold test on 'the warm 2048 MiB token' (42 ms or less), not a pairwise comparison. 36.43 is prof15000's warm (387-1022) value, the H2 metric itself (analysis.md). 39.35 is given for addr15000 because its 387-1022 mean (39.17) is biased by addr15000_r1 covering only 387-841. Both are below 42 ms either way. The like-for-like comparison is stated correctly elsewhere (summary: 39.35 vs 36.65 on 387-841), so this is a presentation preference, not a wrong number or window."
+   }
+  ],
+  "checked": "I checked everything from the top of research/experiments/EXP-0005.md through the end of the order-pairs bullets. Everything not listed as a finding matched the data, read-only.\n\n**Warm, matched and whole-run figures**\n- Warm table 387-1022: every value matches analysis.md, including ms, vs off, r1/r2, compute, DMA, idle, slow and fast idle, and pinned share.\n- Matched 387-841: 53.52, 44.40, 40.70, 39.35, 36.65 and 38.21 all match.\n- Whole run: off 56.20, prof15000 36.56 (-35.0%) matches.\n\n**Order pairs**\n- All six rows match, including r2-only -2.57 (-6.6%) and none - prof15000 +1.56.\n- From timeline_*.json:\n  - prof15000 is faster on 84.2% and 87.3% of paired tokens.\n  - prof7842 vs addr15000: medians +0.414 and +0.089, faster on 42.0-49.2% of tokens.\n  - Every 128-token window has the same sign in both rounds.\n  - 842-1022 is faster than 387-841 in all 11 complete runs.\n- prof7842 is 6.6% slower than none.\n- prof7842 pins 101.02 MiB more than addr7842. That is 0.9 points offline (select 21.6% at cap 7842 vs 20.7% at 7964), about 0.1 ms.\n- 14946/7943 = 1.9x.\n\n**Summary and hypotheses**\n- Probe 0-7/256.\n- Spreads: 1.1-3.9% warm with two arms above 3%; 11.2-27.5% in four arms for tokens 3-130.\n- Prefill slow copies do not reproduce.\n- none: 80% pinned, 38.21 ms, -1.14 vs addr15000 and +1.56 vs prof15000, load 14.84-15.23 s against 6.30-7.47 s.\n- Predicted vs measured shares stay within 3.148 points.\n- 2.3% vs 20.2% pageable.\n\n**EXP-0004 and ROADMAP cross-references**\n- 46.6 ms at 42% pinned, 56.2 warm pageable, 38-39 ms projected, -17 to -18 ms (KB Finding 10).\n- Free RAM 16.45-18.15/18.24 GiB, read via FreePhysicalMemory/1MB, so true GiB.\n- 1.5 GB/s classifier, R5's 18.3 GiB.\n\n**Configuration**\n- Pinned MiB and range counts match the logs: 7842.20/50, 7943.22/7299, 14946.38/96, 14923.83/4881.\n- 244824 selections, and 765 decode tokens (layer 0 rows in profile_bcd.csv).\n- File is 22360456160 B = 20.82 GiB. Host experts are 18760 MiB.\n- 7051 MiB VRAM free of 8187.\n- RAM is 33409036288 B = 31.11 GiB, so RAM/4 = 7965.33 MiB.\n- Pre-eviction available 20140-21644 MiB = 19.67-21.14 GiB. Touched 19456-20992 MiB.\n- Flags match runs.sh. ABBA order and Nsight 2025.6.3 match info.txt.\n\n**Method**\n- Coverage fill counts reproduce: 31516, 31762, 28360, 32893.\n- Every coverage table value at 15000 MiB, computed as 1 - covered, matches. So does the default-cap row (53.8% and 20.7%; 26.8-29.3% for b, c, d).\n- Calibration: 20.63 GiB read, 254/256 pages cached.\n- Watchdog: 205 MiB, 842 decode steps, 839 analyzed tokens.\n- The cap lists of the two coverage files match.\n\n**Code changes**\nThe diff matches the code-change table and the check-correctness.sh description:\n- ranges_by_use: count desc, then address, first fit, merged.\n- set_async splits on exit and entry under the mutex, and the scheduler fallback goes through it when anything is pinned.\n- No-cache branch, the process-wide table, a warning on an empty profile, and the new log line.\n- check-correctness.sh: NGEN=256, GGML_OP_OFFLOAD_MIN_BATCH=1, rm of stale outputs, and the pinprof arm at the default cap.\n\n**Correctness and cross-copy**\n- md5: all 10 files in correctness256gpu are identical. correctness256 splits into three groups (off, 1024/2048, 528/256).\n- cross_copy.txt confirms the driver rejects a copy that starts in registered memory and runs past it."
+ },
+ {
+  "scope": "exp-b",
+  "findings": [
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "**Most of pinning's warm gain is the DMA rate, not page faults**",
+    "problem": "The 86% is DMA time plus fast-copy idle. DMA alone is 8.63 of 16.52 ms (52%). The doc's own 'Where the gain comes from' says fast-copy idle may include soft (transition) faults, and the adjudicator C4 called 'not page faults' an overstatement. The conclusion drops both caveats.",
+    "fix": "**Most of pinning's warm gain is DMA time plus host-side idle inside fast pageable copies, not slow-copy (hard-fault) idle**",
+    "evidence": "analysis.md 387-1022: off DMA 26.86 / fast 6.07 / slow 3.00; prof15000 18.23 / 0.53 / 0.91, so DMA -8.63, fast -5.54, slow -2.09 (r1 19%, r2 6%). review.json adjudication C4: 'Not page faults overstates'. EXP-0005.md line 291: fast-copy idle 'may include soft (transition) faults'.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "**Order matters as much as size at the default cap.**",
+    "problem": "This contradicts Results ('Profile order at the default cap does not match address order at 1.9x the pinned memory'; prof7842 is 1.35 ms behind addr15000). Order gains 3.71 ms at the same MiB, while 1.9x the MiB in address order gains 5.05 ms on the same tokens.",
+    "fix": "**Order is worth about 70% of doubling the pinned size at the default cap** (-3.71 ms at the same MiB against -5.05 ms for address order at 1.9x the MiB, tokens 387-841).",
+    "evidence": "analysis.md, 387-841: addr7842 44.40, prof7842 40.70, addr15000 39.35. Pair prof7842 - addr7842 = -3.71; addr7842 to addr15000 = -5.05 (-11.4%); prof7842 - addr15000 = +1.35.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "tokens selected even once is pinned.",
+    "problem": "Not every expert selected once is pinned. The profile has 8525 seen (layer, expert) units, about 15735 MiB page-rounded, which does not fit under 15000 MiB. The cutoff falls inside count 1: 207 of the 606 count-1 units are pinned, and 399 are left pageable.",
+    "fix": "tokens selected at least twice is pinned, but only 207 of the 606 selected once (8126 of the 8525 experts the profile saw).",
+    "evidence": "I replayed C:/nsys/exp0005/profile_bcd.csv (244824 selections, matching the log) with the GGUF header, using the code's ranges_by_use ordering and first fit (scratch cutoff.py). Cap 15000 MiB: 8126 units pinned, min count 1, 399 seen units unpinned. Default cap 7965 MiB: cutoff 16 (confirmed). The critic in review.json gives the same: '8525 units seen, about 15618 MiB'.",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "The gap is about 1.05 GiB at decode token 3. It grows to 1.65-1.74 GiB by",
+    "problem": "Unit error: these are MiB divided by 1000, not GiB. The token-387 gaps are 1653 and 1736 MiB (1.61-1.70 GiB), and the token-3 gaps are 1042-1060 MiB (1.02-1.04 GiB).",
+    "fix": "The gap is about 1.0 GiB (1042-1060 MiB) at decode token 3. It grows to 1.61-1.70 GiB (1653-1736 MiB) by",
+    "evidence": "review.json adjudication C6: token 3 is 1701/2561 vs 2743/3621 MiB, and token 387 is 304/990 vs 2040/2643 MiB, giving 1736 and 1653 MiB. My own alignment of paging_*.csv to the sqlite logits read-backs gives 303/989 vs 2041/2644 at token 387.",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "token 387 and falls back to 1.40-1.45 GiB by the end.",
+    "problem": "Same MiB/1000 unit error. The end-of-run gaps are about 1396-1455 MiB, which is 1.36-1.42 GiB.",
+    "fix": "token 387 and falls back to about 1.36-1.42 GiB (1396-1455 MiB) by the end.",
+    "evidence": "Adjudication C6: r2 end is 731 vs 2127 MiB, a gap of 1396 MiB = 1.36 GiB; r1 is about 1450 MiB at token ~836. My alignment gives r2 748 vs 2149 (1401 MiB) and r1 216 vs 1671 (1455 MiB) at token 836.",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "At 15000 MiB it is -6.8%, and it leaves about 1.4 GiB",
+    "problem": "The memory-headroom table this conclusion summarizes gives a median gap of 1521-1522 MiB, which is 1.49 GiB, not 1.4 GiB.",
+    "fix": "At 15000 MiB it is -6.8%, and it leaves about 1.5 GiB",
+    "evidence": "EXP-0005.md memory table and adjudication C6: medians 243/814 (addr15000) vs 1764/2336 MiB (prof15000), so the differences are 1521 and 1522 MiB = 1.49 GiB. I reproduced the medians from paging_*.csv aligned to tokens 387-end.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "reps correlates with its r1 - r2 at r = 0.91, the RAM change at r = 0.79, and",
+    "problem": "r = 0.91 and 0.79 use addr15000's unmatched r1 - r2 of +0.81 ms, but the R10 table directly above uses the matched +0.47. With +0.47, r is 0.88 against time and 0.71 against the RAM change. The sentence also reads as if time correlates with the RAM change at 0.79; that correlation is actually 0.86.",
+    "fix": "reps correlates with its r1 - r2 at r = 0.88 (0.91 with addr15000's unmatched +0.81 ms); r1 - r2 correlates with the RAM change at r = 0.71 (0.79); and",
+    "evidence": "Recomputed from wall_*.txt gaps (25.5, 20.6, 15.8, 11.0, 6.9, 2.3 min) and pre_*.txt dAvail (1442, 1502, 605, 1029, 552, 390 MiB). With d = 1.40/1.71/1.32/0.47/0.46/0.41: r(gap,d) = 0.88, r(dAvail,d) = 0.71, r(gap,dAvail) = 0.86. With 0.81: 0.91 and 0.79, as in review.json critic issue 0.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "**Level 3 (hypothesis).**",
+    "problem": "Wrong evidence level. Level 3 means a third-party report. A hypothesis inferred from this project's own data is level 4 (theoretical: reasoning or extrapolation).",
+    "fix": "**Level 4 (hypothesis; the observations behind it are level 1).**",
+    "evidence": "KNOWLEDGE_BASE.md lines 9-13: '3. Third-party report, not independently reproduced here. 4. Theoretical - reasoning or extrapolation only.'",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "reads of 21.3-23.7 GiB include 0.9-4.7 GiB of such later reads.",
+    "problem": "'Such' credits the whole 0.9-4.7 GiB to other processes paging back in. In the mmap arms much of it is llama's own reads of the file tail the load left unread, plus later hard faults. off_r1 had read 19.6 GiB by the end of prefill and read 4.0 GiB more during decode, at least 1.2 GiB of it file tail. Adjudication C7 calls it only 'later system-wide reads'.",
+    "fix": "reads of 21.3-23.7 GiB include 0.9-4.7 GiB read after the load burst: in the mmap arms partly llama's own faults on the file's unread tail, and partly such page-ins.",
+    "evidence": "Disk Read Bytes integrated over real intervals in paging_off_r1.csv, aligned to the sqlite: 19.61 GiB by the end of prefill, 4.00 during decode, 0.09 after. The file is 20.82 GiB. none_r1 (no file faults) read 0.67 during decode. review.json adjudication C7(e).",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "are fewer and rarer, so the host is less often staging one copy while the next",
+    "problem": "This mechanism is stated as fact but was never measured. Adjudication C4 only concludes that copy rate does not depend on source kind alone, and the staging-contention cause is open (Q14).",
+    "fix": "are fewer and rarer; plausibly (untested, Q14) the host is less often staging one copy while the next",
+    "evidence": "review.json adjudication C4 point (3) gives only the rates (10.54/10.70 prof7842, 11.33 prof15000), with no mechanism. Critic issue 12 says the label needs a staging microbenchmark. OPEN_QUESTIONS.md Q14 is unresolved.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "normal rate, so their popular experts join the working set early.",
+    "problem": "The residency mechanism was not measured: no working-set or per-process counters were recorded. Critic 9 calls it untested and asks for working-set data to show it.",
+    "fix": "normal rate, so their popular experts probably join the working set early (residency was not measured).",
+    "evidence": "review.json critic issue 9: 'the memory difference would have to be about residency, which was not measured', with todo 'Collect the llama process' working set ... Show that addr15000's pageable layers 32-39 stay in the working set'.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "the load's prefetch, and how much depends on available RAM, which drifted.",
+    "problem": "This states the level-3/4 prefill hypothesis as fact. The prefill section itself says 'probably' and notes that the r1/r2 contrast is confounded with session order.",
+    "fix": "the load's prefetch, which read 0.5-0.8 GiB less than available RAM in every mmap run; that available RAM drifted, and whether it sets the prefill faults is a hypothesis (level 4, R16).",
+    "evidence": "EXP-0005.md prefill section: 'So prefill page faults probably scale with available RAM' and 'The r1/r2 contrast is confounded with session order'. review.json critic issue 5: keep the hypothesis below level 1 and name the confounds.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "### The offline coverage model predicts the pageable share",
+    "problem": "The heading says 'predicts', but the section body says the match is 'a replay of the same deterministic routing, not a prediction for unseen text'. Critic 6 flagged exactly this framing.",
+    "fix": "### The offline coverage model replays the pageable share",
+    "evidence": "EXP-0005.md lines 309-311. review.json critic issue 6: 'a check of the simulator and address mapping ... not a held-out prediction'.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "15.7-19.2 GiB before the first large expert copy and 19.6-21.1 GiB by the end of",
+    "problem": "15.7-19.2 GiB is read before the first large host-to-device copy, and per adjudication C8 the first 291 such copies are load-time uploads of non-expert weights. Before the first expert copy the load had already read 19.0-20.7 GiB.",
+    "fix": "15.7-19.2 GiB before the first large host-to-device copy (non-expert weights), 19.0-20.7 GiB before the first expert copy, and 19.6-21.1 GiB by the end of",
+    "evidence": "Disk reads integrated from paging_*.csv, aligned to C:/nsys/exp0005/*.sqlite H2D copies of at least 512 KiB, over all 10 mmap runs: before copy 1, 15.70-19.21 GiB; before copy 292, 19.03-20.66 GiB. review.json adjudication C8: 'The first 291 prefill copies turn out to be load-time uploads of non-expert GPU weights.'",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "Scored on 127 tokens only.",
+    "problem": "The window 'tokens >= 128' of traces with token indices 0-255 holds 128 tokens (128-255, as the sentence itself says), not 127.",
+    "fix": "Scored on 128 tokens only.",
+    "evidence": "coverage_2048_runcaps.json online.window = 'tokens >= 128'; checks tokens = 256 (tok 0-255, 10201 calls = 1 + 255*40); coverage.py late window uses t >= 128.",
+    "severity": "error"
+   },
+   {
+    "file": "research/experiments/EXP-0005.md",
+    "quote": "The cache-off text first differs at byte 535; 64 tokens end at byte 524.",
+    "problem": "524 is the size of the 64-token file, which includes two trailing newlines. The generated text ends at byte 522: the 64-token and 256-token cache-off files first differ at byte 523. Bytes 535 and 734 are correct, and the conclusion stands.",
+    "fix": "The cache-off text first differs at byte 535; the 64-token text ends at byte 522 (a 524-byte file with two trailing newlines).",
+    "evidence": "cmp C:/nsys/exp0005/correctness/cache-off.txt correctness256/cache-off.txt gives 'differ: char 523'. The 64-token file ends 'Key elements\\n\\n'; the 256-token text continues ' to cover:'. cmp of correctness256/cache-off vs cache2048-auto gives char 535, and cache528-auto vs cache2048-auto gives char 734.",
+    "severity": "error"
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "fix": "**Most of pinning's warm gain is DMA time plus host-side idle inside fast pageable copies, not slow-copy (hard-fault) idle**",
+    "reason": "The quote is verbatim at EXP-0005.md line 570. In analysis.md (387-1022), off has DMA 26.86, fast 6.07 and slow 3.00, against 18.23, 0.53 and 0.91 for prof15000. So DMA alone is 8.63 of 16.52 ms (52%), and the 86% is DMA plus fast-copy idle. The doc's own section keeps the label 'DMA rate plus host-side idle inside fast pageable copies', and says fast idle may include soft faults. Adjudication C4 says 'Not page faults' overstates. The fix keeps the following '(86% against 13%)' correct."
+   },
+   {
+    "index": 1,
+    "valid": true,
+    "fix": "**Order is worth about three quarters of doubling the pinned size at the default cap** (-3.71 ms at the same MiB against -5.05 ms for address order at 1.9x the MiB, tokens 387-841).",
+    "reason": "The quote is verbatim at line 567. analysis.md, 387-841: addr7842 44.40, prof7842 40.70, addr15000 39.35. Order gives -3.71 ms (pair table). Address order at 1.9x the MiB gives -5.05 ms. prof7842 - addr15000 is +1.35 ms in both rounds, so the Results line 'does not match address order at 1.9x' contradicts 'as much as'. The ratio is 3.71/5.05 = 73.5% (per round 67% and 81%), so 'about three quarters' fits better than the proposed 'about 70%'."
+   },
+   {
+    "index": 2,
+    "valid": true,
+    "fix": "tokens selected at least twice is pinned, but only 207 of the 606 selected once (8126 of the 8525 experts the profile saw).",
+    "reason": "The quote is verbatim at line 321. I replayed C:/nsys/exp0005/profile_bcd.csv (244824 selections, n_ids <= 64) against the GGUF offsets with the diff's ranges_by_use: count descending then address, per-unit page-rounded first fit, then merge (scratch doccheck/v2 replay_pin.py). It reproduces the logs exactly: 14923.83 MiB in 4881 ranges at cap 15000, and 7943.22 MiB in 7299 ranges at 7965.33. The profile saw 8525 units, about 15735 MiB page-rounded per unit. At 15000 MiB, 8126 units are pinned and the minimum count is 1. Of the 606 count-1 units, 207 are pinned and 399 are not. All 7919 units with count 2 or more are pinned. The cutoff at the default cap is 16 (confirmed)."
+   },
+   {
+    "index": 3,
+    "valid": true,
+    "fix": "The gap is about 1.0 GiB at decode token 3. It grows to 1.61-1.70 GiB (1653-1736 MiB) by",
+    "reason": "The quote is verbatim at line 374. Adjudication C6 gives token 387 as 304/990 vs 2040/2643 MiB, gaps of 1736 and 1653 MiB. 'About 1.65-1.74 GiB' is those figures divided by 1000. In GiB they are 1.61-1.70. My own alignment (paging csv against the sqlite logits read-backs) gives 1737 and 1655 MiB. At token 3 the adjudicator has 1042-1060 MiB (1.02-1.04 GiB). My interpolation gives 956-1092 MiB, because token 3 falls in sparse load-phase rows. So I dropped the exact MiB range and kept 'about 1.0 GiB'."
+   },
+   {
+    "index": 4,
+    "valid": true,
+    "fix": "token 387 and falls back to about 1.36-1.42 GiB (1396-1455 MiB) by the end.",
+    "reason": "The quote is verbatim at line 375. Adjudication C6 gives the end-of-run gap as r2 731 vs 2127 = 1396 MiB, and r1 about 1450 MiB at token ~836. Its '1.40-1.45 GiB' is MiB/1000. My alignment gives r1 1454 MiB at token 836 and r2 1401 MiB at token 1022. 1396-1455 MiB is 1.36-1.42 GiB."
+   },
+   {
+    "index": 5,
+    "valid": false,
+    "fix": "",
+    "reason": "The quote is verbatim at line 568, but no error is confirmed. The warm medians do differ by 1521/1522 MiB (1.49 GiB). But over the warm window the gap runs from 1.61-1.70 GiB at token 387 down to 1.36-1.42 GiB (1396-1455 MiB) at the end of the run. 'About 1.4 GiB more RAM available' is inside that measured range and matches the corrected end-of-run gap. Whether to quote the end or the median is a choice of summary statistic, not a wrong number."
+   },
+   {
+    "index": 6,
+    "valid": true,
+    "fix": "reps correlates with its r1 - r2 at r = 0.88 (0.91 with addr15000's unmatched +0.81 ms), the RAM change with r1 - r2 at r = 0.70 (0.79), and",
+    "reason": "The quote is verbatim at line 417. I recomputed from wall_*.txt (gaps 25.5/20.6/15.8/11.0/6.9/2.3 min), pre_*.txt (dAvail 1442/1502/605/1029/552/390 MiB) and analysis.json r1_minus_r2_ms. With the table's values (387-1022, but addr15000 matched +0.468), r(gap, d) = 0.880 and r(dAvail, d) = 0.704. With +0.812 they are 0.910 and 0.789. r(gap, dAvail) = 0.860. So the doc's 0.91/0.79 use the unmatched value, which the table above does not show. The proposed 0.71 should be 0.70 (0.704). I reworded so that the next line's 'the two with each other at r = 0.86' still refers to time and RAM change, which the proposed fix's grammar broke."
+   },
+   {
+    "index": 7,
+    "valid": true,
+    "fix": "**Level 4 (hypothesis; the observations behind it are level 1).**",
+    "reason": "The quote is verbatim at line 439. KNOWLEDGE_BASE.md lines 9-13 define level 3 as a third-party report not reproduced here, and level 4 as theoretical (reasoning or extrapolation only). A mechanism inferred from this project's own measurements is level 4, not 3. The same mislabel also appears in KNOWLEDGE_BASE.md line 392 ('level 3 for the mechanism') and OPEN_QUESTIONS.md Q16 ('level 3 hypothesis'), which are outside this finding."
+   },
+   {
+    "index": 8,
+    "valid": true,
+    "fix": "reads of 21.3-23.7 GiB include 0.9-4.7 GiB read after the load burst: in the mmap arms partly llama's own page faults (on the file's unread tail and during decode), and partly such page-ins.",
+    "reason": "The quote is verbatim at line 500. Disk Read Bytes integrated over the real typeperf intervals and aligned to the sqlite (scratch doccheck/v2/reads.py): total minus load burst is 0.92 (addr7842_r2) to 4.69 GiB (off_r1), matching 0.9-4.7. off_r1 read 19.05 GiB in the burst and 19.64 by the end of prefill, so 0.59 GiB were its prefill tail faults. It then read 4.00 GiB during decode and 0.09 after, against 0.67 GiB during decode in none_r1, which has no file-backed experts. So most of the 4.7 is not other processes paging in. 'Such' wrongly attributes all of it to them. I widened the fix beyond the unread tail, because off_r1's decode reads (4.00) exceed its unread tail (about 1.2 GiB) plus none's level (0.67)."
+   },
+   {
+    "index": 9,
+    "valid": false,
+    "fix": "",
+    "reason": "The quote is verbatim at line 289, but the mechanism is not unsupported. I split warm (387-1022) expert copies of at least 512 KiB in the sqlite by the kind of the next H2D copy (scratch doccheck/v2/staging.py, r2 runs). In addr15000 and none, pageable copies followed by a pinned copy run at 13.0 GB/s, and those followed by a pageable copy at 8.4-8.5 GB/s. In the profile arms 66% (prof7842) and 89% (prof15000) of pageable copies are followed by a pinned copy, against about 1-4% in the addr and none arms. Those copies run faster (11.1-11.6 against 9.7-10.0 GB/s). EXP-0004 also measured 8.2 GB/s while the host stages the next copy against 12.9-13.1 without. The pinned copies of the mixed arms slow down when the next copy is pageable (10.9-11.4 GB/s), which also fits. Q14 asks why staging slows DMA, not whether fewer pageable copies mean less concurrent staging, so '(untested, Q14)' would be inaccurate."
+   },
+   {
+    "index": 10,
+    "valid": true,
+    "fix": "normal rate, so their popular experts probably join the working set early (residency was not measured).",
+    "reason": "The quote is verbatim at line 377. Available RAM counts standby pages as available, so the gap requires the touched pageable pages to stay in working sets rather than be trimmed. No working-set, private-bytes or standby counters were recorded. review.json critic issue 9 calls the mechanism untested and asks to show that addr15000's layers 32-39 stay in the working set. KNOWLEDGE_BASE says nothing below level 1 may be quoted as a fact, so the hedge is warranted."
+   },
+   {
+    "index": 11,
+    "valid": false,
+    "fix": "",
+    "reason": "The quote is verbatim at line 577, but the claim is supported at level 1. Per run, the load burst read 0.52-0.79 GiB less than the pre-eviction available RAM, in all 10 mmap runs. The pairs, avail GiB to burst GiB, are 19.67 to 19.06, 19.73 to 19.05, 20.06 to 19.42, 20.18 to 19.61, 20.43 to 19.78, 20.77 to 20.25, 20.97 to 20.24, 21.07 to 20.30, 21.13 to 20.34 and 21.14 to 20.38 (pre_*.txt, paging csv). That is a tight, near-monotonic per-run dependence, and the drift is measured. The level-3/4 hypothesis in the prefill section is a different claim: that prefill faults scale with RAM and explain EXP-0004. Conclusion 5 does not state it. The proposed fix also uses level 4 and garbled grammar."
+   },
+   {
+    "index": 12,
+    "valid": false,
+    "fix": "",
+    "reason": "The quote is verbatim at line 299, but this is wording, not an overclaim. The offline values, computed from tokens 16-255, do predict the measured share over tokens 387-1022, which the traces never cover, within 3.1 points (53.8/50.7, 20.7/22.3, 21.3/20.2, 2.1/2.3). The body qualifies only the in-window 0.1-point match as a replay, and the intro already says 'replays ... exactly ... and within 3.1 points over the warm window'. 'Replays' in the heading would misdescribe the warm-window comparison."
+   },
+   {
+    "index": 13,
+    "valid": true,
+    "fix": "15.7-19.2 GiB before the first large host-to-device copy (non-expert weights), about 19.1-20.7 GiB before the first expert copy, and 19.5-20.8 GiB by the end of",
+    "reason": "The quote is verbatim at line 423. In off_r1.sqlite the first 291 H2D copies of at least 512 KiB before the first logits read-back are non-expert sizes (540344320, 17825792, 8912896, 2097152, 1114112 B), ending at 6.92 s. Copy 292 (590336 B) starts at 7.2185 s, with the first 46112 B expert-id read-back (7.2184 s). This confirms C8. Disk reads integrated over the typeperf intervals (MDT, the same method that reproduces 15.73-19.21 before copy 1): 19.06-20.74 GiB before copy 292 in the 10 mmap runs (the checker got 19.03-20.66), and 19.50 (addr7842_r1) to 20.82 (prof15000_r2) by the first logits read-back. Pages Input gives the same. So the retained '19.6-21.1' does not reproduce either and is corrected too. Separately, 'whole-file prefetch' earlier in the sentence contradicts C8's finding that the load left the tail unread."
+   },
+   {
+    "index": 14,
+    "valid": true,
+    "fix": "Scored on 128 tokens only.",
+    "reason": "The quote is verbatim at line 326. I replayed trace_prompt.csv with coverage.py's token counting: token 0 is one call (prefill layer 39), and tokens 1-255 are 40 calls each, 256 token indices in all (matching checks tokens=256, calls=10201). The online window is t >= 128 (coverage_2048_runcaps.json 'tokens >= 128'), which is 128 tokens (128-255), as the doc's own 'tokens 128-255' says."
+   },
+   {
+    "index": 15,
+    "valid": true,
+    "fix": "The cache-off text first differs at byte 535; the 64-token text ends at byte 522 (a 524-byte file with two trailing newlines).",
+    "reason": "The quote is verbatim at line 523. cmp correctness/cache-off.txt correctness256/cache-off.txt gives 'differ: char 523'. The 64-token file ends 'Key elements\\n\\n', while the 256-token text continues ' to cover: Pa...', and the 256-token files also end in '\\n\\n'. So the two newlines are appended, and the 64 tokens end at byte 522. cmp of correctness256 cache-off vs cache2048-auto gives char 535, and cache528-auto vs cache2048-auto gives char 734, so those numbers and the conclusion stand."
+   }
+  ],
+  "checked": "Section 'Where the gain comes from' to the end of research/experiments/EXP-0005.md. These all match the data:\n- Gain split: 16.52 ms total, 14.17 ms (86%), 2.08 ms (13%; 19%/6% by round), the 7-20% slow-copy share across arms, compute 12.89-13.02.\n- Copy rates, matching review.json adjudication C4.\n- Transition faults, re-derived from paging CSVs aligned to the sqlite captures: 788/831 for off and 172/214 for none (warm); 8636/8566, 135/142, 693 and 2341 per token in 3-130.\n- Hit counters in all 11 logs.\n- Coverage table: offline predictions from coverage_2048_runcaps.json, and measured 16-255, 256-386 and 387-1022 shares recomputed from the timelines (including 25.1%).\n- Held-out shares (2.1 vs 4.6-5.7; 20.7 vs 26.8-29.3), online 5.5-7.6 / 2.8-4.2 / 17.9-25.5 / 13.6-22.4, and the default-cap cutoff of 16.\n- Registration times, ready-time deltas, and calls per token. Small pinned copies 79629 vs 7167 (both reps), GPU time +172 ms, from the sqlite.\n- Pin budget (14848 MiB, 15243, 15266 = Finding 4), the --load-mode none chunks, 18.5% pageable, and 14.8-15.2 s load.\n- Memory medians 243/814/1764/2336, reproduced; 3.72 GiB; 0.77-0.87 vs 0.19-0.36 MiB per token; 0.64/0.46 vs 0.62/0.42 slow copies per token; warm minimum 724.\n- R10 table: r1 - r2, spreads and prefill slow copies. Pre-eviction RAM from pre_*.txt in MiB and GiB, 17500 MiB, 7 of 12 below the file, rep gaps 2.3-25.5 min.\n- Prefill figures (1.55-3.02 s, 37-604 of 6630-7728). The cross_copy.txt table. GGUF data start 10990048 (480 mod 4096; 120 of 120 tensors off-page; slices page multiples).\n- From the diff: the address-order merge-then-pin means a copy never crosses a pinned edge.\n- Offload threshold 32. calib_disk_counter 1.8-4.3x.\n- B3 files: 9/9 at 64 tokens; three md5 groups at 256 (1/5/4); 10/10 identical in the GPU run, with the reference equal to 2048. The x_off-gpu and x_c528-gpu outputs equal the 2048 text after stripping ANSI codes, and x_c528 equals the 528 text. Byte offsets 535 and 734 (about token 113 by bytes per token).\n- Smoke v2 lines. EXP-0004 projections 38-39 and 34.6, and 91.7 ms. R16, R17, Q14 and Q15 exist. Next-step and limitation numbers (0.95-2.54, 2.4 us, 0.17 ms, 1.5 GiB drift)."
+ },
+ {
+  "scope": "kb",
+  "findings": [
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "| `--load-mode none` | about 15.2 GiB |",
+    "problem": "Unit error (MiB/1000 read as GiB). The none arm pins about 15243 MiB, which is 14.9 GiB, not 15.2 GiB. The same document's Finding 4 gives this figure as 15243 MiB.",
+    "fix": "| `--load-mode none` | about 15240 MiB (14.9 GiB) |",
+    "evidence": "review.json C5 adjudication: chunks 4037/4000/4032/4032/3174 MiB, chunk 4 falls back, 15243 MiB pinned (15243/1024 = 14.89 GiB). Critic 13 gives a lower bound of 15179 MiB. KNOWLEDGE_BASE.md Finding 4: '15243 to 15266 MiB were granted at other times'. EXP-0005.md: 'pinned about 15240 MiB'.",
+    "severity": "error"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "Both beat the projection, which was made against another",
+    "problem": "Address order did not beat the Finding 10 projection of 'about -17 to -18 ms (-> about 38 to 39)'. It ran at 39.35 ms (39.17 over 387-1022), above 38-39 ms. In gain, neither arm reached the projected 17-18 ms: profile order saved 16.52 ms and address order 14.17 ms (matched window). EXP-0005.md claims only that profile order is below the projection.",
+    "fix": "Profile order beat the projected 38 to 39 ms and address order only met it; in gain neither reached the projected 17 to 18 ms (16.52 and 14.17 ms). The projection was made against another",
+    "evidence": "analysis.md 387-1022: off 52.95, prof15000 36.43 (gain 16.52). analysis.md 387-841: off 53.52, addr15000 39.35 (gain 14.17). KNOWLEDGE_BASE.md Finding 10 table row: 'about -17 to -18 ms (-> about 38 to 39)'. EXP-0005.md Conclusions 1: 'below EXP-0004's projection for the cap (38-39 ms)', said of 36.43 only.",
+    "severity": "error"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "39.35 with address order at 14946 MiB (matched window), against a pageable 52.95",
+    "problem": "The sentence mixes windows. 39.35 is on the matched window 387-841, while 36.43 for profile order and 52.95 for pageable are on 387-1022. On 387-841 the values are 36.65 and 53.52.",
+    "fix": "39.35 with address order at 14946 MiB (matched window 387-841, where profile order is 36.65), against a pageable 52.95 (53.52 on 387-841)",
+    "evidence": "analysis.md, tokens 387-841 table: off 53.52, addr15000 39.35, prof15000 36.65. Tokens 387-1022 table: off 52.95, prof15000 36.43.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "**EXP-0005 split it again at 98% pinned**",
+    "problem": "This uses a different metric from the EXP-0004 split it is set against. EXP-0004's '42% pinned' is the share of expert bytes (7842/18760). The '98%' is the pinned share of warm upload bytes (97.7%). prof15000 pins 14924 of 18760 MiB, which is 80% of the expert bytes. On the upload-byte metric the EXP-0004 arm would be about 49% (addr7842 49.3%), not 42%.",
+    "fix": "**EXP-0005 split it again with 80% of the expert bytes pinned** (98% of warm upload bytes)",
+    "evidence": "EXP-0004.md line 83: '7842.20 MiB registered ... 42% of expert bytes'. log_prof15000_r1.txt: 'registered 14923.83 MiB'. coverage_2048.json expert_mib 18760.47, so 14924/18760 = 79.6%. analysis.md pinned share: prof15000 97.7%, addr7842 49.3%.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/OPEN_QUESTIONS.md",
+    "quote": "repeated the split at 98% pinned: 86% of the 16.52 ms warm gain is DMA rate and",
+    "problem": "Same metric mix-up as Finding 4. EXP-0004's '42% pinned' in the preceding sentence is the share of expert bytes, while 98% is the share of warm upload bytes; prof15000 pins 80% of the expert bytes. Also, '13% faults' on the next line counts only slow-copy (hard-fault) idle, while Q14 and EXP-0005.md note that fast-copy idle may include soft faults.",
+    "fix": "repeated the split with 80% of the expert bytes pinned (98% of warm upload bytes): 86% of the 16.52 ms warm gain is DMA rate and",
+    "evidence": "EXP-0004.md line 83 (42% of expert bytes). log_prof15000_r1.txt 14923.83 MiB of 18760.47. analysis.md pinned share prof15000 97.7%. review.json C4 adjudication: slow-copy idle 2.08 ms (13%). Critic 12: fast idle may contain soft faults.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "and 10.5 to 11.3 in the profile arms, where they are few.",
+    "problem": "The data contradict the explanation that the profile arms are faster because their pageable copies are few. prof7842 makes more pageable copies and bytes per token than addr15000 or none, yet its pageable copies run at 10.5-10.7 GB/s against 8.5-8.9. The rate depends on the arm (pinning order), not on how many pageable copies there are.",
+    "fix": "and 10.5 to 11.3 in the profile arms, although prof7842 makes more pageable copies per token (120, 49 MiB) than addr15000 (112, 45 MiB) or none (107, 41 MiB).",
+    "evidence": "timeline_<tag>.json, tokens 387-1022, h2d_by_src_kind pageable per token: prof7842 120.4 copies / 49.2 MiB at 10.50-10.66 GB/s; addr15000 111.5-112.2 / 44.6-45.0 MiB at 8.46-8.55 GB/s; none 107.2 / 40.8 MiB at 8.57-8.88 GB/s. analysis.md pageable share: prof7842 22.3%, addr15000 20.2%, none 18.5%. review.json C4: pageable 10.54/10.70 for prof7842.",
+    "severity": "error"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "12.75 to 12.85 GB/s; pageable ones at 8.5 to 8.9 GB/s in arms with many of them",
+    "problem": "Overgeneralized. Pinned copies in prof7842 ran at 11.9-12.0 GB/s, outside the stated range. 'Arms with many of them' includes addr15000 and none, which have fewer pageable copies than prof7842 (see the next sentence).",
+    "fix": "12.75 to 12.85 GB/s (11.9 to 12.0 in prof7842); pageable ones at 8.5 to 8.9 GB/s in off, the address-order arms and none",
+    "evidence": "review.json C4 adjudication: pinned 12.80/12.81 addr7842, 12.85/12.85 addr15000, 12.78/12.78 prof15000, 12.75/12.78 none, but 11.94/12.00 in prof7842. Pageable 8.56/8.70 off, 8.50-8.58 addr arms, 8.60/8.91 none.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/OPEN_QUESTIONS.md",
+    "quote": "how many pageable copies there are: 8.5 to 8.9 GB/s in arms with many, 10.5 to",
+    "problem": "The data contradict this. addr15000 and none make fewer pageable copies (and bytes) per token than prof7842, yet run at 8.5-8.9 GB/s while prof7842 runs at 10.5-10.7. The rate depends on the arm, not on the count. The next line's 'with few' should also go.",
+    "fix": "the arm, not on how many pageable copies there are (prof7842 makes more per token than addr15000 or none): 8.5 to 8.9 GB/s in off, address order and none, 10.5 to",
+    "evidence": "timeline_<tag>.json, 387-1022, pageable copies per token: prof7842 120.4 (49.2 MiB), addr15000 111.5-112.2 (44.6-45.0 MiB), none 107.2 (40.8 MiB). Rates 10.50-10.66 vs 8.46-8.55 vs 8.57-8.88 GB/s. review.json C4.",
+    "severity": "error"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "selected even once; at the default cap the cutoff is 16 selections",
+    "problem": "At 15000 MiB the profile cannot pin every expert its 765 tokens selected. The 8525 selected experts need about 15735 MiB charged (critic 7: about 15618 MiB), more than the cap. First fit pins 8126 of them: every expert selected twice or more, but only 207 of the 606 selected exactly once.",
+    "fix": "selected at least twice, but only 207 of the 606 it selected once (8126 of 8525; they do not all fit in 15000 MiB); at the default cap the cutoff is 16 selections",
+    "evidence": "Replayed ranges_by_use (n_ids<=64 filter, page-rounded slices, use-desc/address order, first fit) over C:/nsys/exp0005/profile_bcd.csv with the layout JSON. Result: 244824 selections, 8525 units seen (15735 MiB charged). At cap 15000: 14999.99 MiB charged (matching review.json code finding), 8126 pinned, 399 unpinned, all with 1 selection. At the default cap: min use pinned 16. review.json critic 7: '8525 units seen, about 15618 MiB'.",
+    "severity": "error"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "**The share left pageable is predictable offline.**",
+    "problem": "Overclaim, already flagged by the review. The offline model replays prompt a's own traced routing, the same token sequence the runs generate, so the 0.1-point match checks the simulator and the address mapping, not a prediction for unseen text. It also covers tokens 16-255 (skip_tokens 16), not 'the traces' 255 tokens'. Beyond them the share drifts by up to 4.4 points (prof7842 25.1% over 256-386).",
+    "fix": "**The offline replay reproduces the share left pageable** (a replay of the run prompt's own routing over tokens 16-255, not a prediction for unseen text).",
+    "evidence": "review.json critic 6: 'misframed ... a check of the simulator and address mapping (a replay of the same deterministic routing), not a held-out prediction'. coverage_2048_runcaps.json skip_tokens 16. EXP-0005.md: 'not a prediction for unseen text ... drifts by up to 4.4 points: prof7842 is 25.1% over tokens 256-386'.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "and the excess time there is mostly soft (transition) faults",
+    "problem": "The data do not show this. In the pageable arm the excess of tokens 3-130 over the warm window (68.31 vs 52.95 ms) is mostly slow-copy idle (15.22 vs 3.00 ms, about 12.2 of 15.4 ms). The project's classifier counts that idle as hard faults. Disk reads in that window (0.33 / 1.47 GiB in off_r2 / off_r1) at about 175 us per 64 KiB are the same order as the slow idle (5.0 / 25.4 ms). The critic attributed only the fast-copy idle rise (6.07 to 10.37 ms) to soft faults, so the split between soft and hard faults is not established.",
+    "fix": "and the window carries many soft (transition) faults, though its excess time (mostly slow-copy idle, 15.22 against 3.00 ms warm, pageable) is not split between soft and hard faults",
+    "evidence": "analysis.md tokens 3-130: off 68.31 ms, slow 15.22, fast 10.37. Tokens 387-1022: off 52.95, slow 3.00, fast 6.07. review.json critic 3: disk reads in 3-130 off_r1 1.47, off_r2 0.33 GiB; 'fast-copy idle rises ... fits soft faults landing in fast copies'. Critic 0/C7: off slow idle 3-130 r1 25.4, r2 5.0. KNOWLEDGE_BASE.md Finding 4: hard fault about 175 us per 64 KiB.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "the load's whole-file prefetch read 19.05 to 20.38 GiB before",
+    "problem": "Wrong window. 19.05-20.38 GiB is the load burst, read before prefill. By the end of prefill (before decode) 19.6-21.1 GiB had been read in every mmap run.",
+    "fix": "the load's whole-file prefetch read 19.05 to 20.38 GiB before prefill and 19.6 to 21.1 GiB before",
+    "evidence": "review.json C8 adjudication: 'The load burst read 19.05-19.78 GiB (r1) and 20.24-20.38 GiB (r2)'. Critic 3: 'By the end of prefill, 19.6-21.1 GiB of the 20.81 GiB file has been read in every mmap run'.",
+    "severity": "error"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "and RAM drifted 1.5 GiB through one session as the evictions trimmed other",
+    "problem": "States a cause as fact. The adjudicated finding is that trimming of other processes is plausible but unmeasured: no working-set or pagefile counters were recorded, and each eviction itself raised available RAM by only 1-200 MiB.",
+    "fix": "and RAM drifted 1.5 GiB through one session, plausibly (not measured) as the evictions trimmed other",
+    "evidence": "review.json C7 adjudication (h): 'inferred, not measured. No working-set or pagefile counters were recorded ... Each eviction itself raised available memory by only 1-200 MiB'. C7 corrected_text: 'Trimming of other processes is a plausible but unmeasured cause'. EXP-0005.md: 'That is plausible but not measured.'",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "(0.10 to 0.65 GiB of reads in a",
+    "problem": "Wrong window. 0.10-0.65 GiB are the none arm's disk reads in the warm window (tokens 387-1022), not in a whole run. The whole runs read 21.4-22.2 GiB including the load, plus 0.36 GiB after the run in none_r1.",
+    "fix": "(0.10 to 0.65 GiB of reads in tokens 387-1022 of a",
+    "evidence": "review.json critic 2: 'its warm window (387-1022) shows 0.65 GiB of disk reads ... none_r2 warm: 0.10 GiB', plus 0.36 GiB after the run. analysis.md per-run disk read GiB: none_r1 22.2, none_r2 21.4.",
+    "severity": "error"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "as a coldness check, and order runs by cache state, not only by arm.",
+    "problem": "Stale against EXP-0005. Prefill time is no longer a coldness check. With the model evicted (0-7 of 256 pages cached), pageable runs prefilled in 2.10-2.97 s, faster than the 3.7-7.3 s this bullet calls 'partly warm'. The prefill slow copies did not reproduce between reps (604/44, 465/37, ...), because prefill depends on how much of the file the load leaves unread, that is, on available RAM.",
+    "fix": "together with available RAM; it is not a coldness check by itself (EXP-0005: cold-evicted pageable runs prefilled in 2.1 to 3.0 s at 19.7 to 21.1 GiB available), and order runs by cache state, not only by arm.",
+    "evidence": "analysis.md per-run table: off_r1 2.97 s 604/6630, off_r2 2.10 s 44/6630, probes 3/256 each. review.json C7 (f): 'R10's own coldness check was not reproducible'. C8: slow prefill experts are the unread file tail.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/BENCHMARKS.md",
+    "quote": "9.3 to 9.9 s with 42% pinned (about 3600); 3.7 to 7.3 s pageable means an",
+    "problem": "Stale against EXP-0005. Under this rule EXP-0005's cold-evicted runs would be read as left partly cached by an earlier run. With the model evicted (probe 0-7/256), pageable prefill took 2.10-2.97 s (44-604 slow) and 42% pinned (addr7842) took 2.49-3.02 s (37-465 slow). The 13.4-13.8 s figures were EXP-0004's RAM state (16.5-17.3 GiB, no eviction).",
+    "fix": "9.3 to 9.9 s with 42% pinned (about 3600), at 16.5 to 18 GiB available and no eviction. After an eviction at 19.7 to 21.1 GiB (EXP-0005) pageable prefill took 2.1 to 3.0 s and 42% pinned 2.5 to 3.0 s, so a fast prefill does not by itself mean an",
+    "evidence": "analysis.md per-run: off 2.97/2.10 s (604/44 slow), addr7842 3.02/2.49 s (465/37). info.txt probes 0-7/256. review.json C8: EXP-0004 cold runs at 16.5-17.3 GiB.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/BENCHMARKS.md",
+    "quote": "The first 128 tokens of a fresh process are dominated by page faults.",
+    "problem": "Stale against EXP-0005, and against the EXP-0005 rule a few lines below ('Tokens 3-130 are early, not cold'). After an eviction, the pageable arm's tokens 3-130 carry 15.22 ms of slow-copy idle in 68.31 ms (DMA 26.14). prof15000's 3-130 (36.53 ms) equals its warm window (36.43). The statement holds only for EXP-0004's state.",
+    "fix": "In EXP-0004's state (no eviction, 16.5 to 18 GiB available) the first 128 tokens of a fresh process were dominated by page faults; after an eviction (EXP-0005) they are early, not cold.",
+    "evidence": "analysis.md tokens 3-130: off 68.31 ms, DMA 26.14, slow-copy idle 15.22; prof15000 36.53 vs 36.43 warm. review.json critic 3.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "and the decode of a short request is dominated by disk, not by PCIe.",
+    "problem": "Stale against EXP-0005's refinement in the same Finding. After an eviction the load's prefetch leaves little to read: pageable tokens 3-130 read 0.33-1.47 GiB from disk against about 28 GiB uploaded, and DMA (26.14 ms) exceeds slow-copy idle (15.22 ms). Disk dominance holds only for EXP-0004's RAM state.",
+    "fix": "and in EXP-0004's state (no eviction, 16.5 to 18 GiB available) the decode of a short request is dominated by disk, not by PCIe; after an eviction at 19.7 to 21.1 GiB available it is not (EXP-0005: DMA 26.1 ms against 15.2 ms slow-copy idle, pageable tokens 3-130).",
+    "evidence": "analysis.md tokens 3-130 off: DMA 26.14, slow-copy idle 15.22, ms 68.31. review.json critic 3: disk reads in 3-130 only 0.04-1.47 GiB (off 0.33/1.47) 'against about 28 GiB of uploads in the off arm'.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/KNOWLEDGE_BASE.md",
+    "quote": "address order leaves layers 33 to 39 (and layer 32's up tensor) pageable, about 18% of warm traffic",
+    "problem": "Stale against EXP-0005's measurement at 15000 MiB. Address order pins whole layers 0-31 (96 ranges = 32 layers x 3 tensors, 14946.38 MiB) and leaves all of layers 32-39 pageable (3814 MiB), which is 20.2% of warm upload bytes, not 18%.",
+    "fix": "address order leaves layers 32 to 39 pageable at 15000 MiB, 20.2% of warm upload bytes (EXP-0005)",
+    "evidence": "log_addr15000_r1.txt: 14946.38 MiB in 96 ranges, 3814.09 MiB left pageable. coverage_2048.json cap 15000 address: pageable_layers [32..39], partial []. analysis.md measured pageable share addr15000 20.2%. layer_share 32-39 sums to 21.1%.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/OPEN_QUESTIONS.md",
+    "quote": "**Why it matters:** the small-cache rows of Findings 3, 6 and 7 rest on it.",
+    "problem": "Wrong findings named. Finding 6 is simulated from the traces (Belady and policy replays), so it does not depend on hardware decode at small sizes. Finding 1's hardware table (384/528/586 MiB, the cache's own counters) does depend on it and is omitted. Finding 7's table is hardware (EXP-0002/0003 B1).",
+    "fix": "**Why it matters:** the small-cache hardware rows of Findings 1, 3 and 7 rest on it (Finding 6 is simulated from the traces).",
+    "evidence": "KNOWLEDGE_BASE.md Finding 6: 'Level 1 (simulated ...)', 'Simulated, mean of four traces'. Finding 1: 'from the cache's own counters on base d854d98b'. EXP-0002.md 'Hardware: H1 and H2 both confirmed' table (256: 13.40/16.34) = Finding 7 table.",
+    "severity": "error"
+   },
+   {
+    "file": "research/OPEN_QUESTIONS.md",
+    "quote": "(level 3 hypothesis: RAM shortfall, not coldness)",
+    "problem": "Contradicts the adjudicated hypothesis and KNOWLEDGE_BASE.md Finding 9 ('It does not by itself explain EXP-0004's 13.4 s regime'). RAM shortfall alone does not explain EXP-0004: all 40 layers faulted, not the file tail. At the same RAM, runs right after a pinned run prefilled in 3.7-7.3 s, so prior state also set the regime.",
+    "fix": "(level 3 hypothesis: prefill faults scale with available RAM through how much of the file's tail the load leaves unread; that alone does not explain EXP-0004, where all 40 layers faulted and runs after a pinned run at the same RAM prefilled in 3.7 to 7.3 s)",
+    "evidence": "review.json C8 corrected_text: 'RAM shortfall alone does not explain EXP-0004, though. The same tail pattern would leave about the last 9-10 layers missing, yet all 40 were. And at the same RAM, prior state set the regime'. EXP-0005.md 'Prefill depends on how much of the file the load leaves unread'.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/OPEN_QUESTIONS.md",
+    "quote": "**No, not on this host.**",
+    "problem": "Overclaim, and contradicts EXP-0005's own H4 outcome ('mixed'). The question was whether --load-mode none matches capped in-place pinning (the pinning commit's address order). It does better: 38.21 against 39.35 ms at 15000 MiB, -1.14 ms in both rounds, and far ahead of address order at the default cap (44.40). Only the new profile order beats it.",
+    "fix": "**Partly, on this host.** It beats address-order pinning at 15000 MiB by 1.14 ms but not profile order.",
+    "evidence": "analysis.md order pairs: none - addr15000, 387-841: -1.14 ms (-2.9%), r1 -1.16, r2 -1.12. 387-841: none 38.21, addr15000 39.35, prof15000 36.65, addr7842 44.40. EXP-0005.md Outcome: 'H4 is mixed ... 1.14 ms faster than address order at 15000 MiB but 1.56 ms slower than profile order'.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/BENCHMARKS.md",
+    "quote": "measured that residual on hardware at 0.7 to 0.8 points.",
+    "problem": "Stale: incomplete after EXP-0005. Below the crossover the RNG is no longer the only reason hardware and simulator differ. At 256-586 MiB one cache group has no slots and runs on the CPU, so the hardware decodes a different text than the traced 2048 MiB one from about token 110.",
+    "fix": "measured that residual on hardware at 0.7 to 0.8 points. At 256 to 586 MiB there is a second difference: a cache group with no slots runs on the CPU, so hardware decodes a different text than the traces from about token 110 (EXP-0005, OPEN_QUESTIONS.md Q15).",
+    "evidence": "cmp C:/nsys/exp0005/correctness256/cache528-auto.txt vs cache2048-auto.txt: first difference at byte 734 (about token 110). cache256-auto equals cache528 (md5 eb1119eb). EXP-0005.md Correctness item 4.",
+    "severity": "stale"
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "fix": "| `--load-mode none` | about 15240 MiB (14.9 GiB) |",
+    "reason": "The quote is at KNOWLEDGE_BASE.md:451. The review's split model (C5) gives chunks of 4037/4000/4032/4032/3174 MiB with chunk 4 falling back, so 15243 MiB is pinned. That is 14.89 GiB. '15.2 GiB' is the MiB figure divided by 1000; the same slip appears in the C5 adjudication's corrected text. EXP-0005.md:345 says 'pinned about 15240 MiB', and every other row of this table is in MiB. The fix is correct."
+   },
+   {
+    "index": 1,
+    "valid": true,
+    "fix": "Profile order beat the projected 38 to 39 ms; address order about met it (39.35). In gain neither reached the projected 17 to 18 ms (16.52 and 14.17 ms). The projection was made against another",
+    "reason": "Finding 10's row (KB:414) projects 'about -17 to -18 ms (-> about 38 to 39)'. Address order measured 39.35 ms on 387-841 and 39.17 ms on 387-1022, which is at or just above 39, so it did not beat the projection. The gains are 52.95-36.43 = 16.52 ms and 53.52-39.35 = 14.17 ms (analysis.md), both below 17-18 ms. EXP-0005.md Conclusion 1 claims only profile order is below the projection. I softened 'only met it' to 'about met it (39.35)', since 39.35 is slightly above 39. The fix then joins 'session's 56.2 ms (Finding 11).' correctly."
+   },
+   {
+    "index": 2,
+    "valid": true,
+    "fix": "39.35 with address order at 14946 MiB (matched window 387-841, where profile order is 36.65), against a pageable 52.95 (53.52 on 387-841)",
+    "reason": "The quote is at KB:432. 36.43 and 52.95 are 387-1022 values, while 39.35 is on 387-841 (analysis.md). On 387-841, off is 53.52 and prof15000 is 36.65, so the sentence sets a matched-window figure against full-window ones. The fix is correct and does not overlap finding 1's quote on the next line."
+   },
+   {
+    "index": 3,
+    "valid": true,
+    "fix": "**EXP-0005 split it again with 80% of the expert bytes pinned** (98% of warm upload bytes)",
+    "reason": "EXP-0004.md:83 defines its '42%' as a share of expert bytes (7842.20 MiB registered). The 98% is prof15000's pinned share of warm upload bytes (97.7%, analysis.md). prof15000 registered 14923.83 of 18760.47 MiB (log, coverage expert_mib), which is 79.6%. The addr7842 arm's upload-byte share is 49.3%, not 42%, so the two percentages measure different things. The fix is correct."
+   },
+   {
+    "index": 4,
+    "valid": true,
+    "fix": "repeated the split with 80% of the expert bytes pinned (98% of warm upload bytes): 86% of the 16.52 ms warm gain is DMA rate and",
+    "reason": "The quote is at OPEN_QUESTIONS.md:178, and the preceding line cites EXP-0004's 42%, which is a share of expert bytes (EXP-0004.md:83). The 98% is the upload-byte share (97.7%), while 14923.83/18760.47 MiB = 80% of expert bytes. The fix is correct. The side remark about '13% faults' is not part of the fix, and the C4 adjudication supports 13% for slow-copy idle."
+   },
+   {
+    "index": 5,
+    "valid": true,
+    "fix": "and 10.5 to 11.3 in the profile arms, although prof7842 makes more pageable copies per token (120, 49 MiB) than addr15000 (112, 45 MiB) or none (107, 41 MiB).",
+    "reason": "I recomputed from timeline_<tag>.json, tokens 387-1022, h2d_by_src_kind pageable per token. prof7842: 120.4 copies, 49.25 MiB, 10.50/10.66 GB/s. addr15000: 111.5-112.2 copies, 44.6-45.0 MiB, 8.46-8.55 GB/s. none: 107.2 copies, 40.8 MiB, 8.57-8.88 GB/s. prof7842 has more pageable copies and bytes than addr15000 or none, yet faster pageable copies, so 'where they are few' is contradicted for prof7842. The fix is correct and reads well together with finding 6's fix on the line before."
+   },
+   {
+    "index": 6,
+    "valid": true,
+    "fix": "12.75 to 12.85 GB/s (11.9 to 12.0 in prof7842); pageable ones at 8.5 to 8.9 GB/s in off, the address-order arms and none",
+    "reason": "The C4 adjudication gives pinned expert-copy rates of 12.75-12.85 GB/s in addr7842, addr15000, prof15000 and none, but 11.94/12.00 in prof7842. EXP-0005.md's rate table also lists prof7842 separately. The pageable 8.5-8.9 GB/s holds for off (8.56/8.70), the addr arms (8.50-8.58) and none (8.60/8.91). The timeline recomputation agrees (prof7842 pinned 11.8-11.9). 'Arms with many of them' is wrong because prof7842 has more pageable copies than addr15000 or none. The fix is correct."
+   },
+   {
+    "index": 7,
+    "valid": true,
+    "fix": "the arm, not on how many pageable copies there are (prof7842 makes more per token than addr15000 or none): 8.5 to 8.9 GB/s in off, address order and none, 10.5 to",
+    "reason": "The quote is at OPEN_QUESTIONS.md:112. From the timeline JSONs (387-1022), prof7842 makes 120.4 pageable copies per token (49.25 MiB) and runs at 10.50-10.66 GB/s. addr15000 makes 111.5-112.2 (44.6-45.0 MiB) at 8.46-8.55, and none 107.2 (40.8 MiB) at 8.57-8.88. So the rate does not track the count. The fix reads correctly with the preceding 'depends on'. The words 'with few' on the next line (OPEN_QUESTIONS.md:113, '11.3 in the profile arms with few,') are outside the quote and must also be deleted, or they will contradict the new text."
+   },
+   {
+    "index": 8,
+    "valid": true,
+    "fix": "selected at least twice, but only 207 of the 606 it selected once (8126 of its 8525 selected experts; all of them would need about 15650 MiB); at the default cap the cutoff is 16 selections",
+    "reason": "I replayed ranges_by_use over C:/nsys/exp0005/profile_bcd.csv with the GGUF tensor offsets: n_ids<=64, page-rounded slices, selection count descending with ties in address order, first fit. The replay reproduces the logs exactly: 244824 selections, 7943.22 MiB in 7299 ranges at 7965.33 MiB, and 14923.83 MiB in 4881 ranges at 15000. 8525 experts were selected, which need 15735 MiB charged or 15652 MiB merged, more than the cap. At 15000 the replay pins 8126 of them. Every expert selected twice or more is pinned, but the 399 left out all have 1 selection, so only 207 of the 606 selected once are pinned. At the default cap the minimum use pinned is 16. The fix is correct. EXP-0005.md:320-321 makes the same 'selected even once' claim."
+   },
+   {
+    "index": 9,
+    "valid": true,
+    "fix": "**The offline replay reproduces the share left pageable** (a replay of the run prompt's own routing over tokens 16-255, not a prediction for unseen text).",
+    "reason": "Critic issue 6 flags this framing: the match is a replay of the same deterministic routing. EXP-0005.md:308-311 says explicitly that it is 'not a prediction for unseen text'. coverage.py scores tokens 16-255 (skip_tokens 16 in coverage_2048_runcaps.json), not the traces' full 255 tokens. 'Predictable offline' therefore states more than the evidence shows. The fix is correct. The next sentence's 'over the traces' 255 tokens' could also read 'tokens 16-255'."
+   },
+   {
+    "index": 10,
+    "valid": true,
+    "fix": "and the excess time there (pageable: slow-copy idle 15.22 against 3.00 ms warm) is not yet split between hard faults and soft (transition) faults",
+    "reason": "In analysis.md, off tokens 3-130 run 68.31 ms against 52.95 warm. Of the 15.36 ms excess, slow-copy idle accounts for +12.22 (15.22 against 3.00), fast-copy idle for +4.30 and DMA for -0.72. Finding 9 classifies slow copies as hard faults. The disk reads in 3-130 (off_r1 1.47, off_r2 0.33 GiB, critic issue 3) at about 175 us per 64 KiB give about 33 and 7 ms/token, the same order as the slow idle (25.4 and 5.0) and in the same r1/r2 ratio. So 'mostly soft faults' is not shown. The critic tied only the fast-idle rise to soft faults. The proposed fix's wording would leave the following ', about 8600 per token pageable...' attached to 'hard faults'. My rewrite ends on 'soft (transition) faults', so that clause still reads correctly."
+   },
+   {
+    "index": 11,
+    "valid": true,
+    "fix": "the load's whole-file prefetch read 19.05 to 20.38 GiB before prefill, and 19.6 to 21.1 GiB had been read in all before",
+    "reason": "19.05-20.38 GiB is the load burst (C8 adjudication: 19.05-19.78 in r1, 20.24-20.38 in r2), which ends before prefill. By the end of prefill, 19.6-21.1 GiB had been read in every mmap run (critic issue 3), and EXP-0005.md:422-424 gives that figure for the same point. Read literally the KB statement is true, but as a figure for 'read before decode' it understates and conflicts with EXP-0005.md. The proposed fix assigns the 19.6-21.1 GiB to the prefetch itself, but that total also includes prefill page-ins and other system-wide reads. My rewrite keeps the attribution correct and reads on into ' decode, so tokens 3-130 were early'."
+   },
+   {
+    "index": 12,
+    "valid": true,
+    "fix": "and RAM drifted 1.5 GiB through one session, plausibly (not measured) as the evictions trimmed other",
+    "reason": "The C7 adjudication, point (h), says 'inferred, not measured': no working-set or pagefile counters were recorded, and each eviction raised available memory by only 1-200 MiB. EXP-0005.md:414-415 says 'plausible but not measured'. The drift itself checks out: info.txt shows 20140-20202 MiB at the start and 21642-21644 MiB at the end, about 1.47 GiB. The fix is correct."
+   },
+   {
+    "index": 13,
+    "valid": true,
+    "fix": "(0.10 to 0.65 GiB of reads in tokens 387-1022 of a",
+    "reason": "Critic issue 2 gives none_r1 0.65 GiB and none_r2 0.10 GiB of disk reads in the warm window 387-1022, plus 0.36 GiB after the run. EXP-0005.md:496-498 also says 'in the warm window'. Whole none runs read 21.4-22.2 GiB including the load (analysis.md), so 'in a run' names the wrong window. The fix is correct."
+   },
+   {
+    "index": 14,
+    "valid": true,
+    "fix": "together with available RAM; it is not a coldness check by itself (EXP-0005: cold-evicted pageable runs prefilled in 2.1 to 3.0 s at 19.7 to 21.1 GiB available), and order runs by cache state, not only by arm.",
+    "reason": "EXP-0005's H1 included 'the prefill coldness check reproduces', and it did not: slow copies were 604/44, 465/37, 322/97, 335/78 and 144/148 although every probe found 0-7 of 256 pages cached (C7 point (f), EXP-0005.md:54-57). off_r1 prefilled in 2.97 s at 20202 MiB available and off_r2 in 2.10 s at 21644 MiB (analysis.md, info.txt). That is faster than the 3.7-7.3 s this bullet calls partly warm. The fix is correct and reads well inside the sentence."
+   },
+   {
+    "index": 15,
+    "valid": true,
+    "fix": "9.3 to 9.9 s with 42% pinned (about 3600), at 16.5 to 18 GiB available and no eviction; there, 3.7 to 7.3 s pageable meant an earlier run had left the model partly cached. After an eviction at 19.7 to 21.1 GiB available (EXP-0005), pageable prefill took 2.1 to 3.0 s and 42% pinned 2.5 to 3.0 s, so a fast prefill does not by itself mean an",
+    "reason": "Confirmed from analysis.md: off took 2.97/2.10 s (604/44 slow) and addr7842 3.02/2.49 s (465/37), with probes at 0-7/256. info.txt shows 20140-21644 MiB available before eviction. EXP-0004 ran with no eviction at 16.45-18.15 GiB (EXP-0004.md:84). Under the current rule these cold runs would be read as 'left partly cached'. The proposed fix drops EXP-0004's own 3.7-7.3 s observation; my version keeps it, scoped to EXP-0004's state. Either way the sentence continues correctly into 'earlier run left the model partly cached.'"
+   },
+   {
+    "index": 16,
+    "valid": true,
+    "fix": "In EXP-0004's state (no eviction, 16.5 to 18 GiB available) the first 128 tokens of a fresh process were dominated by page faults; after an eviction (EXP-0005) they are early, not cold.",
+    "reason": "From analysis.md, tokens 3-130 for off run 68.31 ms with DMA 26.14 and slow-copy idle 15.22, so page faults do not dominate. prof15000's 3-130 (36.53 ms) equals its warm window (36.43). The same file's EXP-0005 rule says 'Tokens 3-130 are early, not cold, after an eviction', which contradicts the unqualified EXP-0004 sentence. The fix is correct."
+   },
+   {
+    "index": 17,
+    "valid": true,
+    "fix": "and in EXP-0004's state (no eviction, 16.5 to 18 GiB available) the decode of a short request is dominated by disk, not by PCIe; after an eviction at 19.7 to 21.1 GiB available it is not (EXP-0005: DMA 26.1 ms against 15.2 ms slow-copy idle, pageable tokens 3-130).",
+    "reason": "From analysis.md, off tokens 3-130 have DMA 26.14 ms against slow-copy idle 15.22 ms, out of 68.31. Disk reads in that window are 0.33-1.47 GiB against about 28 GiB uploaded (critic issue 3). The unqualified EXP-0004 claim is therefore contradicted in EXP-0005's state. The paragraph that follows refines it but does not withdraw it. The fix is correct."
+   },
+   {
+    "index": 18,
+    "valid": false,
+    "fix": "",
+    "reason": "The text is EXP-0004's level-4 projection for the 15266 MiB maximum registered earlier. EXP-0004.md:340-342 says 'at most 15266 MiB ... In address order that cap leaves layer 32's up tensor and layers 33 to 39 pageable, about 18% of the warm upload bytes', and 14946.38 + 144 (gate) + 176 (down) = 15266. EXP-0005 measured a different cap (15000 MiB, layers 32-39, 20.2%), so it does not contradict this statement. By layer_share, layers 33-39 plus layer 32's up tensor come to about 19%, consistent with 'about 18%'. The proposed fix would also leave the row's -17 to -18 ms projection without the condition it was computed from. At most the row header could name 15266 MiB."
+   },
+   {
+    "index": 19,
+    "valid": true,
+    "fix": "**Why it matters:** the small-cache hardware rows of Findings 1, 3 and 7 rest on it (Finding 6 is simulated from the traces).",
+    "reason": "KB Finding 6 is marked 'Level 1 (simulated ...)' with a 'Simulated, mean of four traces' table, replayed from the 2048 MiB traces (EXP-0001 collect.sh MIB=2048), so it does not depend on hardware decode at small sizes. Finding 1's 384/528/586 MiB table comes from the cache's own hardware counters, where a group without slots runs on the CPU, and it is omitted. Finding 7's table is hardware (EXP-0002.md:215-222, EXP-0003.md:161/267), as is Finding 3's. The fix is correct."
+   },
+   {
+    "index": 20,
+    "valid": true,
+    "fix": "(level 3 hypothesis: prefill faults scale with available RAM through how much of the file's tail the load leaves unread; that alone does not explain EXP-0004, where all 40 layers faulted and runs after a pinned run at about the same RAM prefilled in 3.7 to 7.3 s)",
+    "reason": "The C8 adjudication's corrected text says 'RAM shortfall alone does not explain EXP-0004 ... yet all 40 were. And at the same RAM, prior state set the regime'. KB Finding 9 (KB:399-402) and EXP-0005.md:454-460 say the same. 'RAM shortfall, not coldness' therefore states a single cause that the adjudication rejected. The fix is correct; I changed 'at the same RAM' to 'at about the same RAM', because the C8 figures are 17.05-18.15 GiB against 17.29-17.30 GiB."
+   },
+   {
+    "index": 21,
+    "valid": true,
+    "fix": "**Partly, on this host.** It beats address-order pinning at 15000 MiB by 1.14 ms but not profile order.",
+    "reason": "analysis.md gives none - addr15000 on 387-841 as -1.14 ms (r1 -1.16, r2 -1.12), and none is far ahead of address order at the default cap (38.21 against 44.40). EXP-0005.md:61-64 calls H4 'mixed', and Conclusion 4 says it 'beats address order but not profile order'. A flat 'No' contradicts the experiment's own outcome. The fix is correct, and the 80%-pinned and 15 s load caveats that follow still support 'Partly'."
+   },
+   {
+    "index": 22,
+    "valid": true,
+    "fix": "measured that residual on hardware at 0.7 to 0.8 points. At 256 to 586 MiB there is a second difference: a cache group with no slots runs on the CPU, so hardware decodes a different text than the 2048 MiB traces from about token 110 (EXP-0005, OPEN_QUESTIONS.md Q15).",
+    "reason": "I checked C:/nsys/exp0005/correctness256. cmp of cache528-auto.txt against cache2048-auto.txt first differs at byte 734 (about token 110). cache256-auto, cache528-auto, cache528-dist0 and cache528-lru share md5 eb1119eb, while every 1024 and 2048 MiB configuration shares ad4132c5. The EXP-0001 traces were collected at 2048 MiB (collect.sh MIB=2048). So below the crossover the RNG is no longer the only cause of disagreement, and the text omits this. The fix is correct; I only made 'the traces' explicit as the 2048 MiB traces."
+   }
+  ],
+  "checked": "I checked all of the following against analysis.md, timeline_*.json, review.json (skeptics, adjudications, critic, code), coverage JSONs, logs, info.txt, pin_budget.txt, cross_copy.txt and the b3_* files. All are correct:\n- Finding 11 table values: ms/token, vs-off percentages, pinned MiB, pageable shares 50.7/22.3/20.2/2.3/18.5.\n- Order pairs: -3.55 (-8.1%), -2.69 (-6.8%), +1.35 (+3.4%).\n- Memory medians 243/814 and 1764/2336.\n- Registration 0.26-0.64 s, 3-4 ms, and +12 to +70 copy calls per token.\n- Offline coverage: held-out select pageable 2.07% vs 4.63-5.67% at 15000 MiB, 20.65% vs 26.77-29.32% at the 7964 MiB cap, online 5.49-7.58% and 2.77-4.16%.\n- Default-cap cutoff at 16 selections, reproduced by replaying profile_bcd.csv (charged 7965.17 MiB).\n- Finding 4: budget 14848/15360 MiB, the 16.52 = 14.17 + 2.08 ms split.\n- Finding 9: probe 0-7/256, prefill 1.55-3.02 s with 37-604 slow copies, about 8600 vs 135-142 transition faults per token, tail layers 36-39.\n- Architectural facts: GGML_OP_OFFLOAD_MIN_BATCH defaults to 32 in ggml-cuda.cu:182; the copy-edge rule matches cross_copy.txt; 19275 MiB in five chunks with the fourth falling back.\n- Measurement discipline: 3.9%/28% spreads, r1 slower in every arm, 5.5 s typeperf stalls and the 1.8-4.3x undercount.\n- Correctness invariant: md5s of C:/nsys/exp0005/correctness256gpu (all 10 equal, ad4132c5) and correctness256 (three groups; cache-off differs at byte 535, 528 vs 2048 at byte 734).\n- The 256-token gpu reference equals the CPU-mode cache2048 output.\n- check-correctness.sh diff: NGEN 256, exported GGML_OP_OFFLOAD_MIN_BATCH=1, pinprof at the default cap, rm of stale outputs.\n- 24bd57a1e has the same src as 5df437a57.\n- BENCHMARKS: the B3 text and its 9/9 with 10 identical outputs, the B7 EXP-0005 rules and reference table (component sums leave 0.1 ms read-back), and the Raw results entry.\n- OPEN_QUESTIONS: Q15 divergence tokens, Q16 RAM and prefill figures, Q17 coverage numbers, Q12/Q14 additions (788-831 transition faults), and the settled output row.\n- The code diff (set_async splits at range entry and exit, process-wide table, fallback routing, profile parse with the n_ids filter) agrees with the KB descriptions. No remaining claim of cache-off bit-identity or full pinning by --load-mode none was found.\n\nScratch scripts are in C:/Users/steve/AppData/Local/Temp/claude/C--code-llama-cpp-fork/b559e18f-32b4-455c-93ad-ac06e1162883/scratchpad/doccheck/kbq/. No repo file was modified."
+ },
+ {
+  "scope": "rest",
+  "findings": [
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "MiB was 6.8% slower.",
+    "problem": "The percentage uses the wrong base. 6.8% is how much faster profile order is, measured against address order. Measured against profile order, address order is 7.3% slower.",
+    "fix": "MiB was 7.3% slower (39.35 against 36.65 ms, matched window 387-841; profile order is 6.8% faster).",
+    "evidence": "analysis.md 387-841 table: addr15000 39.35 and prof15000 36.65, and (39.35-36.65)/36.65 = 7.4%. The pair row 'prof15000 - addr15000 | 387-841 | -2.69 | -6.8%' is relative to addr15000.",
+    "severity": "error"
+   },
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "because available RAM drifted; holding it fixed (R16) has to come with the next",
+    "problem": "This states RAM drift as the cause, but the review found that RAM headroom and run position cannot be separated in this design. The time between reps correlates more strongly (r = 0.91) than the RAM change (r = 0.79), and the two correlate with each other at r = 0.86.",
+    "fix": "with a drift that tracks the rise in available RAM (r = 0.79) but also the time between reps (r = 0.91), which this design cannot separate; holding RAM fixed (R16) has to come with the next",
+    "evidence": "review.json critic issue 1: 'time gap vs r1-r2 r=0.91; dAvail vs r1-r2 r=0.79; gap vs dAvail r=0.86. Position and RAM headroom cannot be separated'. Recomputed from info.txt pre-eviction avail and the analysis.md r1/r2 values: 0.913 / 0.790 / 0.860. EXP-0005.md says the same: 'Position and headroom cannot be separated.'",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "out of memory once in address order.",
+    "problem": "The desktop did not run out of memory. The watchdog stopped addr15000_r1 when available RAM stayed below 300 MiB for 20 s (lowest 205 MiB). STATE.md and ENVIRONMENT.md describe this correctly as 'nearly ran out' or 'close to empty'.",
+    "fix": "close to out of memory in address order (243 and 814 MiB available, median, warm); the watchdog stopped one rep at 205 MiB.",
+    "evidence": "info.txt and low_addr15000_r1.txt: 'lowest available 205 MiB, KILLED: below 300 MiB for 20 s'. review.json C6 adjudication gives the 243/814 MiB medians. STATE.md: 'the desktop nearly ran out of memory'.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "whole-file prefetch, and how far depends on available RAM, which rose 1.5 GiB",
+    "problem": "This states the RAM-shortfall mechanism as fact. The review rated it a hypothesis, confounded with session order: r1 versus r2 is also ABBA position.",
+    "fix": "whole-file prefetch, and how far it gets plausibly depends on available RAM (a hypothesis, confounded with run order), which rose 1.5 GiB",
+    "evidence": "review.json C8 adjudication: 'Hypothesis (level 3) ... The r1/r2 contrast is confounded with session order'. Critic: 'C8's RAM-shortfall hypothesis rests on a cross-session comparison ... r1 vs r2 is also ABBA position'.",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "prefill slow copies sat in the file tail the load left unread (level 3)",
+    "problem": "The evidence level does not match the KNOWLEDGE_BASE scale, where level 3 means a third-party report. The tail observation was measured locally per run, so it is level 1. The idea that available RAM sets how much is left unread is local reasoning, so it is level 4.",
+    "fix": "prefill slow copies sat in the file tail the load left unread (level 1; that available RAM sets how much stays unread is a level 4 hypothesis)",
+    "evidence": "KNOWLEDGE_BASE.md 'Evidence levels': 3 = Third-party report, 4 = Theoretical. review.json C8 adjudication: 'the per-run link from burst size to slow layers is direct' (load burst 19.05-19.78 GiB in r1; slow layers 36-39 by GGUF offset).",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "correlated with the session's RAM drift (r = 0.79) and run position (r = 0.91)",
+    "problem": "The labels are wrong. r = 0.91 is the correlation with the time between an arm's two reps, not with run position. r = 0.79 is the correlation with the change in pre-eviction available RAM between an arm's two reps.",
+    "fix": "correlated with the change in pre-eviction available RAM between an arm's reps (r = 0.79) and the time between them (r = 0.91)",
+    "evidence": "review.json critic issue 1 and EXP-0005.md: 'The time between an arm's two reps correlates with its r1 - r2 at r = 0.91, the RAM change at r = 0.79'. Recomputed from info.txt avail and wall times: 0.913 and 0.790.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "of them and 10.5 to 11.3 in the profile arms, where they are few.",
+    "problem": "Pageable copy count does not explain the rate difference. prof7842 has more pageable upload bytes (22.3%) than addr15000 (20.2%) and none (18.5%), yet its pageable copies ran at 10.5-10.7 GB/s while theirs ran at 8.5-8.9.",
+    "fix": "of them and 10.5 to 11.3 in the profile arms, even though prof7842 (22.3% pageable) moves more pageable bytes than addr15000 (20.2%) or none (18.5%), which ran at 8.5 to 8.9.",
+    "evidence": "analysis.md 'Pageable share ... measured': addr15000 20.2%, prof7842 22.3%. review.json C5 adjudication: none 18.5%. C4 adjudication rates: off 8.56/8.70, addr arms 8.50-8.58, none 8.60/8.91, prof7842 10.54/10.70, prof15000 11.33.",
+    "severity": "error"
+   },
+   {
+    "file": "research/ROADMAP.md",
+    "quote": "| Cost | Low, but the cold microbenchmark needs the user to flush the standby list. |",
+    "problem": "This is out of date. EXP-0005 emptied the page cache without admin rights using evict.py: 0-7 of 256 probed expert pages were cached afterwards, and standby fell from about 20 GiB to about 0.5 GiB. A cold CPU-only microbenchmark therefore no longer needs the user.",
+    "fix": "| Cost | Low. The cold microbenchmark can use EXP-0005's `evict.py` (no admin rights; 0 to 7 of 256 probed pages cached after it). |",
+    "evidence": "info.txt: every run's eviction is followed by 'probe: 0-7/256 expert pages cached'; standby_normal before about 19-20 GiB, after 408-652 MiB. evict_validation.txt: 256/256 cached before, 0/256 after.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/ENVIRONMENT.md",
+    "quote": "standby list), which these sessions do not run; a cold arm needs the user.",
+    "problem": "The same bullet list now says eviction works without admin rights. EXP-0005's evict.py pushed the model out of the page cache before all 12 runs with no admin tool, so 'a cold arm needs the user' no longer holds for the launch state.",
+    "fix": "standby list), which these sessions do not run, but EXP-0005's `evict.py` empties it by memory pressure without one (0 to 7 of 256 probed pages cached; see the eviction bullet below). That fixes the launch state, not the state at prefill, which the load's prefetch refills.",
+    "evidence": "info.txt probes 0-7/256 after eviction in all 12 runs. evict_validation.txt 256/256 -> 0/256. ROADMAP.md R10: 'made the launch state reproducibly cold (0 to 7 of 256 probed pages cached)'.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/ENVIRONMENT.md",
+    "quote": "about 1.1 GiB of VRAM through EXP-0004 and 0005 (7051 MiB free in every",
+    "problem": "'7051 MiB free in every log' is true only for EXP-0005. Six of EXP-0004's 21 logs report 7075 MiB free.",
+    "fix": "about 1.0 to 1.1 GiB of VRAM through EXP-0004 and 0005 (7051 or 7075 MiB free in EXP-0004's logs, 7051 in every EXP-0005",
+    "evidence": "grep 'vs. N MiB of free' over EXP-0004/log_*.txt: 15 x 7051, 6 x 7075. EXP-0005/log_*.txt: 12 x 7051. review.json critic: 'EXP-0004 logs report 7051 (15 logs) or 7075 (6)'.",
+    "severity": "error"
+   },
+   {
+    "file": "research/FAILED_APPROACHES.md",
+    "quote": "as available RAM allows, and available RAM rose 1.5 GiB through the session as",
+    "problem": "Two hypotheses are stated as fact. (1) That the prefetch reaches as far as available RAM allows is a hypothesis confounded with run order. (2) That the rise came from evictions trimming other processes was judged plausible but not measured: each eviction itself raised available RAM by only 1-200 MiB, and most of the rise happened between runs.",
+    "fix": "as available RAM plausibly allows (a hypothesis, confounded with run order), and available RAM rose 1.5 GiB through the session, plausibly but not measurably because",
+    "evidence": "review.json C7 adjudication (h): 'Evictions trimmed other processes' is inferred, not measured ... Each eviction itself raised available memory by only 1-200 MiB. Most of the rise happened between runs.' info.txt before/after avail: +52, +102, +80, +37, +32, +37, +36, +1, +55, +200, +22, +59 MiB. EXP-0005.md: 'That is plausible but not measured.'",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/FAILED_APPROACHES.md",
+    "quote": "Found by EXP-0005. The first profile-pinned run died in prefill with `CUDA",
+    "problem": "The crash is stated as a recorded fact, but no surviving file records it. Its log was overwritten by the successful rerun, and only EXP-0005.md and the cross_copy.py docstring mention it. cross_copy.txt shows the driver rule, not the crash.",
+    "fix": "Found by EXP-0005. The first profile-pinned run died in prefill (its log was overwritten by the rerun; cross_copy.txt reproduces the rejected copy) with `CUDA",
+    "evidence": "review.json C9 skeptic and adjudication: 'The crash ... cannot be verified ... A grep of research/, moe-bench/ and C:/nsys/exp0005 finds no invalid argument'. EXP-0005.md: 'Its log was overwritten by the rerun; only this record and cross_copy.py keep it.'",
+    "severity": "overclaim"
+   },
+   {
+    "file": "research/ARCHITECTURE.md",
+    "quote": "A second context on the same model registers nothing,",
+    "problem": "The diff contradicts this in address order. pin_host_experts walks all merged whole-tensor ranges. A failed reg_host (the page is already registered) is not charged to `pinned`, so with the default cap below the expert bytes, a second context goes on to register the next whole tensors up to its own cap. Only with a profile is the result empty, because ranges_by_use already applies the cap. EXP-0005.md also says 'The multi-context path is untested.'",
+    "fix": "A second context on the same model registers none of the first one's ranges (with a profile, nothing at all; in address order it goes on to pin the next whole tensors up to its own cap),",
+    "evidence": "git diff src/llama-moe-cache.cpp: the loop 'if (pinned + n > cap) continue; if (reg_host(...)) { pinned_ranges.push_back(r); pinned += n; }' iterates over all merged ranges (120 tensor ranges, 50 or 96 pinned by the first context). ggml_backend_cuda_register_host_buffer returns false on any cudaHostRegister error.",
+    "severity": "error"
+   },
+   {
+    "file": "research/ARCHITECTURE.md",
+    "quote": "`GGML_CUDA_REGISTER_HOST=1` changes no code path, stream or graph eligibility. It",
+    "problem": "The diff makes this stale, together with the 'only' in the next sentence. While anything is pinned, every expert upload and the scheduler's whole-tensor fallback go through llama_moe_cache_set_async, which splits copies at pinned-range edges. With a profile this adds sub-page copies (+12 to +70 calls per token). The code review flagged this exact line.",
+    "fix": "`GGML_CUDA_REGISTER_HOST=1` changes no stream or graph eligibility, but while anything is pinned the expert uploads and the scheduler's whole-tensor fallback go through `llama_moe_cache_set_async`, which splits them at pinned-range edges (no copy crosses one in address order; with a profile, 12 to 70 extra small copies per token). It",
+    "evidence": "git diff src/llama-context.cpp: the llama_moe_cache_has_pinned() reroute and upload() -> llama_moe_cache_set_async. review.json code nit on ARCHITECTURE.md: 'says GGML_CUDA_REGISTER_HOST=1 changes no code path, but copies are now split'. Critic: 450.3 vs 520.1/462.0 calls per token.",
+    "severity": "stale"
+   },
+   {
+    "file": "research/ARCHITECTURE.md",
+    "quote": "(layers 25 to 32) fell back (EXP-0005).",
+    "problem": "The chunk that fell back also holds one tensor each of layers 24 and 33. The per-layer CUPTI split shows layer 24 at 69% and layer 33 at 62% pinned.",
+    "fix": "(layers 25 to 32, plus one tensor each of layers 24 and 33) fell back (EXP-0005).",
+    "evidence": "review.json C5 adjudication: 'That chunk holds layers 25-32 plus one tensor each of layers 24 and 33.' Critic: 'Layer 24 69% pinned. Layers 25-32 0% pinned. Layer 33 62% pinned.'",
+    "severity": "error"
+   },
+   {
+    "file": "research/STATE.md",
+    "quote": "keeps the watchdog quiet at 15000 MiB pinned)",
+    "problem": "EXP-0005's data contradict this. At 15000 MiB pinned with no balloon, available RAM was already a median of 243/814 MiB in address order (one rep killed below 300 MiB) and 1764/2336 MiB in profile order. A 2-4 GiB balloon would push every 15000 MiB arm below the watchdog's 300 MiB floor. Step 6 of the same list warns that address order went below 300 MiB.",
+    "fix": "would push available RAM below the watchdog's 300 MiB floor at 15000 MiB pinned, where EXP-0005 left a median of 243 to 814 MiB (address order) and 1764 to 2336 MiB (profile order) without one; run the balloon arms at a lower cap or keep the balloon inside that headroom)",
+    "evidence": "review.json C6 adjudication medians 243/814 vs 1764/2336 MiB. low_addr15000_r1.txt and info.txt: 'lowest available 205 MiB, KILLED: below 300 MiB for 20 s'. EXP-0005.md: watchdog stops a run below 300 MiB for 20 s.",
+    "severity": "error"
+   },
+   {
+    "file": "research/STATE.md",
+    "quote": "edges (process-wide table, scheduler fallback included).",
+    "problem": "This implies the crash was cured by the process-wide table and the scheduler fallback. The timed runs completed on the earlier build, which had a per-cache range list and an unrouted fallback. The review added those two fixes later as latent risks, and they are not reached with this model.",
+    "fix": "edges; the timed runs used that per-cache split, and the review then added the process-wide table and the scheduler fallback (latent risks, not reached with this model).",
+    "evidence": "EXP-0005.md: 'The timed runs used the build before the code review's fixes. That build kept the range list per cache instead of process-wide, did not route the scheduler fallback'. File times: timed captures 18:01-18:26, src/llama-moe-cache.cpp 19:07:23, llama.dll 19:07:49.",
+    "severity": "inconsistency"
+   },
+   {
+    "file": "research/STATE.md",
+    "quote": "one run. Profile order left 1.4 GiB more.",
+    "problem": "The same sentence quotes medians (243 to 814 MiB for address order). Against the matching profile-order medians of 1764 and 2336 MiB, the difference is 1521-1522 MiB, which is 1.5 GiB, not 1.4.",
+    "fix": "one run. Profile order left about 1.5 GiB more (1764 and 2336 MiB, median).",
+    "evidence": "review.json C6 adjudication: addr15000 243/814 MiB, prof15000 1764/2336 MiB, so 1764-243 = 1521 and 2336-814 = 1522 MiB = 1.49 GiB.",
+    "severity": "error"
+   }
+  ],
+  "verdicts": [
+   {
+    "index": 0,
+    "valid": true,
+    "fix": "MiB was 7.3% slower (39.35 against 36.65 ms, matched window 387-841; profile order is 6.8% faster).",
+    "reason": "Quote is at ROADMAP.md:12. In analysis.md, the 387-841 pair -2.69 ms / -6.8% uses addr15000 (39.35) as its base. The docs elsewhere put the comparator in the base: EXP-0005.md says 'prof7842 is 6.6% slower' against none, which is (40.42-37.93)/37.93. On that convention address order is 2.69/36.654 = 7.34% slower. The fix is correct as proposed. (The checker's evidence line says 7.4% from rounded means; unrounded, it is 7.3%.)"
+   },
+   {
+    "index": 1,
+    "valid": true,
+    "fix": "and the r1 - r2 gaps track both the rise in available RAM (r = 0.79) and the time between reps (r = 0.91), which this design cannot separate; holding RAM fixed (R16) has to come with the next",
+    "reason": "Quote is at ROADMAP.md:16. In review.json the critic's issue 1 gives time gap vs r1-r2 r=0.91, dAvail r=0.79, gap vs dAvail r=0.86, and 'Position and RAM headroom cannot be separated'. I recomputed 0.913 / 0.790 / 0.860. So 'because available RAM drifted' gives a confounded attribution as the cause. I reworded the proposed fix: after 'did not make runs agree,' the original fix ('with a drift that tracks...') read awkwardly."
+   },
+   {
+    "index": 2,
+    "valid": true,
+    "fix": "nearly out of memory in address order (median 243 and 814 MiB available, warm); the watchdog stopped one rep at 205 MiB.",
+    "reason": "Quote is at ROADMAP.md:80. info.txt and low_addr15000_r1.txt say 'lowest available 205 MiB, KILLED: below 300 MiB for 20 s'. The typeperf minimum is 216 MiB. Nothing ran out of memory; the watchdog stopped the run. The C6 adjudication gives medians of 243/814 MiB. STATE.md says 'nearly ran out' and KNOWLEDGE_BASE says 'near its limit'. I changed the fix to 'nearly out of memory' so it follows 'the desktop ran' grammatically."
+   },
+   {
+    "index": 3,
+    "valid": true,
+    "fix": "whole-file prefetch, and how far it gets depends, by hypothesis (confounded with run order), on available RAM, which rose 1.5 GiB",
+    "reason": "Quote is at ROADMAP.md:96. The C8 adjudication frames the RAM link as 'Hypothesis ... The r1/r2 contrast is confounded with session order'. KNOWLEDGE_BASE.md:392-401 also says 'Hypothesis: prefill faults scale with available RAM'. ROADMAP states it as fact. The 1.5 GiB holds: 20140 to 21644 MiB is 1.47 GiB. I reordered the fix so 'which rose 1.5 GiB' attaches to available RAM and not to 'run order'."
+   },
+   {
+    "index": 4,
+    "valid": true,
+    "fix": "prefill slow copies sat in the file tail the load left unread (level 1; that available RAM sets how much stays unread is a level 4 hypothesis)",
+    "reason": "Quote is at ROADMAP.md:118. KNOWLEDGE_BASE.md:7-13 defines level 3 as a third-party report and level 4 as theoretical. The tail observation was measured in this session from the sqlite captures and GGUF offsets (C8: L36-39 in off_r1/addr7842_r1, the per-run link direct), which is level 1. The review's 'level 3' for a local hypothesis misuses the scale. KNOWLEDGE_BASE.md:392 and OPEN_QUESTIONS.md:31 repeat that label, but that does not make it right here. The fix is correct."
+   },
+   {
+    "index": 5,
+    "valid": false,
+    "fix": "",
+    "reason": "This is a wording choice, not a factual error. In ABBA order the time between an arm's two reps is almost a linear function of its position: gaps of 25.5/20.6/15.8/11.0/6.9/2.3 min against position distances of 11/9/7/5/3/1. The correlation of r1-r2 with run position is 0.917, against 0.913 with the time gap, so 'run position (r = 0.91)' is a fair label. 'The session's RAM drift' for the per-arm change in pre-eviction available RAM (r = 0.790) is also an accurate summary. Neither r value is attached to the wrong quantity in substance."
+   },
+   {
+    "index": 6,
+    "valid": true,
+    "fix": "of them and 10.5 to 11.3 in the profile arms. Their count does not explain it: prof7842 (22.3% of warm upload bytes pageable) has more than addr15000 (20.2%) or none (18.5%), which ran at 8.5 to 8.9.",
+    "reason": "Quote is at ROADMAP.md:255. The C4 adjudication gives pageable rates of 8.56/8.70 for off, 8.50-8.58 for the addr arms, 8.60/8.91 for none, 10.54/10.70 for prof7842 and 11.33 for prof15000. analysis.md pinned shares give pageable 22.3% for prof7842 and 20.2% for addr15000; C5 gives 18.48% for none. Total H2D bytes are equal across arms (229.9 GiB), so prof7842 moves more pageable bytes than two of the slow arms, and 'where they are few' is false for it. I reworded the fix so it reads as a drop-in after 'in the arms with many of them'."
+   },
+   {
+    "index": 7,
+    "valid": true,
+    "fix": "| Cost | Low. The cold microbenchmark can use EXP-0005's `evict.py` (no admin rights; 0 to 7 of 256 probed pages cached after it). |",
+    "reason": "Quote is at ROADMAP.md:162. In info.txt every run shows 'probe: 0-7/256' after evict.py, and standby_normal falls from about 19.1-20.6 GiB to 408-652 MiB. evict_validation shows 256/256 cached before and 0/256 after. R12's microbenchmark is CPU-only reads of GGUF ranges with no llama load prefetch, so evict.py gives it a cold cache without the user. The fix is correct."
+   },
+   {
+    "index": 8,
+    "valid": true,
+    "fix": "standby list), which these sessions do not run, but EXP-0005's `evict.py` empties it by memory pressure without one (0 to 7 of 256 probed pages cached; see the eviction bullet below). That fixes the launch state, not the state at prefill, which the load's prefetch refills.",
+    "reason": "Quote is at ENVIRONMENT.md:142. The next bullet (ENVIRONMENT.md:151) already says 'Eviction without admin rights ... evict.py'. info.txt shows standby_normal emptied to 0.4-0.65 GiB and 0-7/256 pages cached before all 12 runs. An admin flush before launch would also be refilled by the load's prefetch, so 'a cold arm needs the user' is stale. The proposed fix is accurate and keeps the prefill caveat (C7 f)."
+   },
+   {
+    "index": 9,
+    "valid": true,
+    "fix": "about 1.1 GiB of VRAM through EXP-0004 and 0005 (7051 or 7075 MiB free in EXP-0004's logs, 7051 in every EXP-0005",
+    "reason": "Quote is at ENVIRONMENT.md:157. A grep of the EXP-0004 logs finds 15 x 7051 and 6 x 7075 MiB free (the six *_u logs); all 12 EXP-0005 logs show 7051. The proposed change to 'about 1.0 to 1.1 GiB' is wrong. The total is 8187 MiB (memory breakdown line), so 8187-7051 = 1136 MiB (1.11 GiB) and 8187-7075 = 1112 MiB (1.09 GiB). Both are about 1.1 GiB, so I kept 'about 1.1 GiB' and corrected only the parenthetical."
+   },
+   {
+    "index": 10,
+    "valid": true,
+    "fix": "as available RAM allows (a hypothesis, confounded with run order), and available RAM rose 1.5 GiB through the session, plausibly (not measured) because",
+    "reason": "Quote is at FAILED_APPROACHES.md:248. C7(h) says 'Evictions trimmed other processes' is inferred, not measured, and that each eviction raised available memory by only 1-200 MiB. info.txt confirms per-eviction deltas of +52, +102, +80, +37, +32, +37, +36, +1, +55, +200, +22 and +59 MiB. C8 calls the RAM-prefetch link a hypothesis confounded with session order. The proposed fix said 'plausibly but not measurably because', which reads as 'the effect is too small to measure'. I replaced it with 'plausibly (not measured) because' and dropped the duplicated 'plausibly' before 'allows'."
+   },
+   {
+    "index": 11,
+    "valid": true,
+    "fix": "Found by EXP-0005. The first profile-pinned smoke run died in prefill (only EXP-0005.md records it; the rerun overwrote its log) with `CUDA",
+    "reason": "Quote is at FAILED_APPROACHES.md:275. A grep for 'invalid argument' finds only review.json, and nothing in the EXP-0005 results, moe-bench or C:/nsys/exp0005/*.txt. The cross_copy.py docstring mentions the failure but cross_copy.txt does not. The C9 adjudication rewrites it as 'reportedly died ... No surviving file records it', and EXP-0005.md:491 notes the overwritten log; FAILED_APPROACHES drops that caveat. The proposed parenthetical said 'cross_copy.txt reproduces the rejected copy'. That overstates it: cross_copy tests a VirtualAlloc page, not the crashing copy, and the paragraph already cites cross_copy.txt for the driver rule. I also noted that it was a smoke run."
+   },
+   {
+    "index": 12,
+    "valid": true,
+    "fix": "A second context on the same model registers none of the first one's ranges (with a profile, nothing at all; in address order it goes on to pin the next whole tensors up to its own cap),",
+    "reason": "Quote is at ARCHITECTURE.md:183. In the diff, pin_host_experts iterates over all merged ranges (120 whole tensors in address order). When reg_host fails, which ggml_backend_cuda_register_host_buffer does on any cudaHostRegister error including already-registered, the range is not added to `pinned`. A second context with the same cap therefore skips the first context's 50 ranges and registers the next ones up to its own cap. With a profile, ranges_by_use already applies the cap and returns the same ranges, which all fail. EXP-0005.md:601 says the multi-context path is untested. The fix is correct and reads as a drop-in before 'because the pages are already registered'."
+   },
+   {
+    "index": 13,
+    "valid": true,
+    "fix": "`GGML_CUDA_REGISTER_HOST=1` changes no stream or graph eligibility, but while anything is pinned every expert upload, and the scheduler's whole-tensor fallback, goes through `llama_moe_cache_set_async`, split at pinned-range edges (no copy crosses one in address order; a profile adds 12 to 70 small copies per token). Otherwise it",
+    "reason": "Quote is at ARCHITECTURE.md:259. The diff adds the llama_moe_cache_has_pinned() reroute in sched_copy_experts, and routes fills and upload() through llama_moe_cache_set_async, which splits at pinned-range edges. The code review in review.json flags this exact line. Calls per token are 450.3 against 520.1 (prof7842) and 462.0 (prof15000), so +70 and +12. The proposed fix ended in 'It', which left the next line's 'It only makes the registered expert ranges pinned' contradicting it. Ending in 'Otherwise it' keeps the continuation consistent."
+   },
+   {
+    "index": 14,
+    "valid": true,
+    "fix": "(layers 25 to 32, plus one tensor each of layers 24 and 33) fell back (EXP-0005).",
+    "reason": "Quote is at ARCHITECTURE.md:323. The C5 adjudication says 'That chunk holds layers 25-32 plus one tensor each of layers 24 and 33' (layer 24: one 144 MiB tensor, 31%; layer 33: one 176 MiB tensor, 38%). The critic's CUPTI split gives layer 24 at 69% pinned and layer 33 at 62% pinned. EXP-0005.md:359-360 already names 24 and 33. The fix is correct."
+   },
+   {
+    "index": 15,
+    "valid": true,
+    "fix": "would push available RAM below the watchdog's 300 MiB floor at 15000 MiB pinned, where EXP-0005 left a median of 243 to 814 MiB (address order) and 1764 to 2336 MiB (profile order) without one; run the balloon arms at a lower cap or keep the balloon inside that headroom)",
+    "reason": "Quote is at STATE.md:109. The C6 medians, from token 387 to the end, are addr15000 243/814 and prof15000 1764/2336 MiB with no balloon, and one addr rep was killed (205 MiB, below 300 for 20 s). A 2 GiB balloon would leave at most about 2336-2048 = 288 MiB even in the best prof rep. The claim that 2-4 GiB 'keeps the watchdog quiet' contradicts the data and STATE step 6. The fix reads correctly after '2 to 4 GiB '."
+   },
+   {
+    "index": 16,
+    "valid": true,
+    "fix": "edges. The timed runs used a per-cache split; the process-wide table and the scheduler fallback came from the review, for cases these runs never hit (a second context, a declined tensor).",
+    "reason": "Quote is at STATE.md:51. EXP-0005.md:102-107 says the timed runs used the build before the review's fixes: a per-cache range list, with the scheduler fallback not routed, and that build ran without crashing. EXP-0005.md:600-601 says the review fixes were verified by B3 and smoke runs only. The review's code findings mark the fallback 'not reached for qwen35moe here' and the second-context case as latent. So 'crashed until ... (process-wide table, scheduler fallback included)' gets the order wrong. I made the proposed fix more precise and dropped the vague 'latent risks'."
+   },
+   {
+    "index": 17,
+    "valid": true,
+    "fix": "one run. Profile order left about 1.5 GiB more (1764 and 2336 MiB, median).",
+    "reason": "Quote is at STATE.md:46. It follows the 243-814 MiB medians (C6). The matching prof15000 medians are 1764/2336 MiB, so the gaps are 1521 and 1522 MiB, which is 1.485 GiB and rounds to 1.5. The 1.40-1.45 GiB figure in EXP-0005.md:375 is the end-of-run gap, a different measure from the medians this sentence quotes. The fix is correct."
+   }
+  ],
+  "checked": "Scope: the EXP-0005 material in ROADMAP, EXPERIMENTS, FAILED_APPROACHES, ARCHITECTURE, ENVIRONMENT, SOURCES, STATE and README, plus code comments checked against `git diff -- src moe-bench`.\n\nCorrect as written:\n- **Headline timings:** all ms/token and percentages in the ROADMAP header (52.95 -> 36.43, 12.9/18.2/5.2), R11 (39.35 matched, -2.69/-6.8%, -3.55/-8.1%), R5 (38.21, +1.14/-1.56, 15 s against 6.3-7.5 s load), R10 (probe 0-7/256, spreads 3.9%/28%, r1 slower in all six arms), R13/R14/R12 (36.4, 18.2, 12.9, sync idle 2.3, slow idle 0.9). Sources: analysis.md and review.json C1-C7.\n- **R17 and STATE offline figures:** 5.5-7.6% (N = 64) and 2.8-4.2% (N = 128) pageable, file profile held out 2.1-5.7%. Recomputed as 1 - covered from coverage_2048_runcaps.json. Registration 0.26-0.64 s for 4881-7299 ranges.\n- **EXPERIMENTS:** the EXP-0005 row, the Next line, the dependency graph and the validity rows (86%/13% split, prompt a best covered, divergence at about 65-110 tokens).\n- **B3 correctness:** cmp of C:/nsys/exp0005/correctness256 shows every cache config differs from cache-off at char 535 (64-token outputs are 524 B). The 528/256 group differs from 2048 at char 734 (about token 110). All 10 outputs in correctness256gpu share md5 ad4132c5.\n- **ENVIRONMENT:** the RAM row (17.09, 19.67-21.14 GiB), the pin budget (pin_budget.txt 14848/15360), the 243-814 MiB and 205 MiB figures, and evict.py touching about 20 GiB (info.txt 19456-20992 MiB).\n- **FAILED_APPROACHES typeperf figures:** recomputed integrated vs per-row sums from paging_*.csv. mmap runs undercount 1.82-4.26x, none 1.01x, max gap 5.54 s.\n- **SOURCES rows:** confirmed against ggml-cuda.cu (min_batch default 32, offload when batch >= threshold, 4 GiB max size, CPU fallback logged at debug level).\n\nCode descriptions checked against the diff:\n- llama_moe_cache_set_async splits both where a copy enters a pinned range and where it leaves one.\n- The fallback reroute applies only to host weights, when node 0 is not the MUL_MAT_ID that reads dst and llama_moe_cache_has_pinned().\n- The 122 prefill splits match log_prof15000_r1.txt.\n- An unusable profile (unreadable, or 0 selections) logs a warning and falls back to address order; smoke_v2_badprofile_lines.txt shows 50 ranges.\n- The no-cache branch uses set_async.\n- check-correctness.sh now uses NGEN 256, exports GGML_OP_OFFLOAD_MIN_BATCH=1, runs rm -f on old outputs, and adds a PIN_PROFILE arm at the default cap.\n- Code comments in the diff match the behaviour.\n\nNot re-derived from the sqlite captures; I relied on the review.json adjudications. Scratch: C:/Users/steve/AppData/Local/Temp/claude/C--code-llama-cpp-fork/b559e18f-32b4-455c-93ad-ac06e1162883/scratchpad/doccheck/rsc/review_full.txt."
+ }
+]

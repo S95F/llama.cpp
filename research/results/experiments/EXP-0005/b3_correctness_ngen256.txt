@@ -1,0 +1,121 @@
+-- cache-off 
+1337
+-- cache2048-lru LLAMA_MOE_CACHE_SAMPLE=0
+1350
+-- cache2048-auto 
+1350
+-- cache528-lru LLAMA_MOE_CACHE_SAMPLE=0
+1343
+-- cache528-auto 
+1343
+-- cache2048-s16 LLAMA_MOE_CACHE_SAMPLE=16
+1350
+-- cache528-dist0 LLAMA_MOE_CACHE_DIST=0
+1343
+-- cache256-auto 
+1343
+-- cache1024-pinned GGML_CUDA_REGISTER_HOST=1
+1350
+-- cache2048-pinprof GGML_CUDA_REGISTER_HOST=1
+1350
+
+== diff against cache-off ==
+  DIFF  cache1024-pinned
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,18
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache2048-auto
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,18
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache2048-lru
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,18
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache2048-pinprof
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,18
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache2048-s16
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,18
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache256-auto
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,22
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache528-auto
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,22
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache528-dist0
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,22
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).
+  DIFF  cache528-lru
+9,10c9
+<     *   Key elements to cover: Page cache, staging buffers, asynchronous copies.
+<     *   Output: Detailed technical explanation.
+---
+>     *   Key elements to cover: PCIe bandwidth, DMA transfers, pinned host memory, page cache, staging buffers, asynchronous copies.
+13,19c12,22
+<     *   *Goal:* Explain the data flow from System RAM (weights) to GPU memory (VRAM) via PCIe, focusing on performance optimization mechanisms.
+<     *   *Structure:* A logical flow is essential. I should start with the basics (PCIe, DMA), move to the problem (why pinned memory?), discuss the mechanisms (page cache, staging, async), and then synthesize everything into a coherent data path.
+<     *   *Proposed Outline:*
+<         *   Introduction: Context (GPU computing, model weights, PCIe bottleneck).

@@ -32,8 +32,8 @@ public:
     // returns the number of experts copied, 0 if expert e is not in the cache
     int64_t copy_experts(ggml_backend_t backend, const ggml_tensor * w, ggml_tensor * dst, int64_t e, int64_t last);
 
-    // telemetry: count a host upload of uncached experts done for a large batch
-    void count_upload(size_t bytes);
+    // for large batches: upload size bytes of uncached experts from host data to dst at offset, with llama_moe_cache_set_async
+    void upload(ggml_backend_t backend, ggml_tensor * dst, const void * data, size_t offset, size_t size);
 
     std::map<ggml_backend_buffer_type_t, size_t> memory_breakdown() const;
 
@@ -43,3 +43,10 @@ private:
 };
 
 using llama_moe_cache_ptr = std::unique_ptr<llama_moe_cache>;
+
+// ggml_backend_tensor_set_async from host memory, split at the bounds of the host expert ranges pinned by any MoE cache
+// (the driver rejects a copy that starts in a pinned range and runs past its end)
+void llama_moe_cache_set_async(ggml_backend_t backend, ggml_tensor * dst, const void * data, size_t offset, size_t size);
+
+// true if any MoE cache of the process pinned host expert ranges
+bool llama_moe_cache_has_pinned();

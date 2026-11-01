@@ -1,0 +1,11 @@
+Disk-read counter calibration, 2026-11-01 (EXP-0005, after the runs).
+evict.py, then probe.py --seed 11 (0/256 expert pages cached, median 153 us), then
+typeperf "\PhysicalDisk(_Total)\Disk Read Bytes/sec" -si 1 while `cat model > /dev/null`
+read the whole 22360456160-byte (20.82 GiB) GGUF; then probe.py --seed 12.
+  counter, summed per row: 20.63 GiB over 19 rows (no stalls during a plain read)
+  probe after the read: 254/256 expert pages cached (99.2%), median 5 us
+Result: the counter and the probe are both sound. During model loads typeperf rows
+are up to 5.5 s apart (analysis.json max_gap_s), so the run totals in analysis.md
+integrate rate x interval; summing rows as 1 s each undercounts the mmap runs 1.8 to
+4.3x (the --load-mode none runs, whose rows never stalled, 1.0x).
+Raw rows: calib_disk_counter.csv.

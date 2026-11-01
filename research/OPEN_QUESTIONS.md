@@ -1,7 +1,57 @@
 # OPEN QUESTIONS
 
 Unresolved questions, missing evidence, and what it would take to settle each.
-Ordered by value, not by age. Q11 to Q14 are new from EXP-0004.
+Ordered by value, not by age. Q11 to Q14 are new from EXP-0004, Q15 to Q17 from
+EXP-0005.
+
+## Q15 - How much do the small-cache hardware rows depend on CPU-computed layers?
+
+**New, from EXP-0005.** At 256, 528 and 586 MiB one cache group gets no slots,
+and decode computes that layer's experts on the CPU. CPU and CUDA round
+differently, so from about token 110 those runs decode a different text than
+2048 MiB (and the cache-off run a different one from about token 65). Their
+hardware hit rates are therefore over different routing than the simulator's
+replay, and than the larger sizes. Comparisons between policies at one size are
+unaffected: B3 shows every policy at 528 MiB generating the same text.
+
+**To settle:** re-run B1 at 256 to 586 MiB with `GGML_OP_OFFLOAD_MIN_BATCH=1`
+(the same text as 2048 MiB) and compare hit rates with the default rows and
+with the simulator.
+
+**Why it matters:** the small-cache hardware rows of Findings 1, 3 and 7 rest
+on it (Finding 6 is simulated from the traces). Probably small (routing
+statistics are similar across texts), but unmeasured.
+
+## Q16 - Does prefill depend on available RAM, and what made EXP-0004's prefill slow?
+
+**New, from EXP-0005.** With the model evicted before launch, prefill took 1.55
+to 3.02 s at 19.7 to 21.1 GiB available, and its slow copies sat in the file
+tail that the load's prefetch left unread. EXP-0004's pageable runs after other
+pageable runs took 13.4 to 13.8 s with every layer faulting, at 16.5 to 17.3
+GiB. Available RAM, the eviction procedure, the code and other processes all
+differ between the two sessions (level 4 hypothesis: prefill faults scale with
+available RAM through how much of the file's tail the load leaves unread; that
+alone does not explain EXP-0004, where all 40 layers faulted and runs after a
+pinned run at about the same RAM prefilled in 3.7 to 7.3 s).
+
+**To settle:** ROADMAP R16, a fixed balloon of 0 to 6 GiB per run, with per-layer
+fault positions at prefill.
+
+**Why it matters:** it decides whether short requests on a host with less spare
+RAM pay 2 s or 13 s of prefill, and it is R10's missing control.
+
+## Q17 - Does a selection profile from one domain pin well for another?
+
+**New, from EXP-0005.** The profile (prompts b, c, d) was held out from the run
+prompt but shares its domain, and the run prompt is the best covered of four
+offline (2.1% pageable at 15000 MiB against 4.6 to 5.7%; 20.7% at the default
+cap against 26.8 to 29.3%).
+
+**To settle:** time a run prompt from another domain (code, non-English, chat
+without thinking) with the same profile, at both caps; and an online profile
+(ROADMAP R17), which adapts by construction.
+
+**Why it matters:** the default-cap gain (-8.1%) depends most on it.
 
 ## Q11 - Are the faults left in a warm run first touches or re-faults?
 
@@ -31,10 +81,13 @@ between requests. Separately, warm 2048 MiB here (52 to 56 ms, traced) is 10 to
 36% slower per token than the B2 `llama-bench` references (41.2 to 47.1 ms), while at 586
 MiB the two agree.
 
-**To settle:** ROADMAP R10 - two generations in one process, and an untraced
-run plus `llama-bench` at the same configuration and token window.
+**To settle:** two generations in one process, and an untraced run plus
+`llama-bench` at the same configuration and token window. EXP-0005 did R10's
+page-cache part but not this; the persistent-process run belongs with R16's
+fixed headroom.
 
 **Why it matters:** every timing from R11 on is quoted against this baseline.
+EXP-0005's 52.95 ms pageable (traced, fresh process) is the current one.
 
 ## Q13 - Can a second stream overlap a copy with a kernel on this card?
 
@@ -59,7 +112,11 @@ class. Host memory bandwidth and the driver's staging path are the candidates.
 without a concurrent host `memcpy`.
 
 **Why it matters:** modestly. About 8 ms per token at 2048 MiB pageable today,
-but pinning removes most of it.
+but pinning removes most of it. EXP-0005 adds that the pageable rate depends on
+the arm, not on how many pageable copies there are (prof7842 makes more per
+token than addr15000 or none): 8.5 to 8.9 GB/s in off, address order and none,
+10.5 to 11.3 in the profile arms, and fast-copy idle may include soft faults
+(788 to 831 transition faults per token warm when pageable).
 
 ## Q10 - Should the distance term also run above the crossover?
 
@@ -121,10 +178,12 @@ source of information. Q7 is the only candidate with one.
 Finding 4's +88% is the sum of two effects. **EXP-0004 split them on this host**
 at 42% pinned, from the timeline: in cold 128-token runs pinning saves 42.1 ms
 per token at 2048 MiB, 86% of it avoided page faults; warm, the 9.6 ms saved is
-5.4 DMA rate (the removal of staging contention), 2.8 faults and 1.5 staging.
-So pinning pays without faults too, **on this host's memory system**. What still
-needs a host with more RAM is whether that DMA-rate part survives where the page
-cache never misses and memory is less contended.
+5.4 DMA rate (the removal of staging contention), 2.8 faults and 1.5 staging. So
+pinning pays without faults too, **on this host's memory system**. EXP-0005
+repeated the split with 80% of the expert bytes pinned (98% of warm upload
+bytes): 86% of the 16.52 ms warm gain is DMA rate and fast-copy idle, 13%
+faults. What still needs a host with more RAM is whether that DMA-rate part
+survives where the page cache never misses and memory is less contended.
 
 **To settle:** ROADMAP R4, which needs **a smaller MoE model** whose expert
 working set fits comfortably in RAM - something in the 4 to 8 GiB range. The only
@@ -210,23 +269,6 @@ the prefill could dominate, and this project has no number for it.
 **To settle:** run B4. Cheap. Upstream #30594 is the fix, so this is about sizing
 the problem, not solving it.
 
-## Q9 - Does `--load-mode none` already do what the pinning commit does?
-
-RESULTS.md leaves this open explicitly. `--load-mode none` puts all experts in a
-pinned host buffer, at the cost of pinning the full 18.3 GiB and reading the whole
-file at startup.
-
-**To settle:** ROADMAP R5. One existing flag, no code.
-
-**Caution:** pinning 18.3 GiB of 31.11 GiB with 14 GiB free may drive the host
-into swap. Windows also charges pinned pages to a budget of about half the RAM,
-and 15266 MiB is the most ever registered here, so the full pinned buffer may
-simply fail to allocate (level 4). Check free RAM first and be ready to abort.
-Run it as an arm of ROADMAP R11.
-
-**Why it matters:** if it matches capped in-place pinning, the pinning commit has
-no upstream value.
-
 ## Settled questions
 
 Kept so they are not reopened without new evidence.
@@ -238,6 +280,7 @@ Kept so they are not reopened without new evidence.
 | Should frequency replace recency everywhere? | No - it costs 2 to 3 points above the crossover | Finding 3, level 1 |
 | Is counter aging optional? | No - 6 to 9 points over a multi-topic session | FAILED_APPROACHES.md |
 | Sample the LRU end or uniformly? | Uniformly: 14.2% vs 1.1% at 256 MiB | Finding 3, level 1 |
-| Does the cache change generated output? | No, byte-identical in every configuration | Correctness invariant, level 1 |
+| Does the cache change generated output? | No, byte-identical in every configuration **with every expert computed on the GPU**. With the cache off, or a group with no slots, those experts run on the CPU and the text diverges after about 65 to 110 tokens (EXP-0005) | Correctness invariant, level 1 |
 | **Q1** - do the simulated rankings hold on `d854d98b`? | **Yes.** Simulator exact to hit and fill counts on all four traces; every figure within +0.45 points; no ranking changed; crossover unmoved | EXP-0001, level 1 |
 | **Q6** - is the host-to-device copy overlapped with compute? | **No.** 0 ns of overlap in every token of 15 traced runs; one stream and two host waits per MoE layer. A warm 2048 MiB token is 12.8 compute + 27.1 DMA + 0.1 read-back + 16.1 host waits; overlap could hide at most 9.4 ms of it | EXP-0004, level 1 (level 2 for the mechanism); Findings 4, 9, 10 |
+| **Q9** - does `--load-mode none` already do what the pinning commit does? | **Partly, on this host.** It beats address-order pinning at 15000 MiB by 1.14 ms but not profile order. It is about 80% pinned (a 4 GiB chunk silently falls back to pageable at the budget), 38.21 ms warm against 39.35 for address-order pinning and 36.65 for profile order at 15000 MiB (tokens 387-841), and it loads in 15 s instead of 6.3 to 7.5 | EXP-0005, level 1; Finding 11 |

@@ -1,0 +1,31 @@
+-- cache-off 
+524
+-- cache2048-lru LLAMA_MOE_CACHE_SAMPLE=0
+524
+-- cache2048-auto 
+524
+-- cache528-lru LLAMA_MOE_CACHE_SAMPLE=0
+524
+-- cache528-auto 
+524
+-- cache2048-s16 LLAMA_MOE_CACHE_SAMPLE=16
+524
+-- cache528-dist0 LLAMA_MOE_CACHE_DIST=0
+524
+-- cache256-auto 
+524
+-- cache1024-pinned GGML_CUDA_REGISTER_HOST=1
+524
+-- cache2048-pinprof GGML_CUDA_REGISTER_HOST=1 LLAMA_MOE_PIN_MIB=15000 LLAMA_MOE_PIN_PROFILE=C:/nsys/exp0005/profile_bcd.csv
+524
+
+== diff against cache-off ==
+  OK    cache1024-pinned
+  OK    cache2048-auto
+  OK    cache2048-lru
+  OK    cache2048-pinprof
+  OK    cache2048-s16
+  OK    cache256-auto
+  OK    cache528-auto
+  OK    cache528-dist0
+  OK    cache528-lru

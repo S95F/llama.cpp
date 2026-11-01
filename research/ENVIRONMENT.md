@@ -13,7 +13,7 @@ breaks every binary.
 | Link | PCIe 4.0 x8, `current` = `max` for both gen and width; 15.75 GB/s raw, **pinned copies measured at 12.8 GB/s** (EXP-0004) |
 | Copy engines | **1** (`asyncEngineCount`), `concurrentKernels = 1`, `pageableMemoryAccess = 0` (`device_query.json`, EXP-0004) |
 | CPU | AMD Ryzen 7 9700X, 8 cores / 16 threads |
-| RAM | 31.11 GiB total; 14 GiB free at the 2026-10-25 session start, 16.45 to 18.24 GiB during EXP-0004 |
+| RAM | 31.11 GiB total; 14 GiB free at the 2026-10-25 session start, 16.45 to 18.24 GiB during EXP-0004, 17.09 GiB available at the start of EXP-0005 and 19.67 to 21.14 GiB before its runs' evictions (rising through the session) |
 | OS | Windows 11 Pro 10.0.26300 |
 
 Queried with:
@@ -139,10 +139,28 @@ Recorded explicitly so no document implies these were tested.
   (the next pageable run prefilled in 3.7 to 7.3 s instead of 13.4 to 13.8 s;
   after a pageable run the next one started cold), so the page-cache state a run
   starts in depends on what ran before. **Flushing it needs an admin tool** (the
-  standby list), which these sessions do not run; a cold arm needs the user.
-- **Pinned memory is capped near half of RAM** by WDDM's budget. The branch pins
-  at most RAM/4 by default (7842 MiB here, 42% of the experts);
-  `LLAMA_MOE_PIN_MIB` raises it, and 15266 MiB (81%) is the most ever registered.
+  standby list), which these sessions do not run, but EXP-0005's `evict.py`
+  empties it by memory pressure without one (0 to 7 of 256 probed pages cached;
+  see the eviction bullet below). That fixes the launch state, not the state at
+  prefill, which the load's prefetch refills.
+- **Pinned memory is capped near half of RAM** by WDDM's budget: about 15 GiB
+  (EXP-0005: `cudaMallocHost` refused at 15360 MiB after 14848; 15243 to 15266
+  MiB granted at other times). The branch pins at most RAM/4 by default (7842
+  MiB of whole tensors here, 7943 MiB in profile order); `LLAMA_MOE_PIN_MIB`
+  raises it. **At about 15 GiB pinned the desktop runs close to empty**: address
+  order at 15000 MiB left 243 to 814 MiB available, and one run was stopped by
+  the watchdog at 205 MiB. Other processes holding pinned memory count against
+  the same budget.
+- **Eviction without admin rights trims every other process** (EXP-0005).
+  `evict.py` commits and touches about 20 GiB, which pushes the desktop's working
+  sets to the pagefile. They page back in during the next run (system-wide disk
+  and paging counters include them), and available RAM drifted up 1.5 GiB over
+  the session. Interactive apps may be sluggish for a while after a run.
+- **Other GPU and RAM users.** An idle ComfyUI server and other processes held
+  about 1.1 GiB of VRAM through EXP-0004 and 0005 (7051 or 7075 MiB free in
+  EXP-0004's logs, 7051 in every EXP-0005 log). Steam, Battle.net (launchers,
+  idle) and Discord were running; no game was. CUPTI traces only this process,
+  so "idle" cannot exclude another process's GPU use.
 - **Fetching `upstream` may fail in a sandboxed session** (`git fetch upstream`
   exited 53, no network, on 2026-10-25). When it does, "no new upstream commits"
   means "none known locally", not "none exist". The base has since moved twice

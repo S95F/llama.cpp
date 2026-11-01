@@ -1,0 +1,8 @@
+0.05.838.674 I impl:      CUDA0 MoE cache size =  2044.11 MiB for 18760.00 MiB of host experts
+0.05.854.297 I ranges_by_use: pinning the experts most selected in 'C:/nsys/exp0005/profile_bcd.csv' first (244824 selections)
+0.06.097.157 I pin_host_experts: registered 14923.83 MiB of host experts as pinned memory (3836.64 MiB left pageable) in 4881 ranges
+0.06.118.535 I sampler seed: 4294967295
+0.11.102.491 I common_perf_print: prompt eval time =    3599.87 ms /    46 tokens (   78.26 ms per token,    12.78 tokens per second)
+0.11.102.493 I common_perf_print:        eval time =    1372.93 ms /    31 runs   (   44.29 ms per token,    22.58 tokens per second)
+0.11.112.742 I llama_moe_cache: ubatch <= 8: hits = 5679, misses = 4249, hit rate = 57.20%, uploaded = 7804.12 MiB
+0.11.112.746 I llama_moe_cache: large batches: 6315 uploads of uncached experts, 5707.74 MiB

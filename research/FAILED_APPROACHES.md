@@ -218,6 +218,75 @@ deterministic) and disagree with anything run in a different order or for longer
 **Guard:** quote a stated warm window for steady state, record the prefill time
 as a coldness check, and order runs by page-cache state as well as by arm.
 
+### A short correctness gate against the cache-off output
+
+Found by EXP-0005. B3 decoded 64 tokens and required every cache configuration to
+match `--moe-cache-mib 0` byte for byte, and it passed in every iteration. At 256
+tokens every cache configuration differs from cache-off. The cache is not wrong:
+with the cache off, decode computes the experts on the CPU (host weights, batch
+under the offload threshold of 32), and CPU and CUDA round differently. The
+cache-off text first differs at byte 535; 64 tokens end at byte 524. A cache
+group with no slots (256 to 586 MiB) does the same for its layer, from about
+token 110. With `GGML_OP_OFFLOAD_MIN_BATCH=1`, all ten configurations agree.
+
+**How it presents:** a gate that passes and seems to prove a strong invariant
+("bit-identical with the cache off"), but compares two compute devices and
+passes only because it stops early.
+
+**Guard:** compute every expert on the same device in a correctness gate (the
+script now exports `GGML_OP_OFFLOAD_MIN_BATCH=1`), and decode long enough for
+rounding to show (256 tokens).
+
+### Fixing only the launch page-cache state (R10 as first framed)
+
+Found by EXP-0005. R10 proposed that reps would agree within 3% if every run
+started from the same page-cache state. Eviction by memory pressure did make the
+launch state reproducible (0 to 7 of 256 probed pages cached before all 12
+runs), but reps still differed by up to 3.9% warm and 28% in tokens 3-130, r1
+was slower than r2 in all six arms, and the prefill coldness check did not
+reproduce (604 against 44 slow copies). The load's prefetch refills the page
+cache as far as available RAM allows (a hypothesis, confounded with run order),
+and available RAM rose 1.5 GiB through the session, plausibly (not measured)
+because each eviction trimmed other processes.
+
+**How it presents:** a verified-cold start, then a drift that looks like an arm
+effect when arms are not interleaved, and that ABBA averages away only if it is
+linear.
+
+**Guard:** hold RAM headroom fixed through each run (ROADMAP R16), record
+available RAM before every run, and report per-round pair differences.
+
+### Summing typeperf rows as one second each
+
+Found by EXP-0005. During a model load typeperf rows stall for up to 5.5 s, and
+each row's cooked rate is the average over its real interval. Summing the rates
+as if every row were 1 s undercounted the mmap runs' disk reads 1.8 to 4.3x (the
+`--load-mode none` runs, whose rows never stalled, 1.0x).
+
+**Guard:** integrate each rate over the timestamp difference to its previous
+row (`analyze.py`), and calibrate the counter against a known read
+(`calib_disk_counter.txt`).
+
+---
+
+## Code failures
+
+### Pinning single experts without splitting the copies
+
+Found by EXP-0005. The first profile-pinned smoke run died in prefill (only
+EXP-0005.md records it; the rerun overwrote its log) with `CUDA error: invalid
+argument` in `ggml_backend_cuda_set_tensor_async`. Every expert tensor starts
+off a page boundary, so a pinned expert's page-rounded range covers the first
+partial page of its neighbour. A copy of that neighbour, or of a run of
+consecutive experts, then starts inside a registered range and runs past it, and
+the driver rejects such copies (`cross_copy.txt`). Address order never hit this,
+because it pins whole tensors and no copy spans two tensors.
+
+**Guard:** route every host upload of expert data through
+`llama_moe_cache_set_async`, which splits at the edges of every range pinned in
+the process (a second context on the same model included), and keep the
+scheduler's whole-tensor fallback on it while anything is pinned.
+
 ---
 
 ## Not a failure, but recorded to prevent a wasted iteration

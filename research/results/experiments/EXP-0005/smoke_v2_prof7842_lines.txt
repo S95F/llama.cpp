@@ -1,0 +1,6 @@
+0.04.648.683 I ranges_by_use: pinning the experts most selected in 'C:/nsys/exp0005/profile_bcd.csv' first (244824 selections)
+0.05.178.986 I pin_host_experts: registered 7943.22 MiB of host experts as pinned memory (10817.25 MiB left pageable) in 7299 ranges
+0.16.762.109 I common_perf_print: prompt eval time =    7739.08 ms /    46 tokens (  168.24 ms per token,     5.94 tokens per second)
+0.16.762.110 I common_perf_print:        eval time =    3805.73 ms /    31 runs   (  122.77 ms per token,     8.15 tokens per second)
+0.16.771.623 I llama_moe_cache: ubatch <= 8: hits = 5679, misses = 4249, hit rate = 57.20%, uploaded = 7804.12 MiB
+0.16.771.627 I llama_moe_cache: large batches: 6315 uploads of uncached experts, 5707.74 MiB

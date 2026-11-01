@@ -17,9 +17,14 @@ BIN=${BIN:-./build/bin}
 OUT=${OUT:-moe-bench/out/correctness}
 NCMOE=${NCMOE:-40}
 THREADS=${THREADS:-8}
-NGEN=${NGEN:-64}
+NGEN=${NGEN:-256}
+
+# experts the cache does not serve would run on the CPU, whose rounding differs from CUDA's and flips a greedy token
+# within a few hundred tokens: offload them too, so that only the movement of the experts differs (EXP-0005)
+export GGML_OP_OFFLOAD_MIN_BATCH=${GGML_OP_OFFLOAD_MIN_BATCH:-1}
 
 mkdir -p "$OUT"
+rm -f "$OUT"/*.txt
 PROMPT=moe-bench/prompt.txt
 
 # run <name> <bin dir> <env assignment|-> <extra args...>
@@ -53,6 +58,11 @@ run cache256-auto    "$BIN" -                         --moe-cache-mib 256
 
 # pinned host expert pages must not change anything either
 run cache1024-pinned "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 1024
+
+# nor pinning by expert, ordered by a selection trace (PIN_PROFILE, the LLAMA_MOE_CACHE_TRACE format)
+if [ -n "${PIN_PROFILE:-}" ]; then
+    LLAMA_MOE_PIN_PROFILE="$PIN_PROFILE" run cache2048-pinprof "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
+fi
 
 if [ -n "$BASE_BIN" ]; then
     run upstream-off  "$BASE_BIN" - --moe-cache-mib 0

@@ -1,0 +1,17 @@
+C:/nsys/exp0005/addr15000_r1.sqlite: 839 tokens, 42.82 ms/token (median 39.71)
+  per token: compute 12.90  h2d 20.00  d2h 0.12  idle 9.80  compute/h2d overlap 0.000 ms
+  shares: compute 30.1%  h2d 46.7%  d2h 0.3%  memset 0.0%  idle 22.9%  overlap_compute_h2d 0.0%
+  overlap / min(compute, h2d) = 0.00%
+  h2d 223.8 MiB/token (223.8 expert), 11.73 GB/s while copying, 5.48 GB/s over token time
+  by source kind MiB/token: {'pageable': 45.919742625148984, 'pinned': 177.91096791209424}
+  calls/token: {'n_h2d': 414.20858164481524, 'n_h2d_expert': 364.20858164481524, 'n_h2d_small': 50, 'n_d2h': 41, 'n_graph_launch': 40.86769964243147, 'n_kernel': 5.424314660309893}
+  host API ms/token: cudaGraphLaunch 1.09, cudaMemcpyAsync 12.90, cudaStreamSynchronize 27.72
+  GPU idle ms/token while host in: cudaStreamSynchronize 2.31, cudaMemcpyAsync 6.63, cudaGraphLaunch 0.12, cudaLaunchKernel 0.00, no_api 0.74, expert_copy_slow 4.29, expert_copy_fast 1.67
+  host ms/token in expert copies: slow 4.42, fast 7.58 (2.7 slow copies/token)
+  app registered: registered 14946.38 MiB of host experts as pinned memory (3814.09 MiB left pageable) in 96 ranges
+  expert copies from pageable: n=61785, aggregate GPU 8.81 GB/s, host 4.52 GB/s, per-copy GPU median 8.25
+  expert copies from pageable/fast: n=59484, aggregate GPU 8.78 GB/s, host 7.43 GB/s, per-copy GPU median 8.24
+  expert copies from pageable/slow: n=2301, aggregate GPU 9.91 GB/s, host 0.41 GB/s, per-copy GPU median 9.58
+  expert copies from pinned: n=243786, aggregate GPU 12.86 GB/s, host 138.24 GB/s, per-copy GPU median 12.90
+  expert copies from pinned/fast: n=243785, aggregate GPU 12.86 GB/s, host 138.30 GB/s, per-copy GPU median 12.90
+  expert copies from pinned/slow: n=1, aggregate GPU 12.88 GB/s, host 1.24 GB/s, per-copy GPU median 12.88

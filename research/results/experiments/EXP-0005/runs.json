@@ -1,0 +1,983 @@
+{
+ "addr15000_r1": {
+  "log": {
+   "pageable_mib": 3814.09,
+   "ranges": 96.0,
+   "ready_s": 6.44,
+   "register_s": 0.004,
+   "registered_mib": 14946.38
+  },
+  "low": "lowest available 205 MiB, KILLED: below 300 MiB for 20 s",
+  "pre": "evict: touched 19968 MiB in 4.0 s, available fell to 610 MiB; before {'avail': 20546, 'free': 781, 'standby_normal': 19500, 'standby_reserve': 131, 'standby_core': 96} after {'avail': 20583, 'free': 19938, 'standby_normal': 520, 'standby_reserve': 1, 'standby_core': 96}\nprobe: 2/256 expert pages cached (0.8%), median 158 us, p90 218 us",
+  "prefill": {
+   "expert_copies": 6630,
+   "mib": 7742.36279296875,
+   "slow": 335,
+   "span_s": 4.21
+  },
+  "tag": "addr15000_r1",
+  "windows": {
+   "131-386": {
+    "compute": 12.86951325390625,
+    "d2h": 0.1222103359375,
+    "dma": 19.9415446875,
+    "idle": 10.413173625,
+    "idle_fast": 1.92669858984375,
+    "idle_slow": 4.6546270390625,
+    "idle_sync": 2.3083385859375,
+    "mib": 225.03427124023438,
+    "ms": 43.34644190234375,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.7938364827709112,
+    "slow_per_token": 2.9140625
+   },
+   "3-1022": {
+    "compute": 12.90150757330155,
+    "d2h": 0.1224323599523242,
+    "dma": 20.002248567342072,
+    "idle": 9.798107245530392,
+    "idle_fast": 1.6716683957091776,
+    "idle_slow": 4.287143858164482,
+    "idle_sync": 2.309755392133492,
+    "mib": 223.7670217520858,
+    "ms": 42.82429574612634,
+    "n": 839,
+    "overlap_ns": 0,
+    "pinned_share": 0.7948461025972198,
+    "slow_per_token": 2.743742550655542
+   },
+   "3-130": {
+    "compute": 12.8607729921875,
+    "d2h": 0.1220968046875,
+    "dma": 19.79495678125,
+    "idle": 20.5344408359375,
+    "idle_fast": 1.8440270859375,
+    "idle_slow": 14.9635669609375,
+    "idle_sync": 2.273744109375,
+    "mib": 222.48406982421875,
+    "ms": 53.3122674140625,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.7840339360433469,
+    "slow_per_token": 9.9453125
+   },
+   "387-1022": {
+    "compute": 12.930968171428571,
+    "d2h": 0.12265167692307692,
+    "dma": 20.09471789010989,
+    "idle": 6.431716712087913,
+    "idle_fast": 1.4796911604395604,
+    "idle_slow": 1.0769068219780218,
+    "idle_sync": 2.320683186813187,
+    "mib": 223.41493818681317,
+    "ms": 39.580054450549454,
+    "n": 455,
+    "overlap_ns": 0,
+    "pinned_share": 0.7984472477751839,
+    "slow_per_token": 0.621978021978022
+   }
+  }
+ },
+ "addr15000_r2": {
+  "log": {
+   "eval_ms": 40860.6,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "pageable_mib": 3814.09,
+   "prompt_eval_ms": 2912.25,
+   "ranges": 96.0,
+   "ready_s": 6.51,
+   "register_s": 0.004,
+   "registered_mib": 14946.38
+  },
+  "low": "lowest available 730 MiB",
+  "pre": "evict: touched 20992 MiB in 3.9 s, available fell to 614 MiB; before {'avail': 21575, 'free': 1075, 'standby_normal': 20299, 'standby_reserve': 49, 'standby_core': 117} after {'avail': 21630, 'free': 20969, 'standby_normal': 502, 'standby_reserve': 1, 'standby_core': 119}\nprobe: 3/256 expert pages cached (1.2%), median 158 us, p90 218 us",
+  "prefill": {
+   "expert_copies": 6630,
+   "mib": 7742.36279296875,
+   "slow": 78,
+   "span_s": 3.73
+  },
+  "tag": "addr15000_r2",
+  "windows": {
+   "131-386": {
+    "compute": 12.88327473046875,
+    "d2h": 0.1222196953125,
+    "dma": 20.2903391796875,
+    "idle": 7.39063444140625,
+    "idle_fast": 1.58633212890625,
+    "idle_slow": 2.0453782734375,
+    "idle_sync": 2.22157500390625,
+    "mib": 225.03427124023438,
+    "ms": 40.686468046875,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.7938364827709112,
+    "slow_per_token": 1.31640625
+   },
+   "3-1022": {
+    "compute": 12.898911914705883,
+    "d2h": 0.12210212647058824,
+    "dma": 20.003956371568627,
+    "idle": 7.102782842156863,
+    "idle_fast": 1.5965074490196078,
+    "idle_slow": 1.783821781372549,
+    "idle_sync": 2.2229084539215687,
+    "mib": 222.07527573529413,
+    "ms": 40.12775325490196,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.7953398456731635,
+    "slow_per_token": 1.1558823529411764
+   },
+   "3-130": {
+    "compute": 12.84518084375,
+    "d2h": 0.12284428125,
+    "dma": 19.8468945859375,
+    "idle": 12.95318109375,
+    "idle_fast": 2.61958678125,
+    "idle_slow": 6.707355625,
+    "idle_sync": 2.2101129453125,
+    "mib": 222.48406982421875,
+    "ms": 45.7681008046875,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.7840339360433469,
+    "slow_per_token": 4.5
+   },
+   "387-1022": {
+    "compute": 12.916019927672956,
+    "d2h": 0.12190543867924529,
+    "dma": 19.92029270754717,
+    "idle": 5.809479405660378,
+    "idle_fast": 1.3947004166666668,
+    "idle_slow": 0.687641287735849,
+    "idle_sync": 2.2260203852201257,
+    "mib": 220.80196049528303,
+    "ms": 38.76769747955975,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.7982492866569281,
+    "slow_per_token": 0.41823899371069184
+   }
+  }
+ },
+ "addr7842_r1": {
+  "log": {
+   "eval_ms": 48665.36,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "pageable_mib": 10918.27,
+   "prompt_eval_ms": 3015.12,
+   "ranges": 50.0,
+   "ready_s": 6.63,
+   "register_s": 0.003,
+   "registered_mib": 7842.2
+  },
+  "low": "lowest available 1776 MiB",
+  "pre": "evict: touched 19712 MiB in 4.3 s, available fell to 539 MiB; before {'avail': 20140, 'free': 758, 'standby_normal': 19125, 'standby_reserve': 101, 'standby_core': 115} after {'avail': 20242, 'free': 19674, 'standby_normal': 417, 'standby_reserve': 1, 'standby_core': 119}\nprobe: 0/256 expert pages cached (0.0%), median 159 us, p90 230 us",
+  "prefill": {
+   "expert_copies": 6630,
+   "mib": 7742.36279296875,
+   "slow": 465,
+   "span_s": 3.86
+  },
+  "tag": "addr7842_r1",
+  "windows": {
+   "131-386": {
+    "compute": 12.9276792578125,
+    "d2h": 0.120757765625,
+    "dma": 23.09324152734375,
+    "idle": 12.41425687890625,
+    "idle_fast": 3.69802773046875,
+    "idle_slow": 4.95254551953125,
+    "idle_sync": 2.17437695703125,
+    "mib": 225.03427124023438,
+    "ms": 48.5559354296875,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.47588743735679484,
+    "slow_per_token": 3.05078125
+   },
+   "3-1022": {
+    "compute": 12.939679714705882,
+    "d2h": 0.12047198039215687,
+    "dma": 22.72651148137255,
+    "idle": 11.925404157843138,
+    "idle_fast": 3.5353048147058823,
+    "idle_slow": 4.672942934313726,
+    "idle_sync": 2.160765037254902,
+    "mib": 222.07527573529413,
+    "ms": 47.71206733431373,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.4831166659913698,
+    "slow_per_token": 2.976470588235294
+   },
+   "3-130": {
+    "compute": 12.8452282109375,
+    "d2h": 0.1203205234375,
+    "dma": 22.4726689296875,
+    "idle": 24.8995706953125,
+    "idle_fast": 5.7478399375,
+    "idle_slow": 15.4552061875,
+    "idle_sync": 2.191696640625,
+    "mib": 222.48406982421875,
+    "ms": 60.337788359375,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.44739084338697555,
+    "slow_per_token": 10.703125
+   },
+   "387-1022": {
+    "compute": 12.963519194968553,
+    "d2h": 0.120387429245283,
+    "dma": 22.62998468081761,
+    "idle": 9.117480237421384,
+    "idle_fast": 3.024516194968553,
+    "idle_slow": 2.3903832515723273,
+    "idle_sync": 2.149060797169811,
+    "mib": 220.80196049528303,
+    "ms": 44.83137154245283,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.49332711697210024,
+    "slow_per_token": 1.3915094339622642
+   }
+  }
+ },
+ "addr7842_r2": {
+  "log": {
+   "eval_ms": 45317.87,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "pageable_mib": 10918.27,
+   "prompt_eval_ms": 2493.83,
+   "ranges": 50.0,
+   "ready_s": 6.93,
+   "register_s": 0.003,
+   "registered_mib": 7842.2
+  },
+  "low": "lowest available 990 MiB",
+  "pre": "evict: touched 20992 MiB in 4.3 s, available fell to 669 MiB; before {'avail': 21642, 'free': 995, 'standby_normal': 20413, 'standby_reserve': 81, 'standby_core': 116} after {'avail': 21664, 'free': 20968, 'standby_normal': 545, 'standby_reserve': 2, 'standby_core': 116}\nprobe: 7/256 expert pages cached (2.7%), median 155 us, p90 223 us",
+  "prefill": {
+   "expert_copies": 6630,
+   "mib": 7742.36279296875,
+   "slow": 37,
+   "span_s": 3.25
+  },
+  "tag": "addr7842_r2",
+  "windows": {
+   "131-386": {
+    "compute": 12.9179753828125,
+    "d2h": 0.12057034765625,
+    "dma": 23.223050375,
+    "idle": 8.67354195703125,
+    "idle_fast": 3.88916825,
+    "idle_slow": 1.058461140625,
+    "idle_sync": 2.14258201953125,
+    "mib": 225.03427124023438,
+    "ms": 44.9351380625,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.47588743735679484,
+    "slow_per_token": 0.73828125
+   },
+   "3-1022": {
+    "compute": 12.938841938235294,
+    "d2h": 0.12015701470588235,
+    "dma": 22.849811497058823,
+    "idle": 8.572518097058824,
+    "idle_fast": 3.670861624509804,
+    "idle_slow": 1.2152716813725488,
+    "idle_sync": 2.1398752117647057,
+    "mib": 222.07527573529413,
+    "ms": 44.48132854705882,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.4831166659913698,
+    "slow_per_token": 0.8450980392156863
+   },
+   "3-130": {
+    "compute": 12.886185625,
+    "d2h": 0.1200826953125,
+    "dma": 22.5782891640625,
+    "idle": 14.7635722421875,
+    "idle_fast": 6.5832016875,
+    "idle_slow": 4.55557596875,
+    "idle_sync": 2.1236181171875,
+    "mib": 222.48406982421875,
+    "ms": 50.3481297265625,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.44739084338697555,
+    "slow_per_token": 3.3359375
+   },
+   "387-1022": {
+    "compute": 12.957838551886793,
+    "d2h": 0.12000559905660378,
+    "dma": 22.75422298427673,
+    "idle": 7.285856086477987,
+    "idle_fast": 2.9968584418238993,
+    "idle_slow": 0.606127891509434,
+    "idle_sync": 2.142057547169811,
+    "mib": 220.80196049528303,
+    "ms": 43.11792322169811,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.49332711697210024,
+    "slow_per_token": 0.3867924528301887
+   }
+  }
+ },
+ "none_r1": {
+  "log": {
+   "eval_ms": 38917.22,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "prompt_eval_ms": 1075.86,
+   "ready_s": 15.23
+  },
+  "low": "lowest available 480 MiB",
+  "pre": "evict: touched 20480 MiB in 4.2 s, available fell to 512 MiB; before {'avail': 20958, 'free': 989, 'standby_normal': 19773, 'standby_reserve': 69, 'standby_core': 102} after {'avail': 20995, 'free': 20455, 'standby_normal': 408, 'standby_reserve': 1, 'standby_core': 102}\nprobe: 0/256 expert pages cached (0.0%), median 159 us, p90 227 us",
+  "prefill": {
+   "expert_copies": 8384,
+   "mib": 7733.30029296875,
+   "slow": 1,
+   "span_s": 12.71
+  },
+  "tag": "none_r1",
+  "windows": {
+   "131-386": {
+    "compute": 12.82809696484375,
+    "d2h": 0.122561046875,
+    "dma": 20.04418579296875,
+    "idle": 5.21651165234375,
+    "idle_fast": 1.57996696484375,
+    "idle_slow": 0.0041687421875,
+    "idle_sync": 2.14862287109375,
+    "mib": 225.03427124023438,
+    "ms": 38.21135545703125,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.8084500954751963,
+    "slow_per_token": 0.1484375
+   },
+   "3-1022": {
+    "compute": 12.863975771568628,
+    "d2h": 0.12293172450980393,
+    "dma": 19.62739333137255,
+    "idle": 5.70149813627451,
+    "idle_fast": 1.9662571784313727,
+    "idle_slow": 0.006538814705882353,
+    "idle_sync": 2.182887216666667,
+    "mib": 222.07527573529413,
+    "ms": 38.31579896372549,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.8114055381265157,
+    "slow_per_token": 0.14019607843137255
+   },
+   "3-130": {
+    "compute": 12.836214296875,
+    "d2h": 0.12240709375,
+    "dma": 18.7182831953125,
+    "idle": 7.752261859375,
+    "idle_fast": 4.0375459921875,
+    "idle_slow": 0.00659084375,
+    "idle_sync": 2.142549875,
+    "mib": 222.48406982421875,
+    "ms": 39.4291664453125,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.7985284315975341,
+    "slow_per_token": 0.109375
+   },
+   "387-1022": {
+    "compute": 12.884004770440253,
+    "d2h": 0.12318651415094341,
+    "dma": 19.64259337421384,
+    "idle": 5.4839805,
+    "idle_fast": 1.7048819056603775,
+    "idle_slow": 0.007482334905660378,
+    "idle_sync": 2.20479736163522,
+    "mib": 220.80196049528303,
+    "ms": 38.13376515880503,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.815229284230267,
+    "slow_per_token": 0.1430817610062893
+   }
+  }
+ },
+ "none_r2": {
+  "log": {
+   "eval_ms": 38469.39,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "prompt_eval_ms": 1119.87,
+   "ready_s": 14.84
+  },
+  "low": "lowest available 1005 MiB",
+  "pre": "evict: touched 20736 MiB in 3.4 s, available fell to 650 MiB; before {'avail': 21348, 'free': 20450, 'standby_normal': 685, 'standby_reserve': 88, 'standby_core': 102} after {'avail': 21384, 'free': 20699, 'standby_normal': 543, 'standby_reserve': 9, 'standby_core': 102}\nprobe: 0/256 expert pages cached (0.0%), median 155 us, p90 223 us",
+  "prefill": {
+   "expert_copies": 8384,
+   "mib": 7733.30029296875,
+   "slow": 1,
+   "span_s": 12.66
+  },
+  "tag": "none_r2",
+  "windows": {
+   "131-386": {
+    "compute": 12.86116840625,
+    "d2h": 0.12210116015625,
+    "dma": 20.214059078125,
+    "idle": 4.9681429140625,
+    "idle_fast": 1.329907125,
+    "idle_slow": 0.0047521875,
+    "idle_sync": 2.14080550390625,
+    "mib": 225.03427124023438,
+    "ms": 38.16547155859375,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.8084500954751963,
+    "slow_per_token": 0.17578125
+   },
+   "3-1022": {
+    "compute": 12.873939374509805,
+    "d2h": 0.12202812647058824,
+    "dma": 19.93083037352941,
+    "idle": 4.948310602941177,
+    "idle_fast": 1.3126325078431373,
+    "idle_slow": 0.00498209705882353,
+    "idle_sync": 2.121061861764706,
+    "mib": 222.07527573529413,
+    "ms": 37.87510847745098,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.8114055381265157,
+    "slow_per_token": 0.1627450980392157
+   },
+   "3-130": {
+    "compute": 12.8276630546875,
+    "d2h": 0.1222847421875,
+    "dma": 20.1064597265625,
+    "idle": 4.9980226953125,
+    "idle_fast": 1.3849825,
+    "idle_slow": 0.0068731875,
+    "idle_sync": 2.1193514921875,
+    "mib": 222.48406982421875,
+    "ms": 38.05443021875,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.7985284315975341,
+    "slow_per_token": 0.2265625
+   },
+   "387-1022": {
+    "compute": 12.888393363207546,
+    "d2h": 0.12194708333333333,
+    "dma": 19.781479578616352,
+    "idle": 4.930322836477988,
+    "idle_fast": 1.2911181981132074,
+    "idle_slow": 0.004694042452830188,
+    "idle_sync": 2.113458960691824,
+    "mib": 220.80196049528303,
+    "ms": 37.72214286163522,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.815229284230267,
+    "slow_per_token": 0.14465408805031446
+   }
+  }
+ },
+ "off_r1": {
+  "log": {
+   "eval_ms": 60141.94,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "prompt_eval_ms": 2973.98,
+   "ready_s": 6.3
+  },
+  "low": "lowest available 2727 MiB",
+  "pre": "evict: touched 19456 MiB in 4.7 s, available fell to 766 MiB; before {'avail': 20202, 'free': 422, 'standby_normal': 19592, 'standby_reserve': 40, 'standby_core': 110} after {'avail': 20254, 'free': 19457, 'standby_normal': 652, 'standby_reserve': 3, 'standby_core': 110}\nprobe: 3/256 expert pages cached (1.2%), median 151 us, p90 217 us",
+  "prefill": {
+   "expert_copies": 6630,
+   "mib": 7742.36279296875,
+   "slow": 604,
+   "span_s": 3.79
+  },
+  "tag": "off_r1",
+  "windows": {
+   "131-386": {
+    "compute": 13.002882140625,
+    "d2h": 0.11895837890625,
+    "dma": 27.47393687109375,
+    "idle": 21.78485913671875,
+    "idle_fast": 6.6116993046875,
+    "idle_slow": 11.52394854296875,
+    "idle_sync": 2.0771788984375,
+    "mib": 225.03427124023438,
+    "ms": 62.38063652734375,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.00010798536523761967,
+    "slow_per_token": 6.8671875
+   },
+   "3-1022": {
+    "compute": 12.981368542156861,
+    "d2h": 0.11848140098039216,
+    "dma": 27.050401100000002,
+    "idle": 18.71167055980392,
+    "idle_fast": 6.315297907843137,
+    "idle_slow": 8.783594542156862,
+    "idle_sync": 2.063160416666667,
+    "mib": 222.07527573529413,
+    "ms": 58.86192160294118,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.00011160169871706129,
+    "slow_per_token": 5.3882352941176475
+   },
+   "3-130": {
+    "compute": 12.84833709375,
+    "d2h": 0.118384328125,
+    "dma": 26.0726549921875,
+    "idle": 38.6794214453125,
+    "idle_fast": 9.712344140625,
+    "idle_slow": 25.3915471484375,
+    "idle_sync": 2.079049546875,
+    "mib": 222.48406982421875,
+    "ms": 77.718797859375,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.00010771453413258295,
+    "slow_per_token": 16.59375
+   },
+   "387-1022": {
+    "compute": 12.999482605345912,
+    "d2h": 0.11830894654088049,
+    "dma": 27.0767003836478,
+    "idle": 13.455996992138365,
+    "idle_fast": 5.5123094245283015,
+    "idle_slow": 4.3380779418239,
+    "idle_sync": 2.0543199449685536,
+    "mib": 220.80196049528303,
+    "ms": 53.65048892767295,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.00011387349392482323,
+    "slow_per_token": 2.5377358490566038
+   }
+  }
+ },
+ "off_r2": {
+  "log": {
+   "eval_ms": 54594.05,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "prompt_eval_ms": 2097.62,
+   "ready_s": 6.57
+  },
+  "low": "lowest available 4024 MiB",
+  "pre": "evict: touched 20992 MiB in 4.4 s, available fell to 689 MiB; before {'avail': 21644, 'free': 781, 'standby_normal': 20587, 'standby_reserve': 122, 'standby_core': 116} after {'avail': 21703, 'free': 20966, 'standby_normal': 580, 'standby_reserve': 2, 'standby_core': 116}\nprobe: 3/256 expert pages cached (1.2%), median 154 us, p90 218 us",
+  "prefill": {
+   "expert_copies": 6630,
+   "mib": 7742.36279296875,
+   "slow": 44,
+   "span_s": 2.87
+  },
+  "tag": "off_r2",
+  "windows": {
+   "131-386": {
+    "compute": 13.0142801328125,
+    "d2h": 0.1190766875,
+    "dma": 27.57636944140625,
+    "idle": 13.34955283203125,
+    "idle_fast": 7.0850125,
+    "idle_slow": 2.3129636328125,
+    "idle_sync": 2.14480533984375,
+    "mib": 225.03427124023438,
+    "ms": 54.05927909375,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.00010798536523761967,
+    "slow_per_token": 1.4140625
+   },
+   "3-1022": {
+    "compute": 13.020005976470587,
+    "d2h": 0.11900352352941176,
+    "dma": 26.8186689,
+    "idle": 13.580830988235295,
+    "idle_fast": 7.298948052941176,
+    "idle_slow": 2.244485820588235,
+    "idle_sync": 2.103733369607843,
+    "mib": 222.07527573529413,
+    "ms": 53.53850938823529,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.00011160169871706129,
+    "slow_per_token": 1.4039215686274509
+   },
+   "3-130": {
+    "compute": 12.9160773671875,
+    "d2h": 0.1204261640625,
+    "dma": 26.216199296875,
+    "idle": 19.64699521875,
+    "idle_fast": 11.0347905546875,
+    "idle_slow": 5.0449396796875,
+    "idle_sync": 2.0156230546875,
+    "mib": 222.48406982421875,
+    "ms": 58.899698046875,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.00010771453413258295,
+    "slow_per_token": 3.625
+   },
+   "387-1022": {
+    "compute": 13.043227168238994,
+    "d2h": 0.11868775628930818,
+    "dma": 26.634934262578618,
+    "idle": 12.453060841194969,
+    "idle_fast": 6.633192803459119,
+    "idle_slow": 1.65330906918239,
+    "idle_sync": 2.1049341493710694,
+    "mib": 220.80196049528303,
+    "ms": 52.24991002830189,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.00011387349392482323,
+    "slow_per_token": 0.9528301886792453
+   }
+  }
+ },
+ "prof15000_r1": {
+  "log": {
+   "eval_ms": 37426.45,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "pageable_mib": 3836.64,
+   "profile": "pinning the experts most selected in 'C:/nsys/exp0005/profile_bcd.csv' first (244824 selections)",
+   "prompt_eval_ms": 2724.5,
+   "ranges": 4881.0,
+   "ready_s": 6.99,
+   "register_s": 0.274,
+   "registered_mib": 14923.83
+  },
+  "low": "lowest available 1585 MiB",
+  "pre": "evict: touched 20224 MiB in 4.2 s, available fell to 734 MiB; before {'avail': 20923, 'free': 354, 'standby_normal': 20376, 'standby_reserve': 54, 'standby_core': 102} after {'avail': 20955, 'free': 20191, 'standby_normal': 628, 'standby_reserve': 1, 'standby_core': 102}\nprobe: 1/256 expert pages cached (0.4%), median 157 us, p90 216 us",
+  "prefill": {
+   "expert_copies": 6798,
+   "mib": 7741.753143310547,
+   "slow": 144,
+   "span_s": 3.79
+  },
+  "tag": "prof15000_r1",
+  "windows": {
+   "131-386": {
+    "compute": 12.8413647578125,
+    "d2h": 0.12275587890625,
+    "dma": 18.55518058984375,
+    "idle": 5.61936479296875,
+    "idle_fast": 0.63537846484375,
+    "idle_slow": 1.12134870703125,
+    "idle_sync": 2.31441238671875,
+    "mib": 225.0091564655304,
+    "ms": 37.13866601953125,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.9766636319508292,
+    "slow_per_token": 0.703125
+   },
+   "3-1022": {
+    "compute": 12.869661093137255,
+    "d2h": 0.12255308823529411,
+    "dma": 18.314739821568626,
+    "idle": 5.512296588235294,
+    "idle_fast": 0.5782845147058824,
+    "idle_slow": 1.125083282352941,
+    "idle_sync": 2.2928277647058826,
+    "mib": 222.0517349243164,
+    "ms": 36.81925059117647,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.97736402525824,
+    "slow_per_token": 0.6911764705882353
+   },
+   "3-130": {
+    "compute": 12.825119578125,
+    "d2h": 0.1224953515625,
+    "dma": 18.2806741875,
+    "idle": 5.7470027734375,
+    "idle_fast": 0.7058980078125,
+    "idle_slow": 1.330863546875,
+    "idle_sync": 2.2761790859375,
+    "mib": 222.46274876594543,
+    "ms": 36.975291890625,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.9785737414232045,
+    "slow_per_token": 0.9140625
+   },
+   "387-1022": {
+    "compute": 12.890015143081762,
+    "d2h": 0.1224830817610063,
+    "dma": 18.22481460849057,
+    "idle": 5.421963487421384,
+    "idle_fast": 0.5296200833333333,
+    "idle_slow": 1.0851716116352201,
+    "idle_sync": 2.2874902924528304,
+    "mib": 220.77860648677034,
+    "ms": 36.659276320754714,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.9774060279225149,
+    "slow_per_token": 0.6415094339622641
+   }
+  }
+ },
+ "prof15000_r2": {
+  "log": {
+   "eval_ms": 36871.99,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "pageable_mib": 3836.64,
+   "profile": "pinning the experts most selected in 'C:/nsys/exp0005/profile_bcd.csv' first (244824 selections)",
+   "prompt_eval_ms": 2446.91,
+   "ranges": 4881.0,
+   "ready_s": 7.47,
+   "register_s": 0.258,
+   "registered_mib": 14923.83
+  },
+  "low": "lowest available 1246 MiB",
+  "pre": "evict: touched 20736 MiB in 3.2 s, available fell to 739 MiB; before {'avail': 21475, 'free': 20276, 'standby_normal': 1018, 'standby_reserve': 39, 'standby_core': 103} after {'avail': 21476, 'free': 20706, 'standby_normal': 630, 'standby_reserve': 5, 'standby_core': 103}\nprobe: 1/256 expert pages cached (0.4%), median 157 us, p90 232 us",
+  "prefill": {
+   "expert_copies": 6798,
+   "mib": 7741.753143310547,
+   "slow": 148,
+   "span_s": 3.83
+  },
+  "tag": "prof15000_r2",
+  "windows": {
+   "131-386": {
+    "compute": 12.8438464609375,
+    "d2h": 0.1229691875,
+    "dma": 18.57267971484375,
+    "idle": 5.09703137890625,
+    "idle_fast": 0.64575904296875,
+    "idle_slow": 0.6848777890625,
+    "idle_sync": 2.29508858203125,
+    "mib": 225.0091564655304,
+    "ms": 36.6365267421875,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.9766636319508292,
+    "slow_per_token": 0.4296875
+   },
+   "3-1022": {
+    "compute": 12.874120123529412,
+    "d2h": 0.12267452843137254,
+    "dma": 18.320528800980394,
+    "idle": 4.979803768627451,
+    "idle_fast": 0.5852282029411765,
+    "idle_slow": 0.6908128499999999,
+    "idle_sync": 2.2683735833333336,
+    "mib": 222.0517349243164,
+    "ms": 36.29712722156863,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.97736402525824,
+    "slow_per_token": 0.43333333333333335
+   },
+   "3-130": {
+    "compute": 12.849677359375,
+    "d2h": 0.1224668671875,
+    "dma": 18.282294796875,
+    "idle": 4.8312334921875,
+    "idle_fast": 0.70067671875,
+    "idle_slow": 0.4666315390625,
+    "idle_sync": 2.25402815625,
+    "mib": 222.46274876594543,
+    "ms": 36.085672515625,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.9785737414232045,
+    "slow_per_token": 0.3046875
+   },
+   "387-1022": {
+    "compute": 12.891225047169812,
+    "d2h": 0.12259771698113207,
+    "dma": 18.22672898742138,
+    "idle": 4.962518748427673,
+    "idle_fast": 0.5376286666666666,
+    "idle_slow": 0.7383200566037736,
+    "idle_sync": 2.260507506289308,
+    "mib": 220.77860648677034,
+    "ms": 36.2030705,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.9774060279225149,
+    "slow_per_token": 0.4606918238993711
+   }
+  }
+ },
+ "prof7842_r1": {
+  "log": {
+   "eval_ms": 43856.88,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "pageable_mib": 10817.25,
+   "profile": "pinning the experts most selected in 'C:/nsys/exp0005/profile_bcd.csv' first (244824 selections)",
+   "prompt_eval_ms": 2103.82,
+   "ranges": 7299.0,
+   "ready_s": 7.26,
+   "register_s": 0.635,
+   "registered_mib": 7943.22
+  },
+  "low": "lowest available 2784 MiB",
+  "pre": "evict: touched 19968 MiB in 4.2 s, available fell to 754 MiB; before {'avail': 20664, 'free': 925, 'standby_normal': 19485, 'standby_reserve': 86, 'standby_core': 140} after {'avail': 20744, 'free': 19950, 'standby_normal': 623, 'standby_reserve': 3, 'standby_core': 141}\nprobe: 3/256 expert pages cached (1.2%), median 151 us, p90 211 us",
+  "prefill": {
+   "expert_copies": 7728,
+   "mib": 7740.085784912109,
+   "slow": 322,
+   "span_s": 3.54
+  },
+  "tag": "prof7842_r1",
+  "windows": {
+   "131-386": {
+    "compute": 12.89462425,
+    "d2h": 0.1211512265625,
+    "dma": 20.35487506640625,
+    "idle": 11.630570609375,
+    "idle_fast": 1.8967206640625,
+    "idle_slow": 5.83128273046875,
+    "idle_sync": 2.28111465234375,
+    "mib": 224.89355790615082,
+    "ms": 45.00122115234375,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.7740961549092431,
+    "slow_per_token": 3.62890625
+   },
+   "3-1022": {
+    "compute": 12.936231093137255,
+    "d2h": 0.12091979901960785,
+    "dma": 20.138178816666667,
+    "idle": 9.938034012745097,
+    "idle_fast": 1.6971659784313724,
+    "idle_slow": 4.402539805882354,
+    "idle_sync": 2.2608168931372545,
+    "mib": 221.93778524959788,
+    "ms": 43.13336372156863,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.7764610425505717,
+    "slow_per_token": 2.7862745098039214
+   },
+   "3-130": {
+    "compute": 12.8279808671875,
+    "d2h": 0.121130390625,
+    "dma": 19.633017640625,
+    "idle": 16.9959076953125,
+    "idle_fast": 3.11260996875,
+    "idle_slow": 10.0290508671875,
+    "idle_sync": 2.2982784375,
+    "mib": 222.3552987575531,
+    "ms": 49.57803659375,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.7784121745500655,
+    "slow_per_token": 6.8671875
+   },
+   "387-1022": {
+    "compute": 12.974764710691824,
+    "d2h": 0.12078426257861635,
+    "dma": 20.152622827044024,
+    "idle": 7.836308855345912,
+    "idle_fast": 1.3319728490566038,
+    "idle_slow": 2.6950687295597486,
+    "idle_sync": 2.2451072955974842,
+    "mib": 220.6640124051076,
+    "ms": 41.08448065566038,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.7770355148827697,
+    "slow_per_token": 1.6257861635220126
+   }
+  }
+ },
+ "prof7842_r2": {
+  "log": {
+   "eval_ms": 41590.51,
+   "hit_line": "ubatch <= 8: hits = 203847, misses = 123521, hit rate = 62.27%, uploaded = 227643.19 MiB",
+   "pageable_mib": 10817.25,
+   "profile": "pinning the experts most selected in 'C:/nsys/exp0005/profile_bcd.csv' first (244824 selections)",
+   "prompt_eval_ms": 1545.13,
+   "ranges": 7299.0,
+   "ready_s": 7.12,
+   "register_s": 0.64,
+   "registered_mib": 7943.22
+  },
+  "low": "lowest available 116 MiB",
+  "pre": "evict: touched 20736 MiB in 4.3 s, available fell to 696 MiB; before {'avail': 21269, 'free': 685, 'standby_normal': 20413, 'standby_reserve': 139, 'standby_core': 115} after {'avail': 21469, 'free': 20718, 'standby_normal': 599, 'standby_reserve': 1, 'standby_core': 115}\nprobe: 1/256 expert pages cached (0.4%), median 157 us, p90 226 us",
+  "prefill": {
+   "expert_copies": 7728,
+   "mib": 7740.085784912109,
+   "slow": 97,
+   "span_s": 2.95
+  },
+  "tag": "prof7842_r2",
+  "windows": {
+   "131-386": {
+    "compute": 12.88681176171875,
+    "d2h": 0.12028319140625,
+    "dma": 20.0902003671875,
+    "idle": 8.94965555859375,
+    "idle_fast": 2.217348140625,
+    "idle_slow": 2.94701905859375,
+    "idle_sync": 2.17967067578125,
+    "mib": 224.89355790615082,
+    "ms": 42.04695087890625,
+    "n": 256,
+    "overlap_ns": 0,
+    "pinned_share": 0.7740961549092431,
+    "slow_per_token": 1.85546875
+   },
+   "3-1022": {
+    "compute": 12.910105843137256,
+    "d2h": 0.11997421960784314,
+    "dma": 19.899029437254903,
+    "idle": 7.978174794117647,
+    "idle_fast": 1.9899685294117648,
+    "idle_slow": 2.243777581372549,
+    "idle_sync": 2.172224973529412,
+    "mib": 221.93778524959788,
+    "ms": 40.907284294117645,
+    "n": 1020,
+    "overlap_ns": 0,
+    "pinned_share": 0.7764610425505717,
+    "slow_per_token": 1.4372549019607843
+   },
+   "3-130": {
+    "compute": 12.8211479453125,
+    "d2h": 0.12054759375,
+    "dma": 18.963257109375,
+    "idle": 12.4204872578125,
+    "idle_fast": 4.1074572109375,
+    "idle_slow": 4.547982140625,
+    "idle_sync": 2.16156809375,
+    "mib": 222.3552987575531,
+    "ms": 44.32543990625,
+    "n": 128,
+    "overlap_ns": 0,
+    "pinned_share": 0.7784121745500655,
+    "slow_per_token": 3.1796875
+   },
+   "387-1022": {
+    "compute": 12.93738555345912,
+    "d2h": 0.1197344575471698,
+    "dma": 20.01041166981132,
+    "idle": 6.693088204402516,
+    "idle_fast": 1.4722834166666667,
+    "idle_slow": 1.4969725471698114,
+    "idle_sync": 2.171372742138365,
+    "mib": 220.6640124051076,
+    "ms": 39.76061988522012,
+    "n": 636,
+    "overlap_ns": 0,
+    "pinned_share": 0.7770355148827697,
+    "slow_per_token": 0.9182389937106918
+   }
+  }
+ }
+}
