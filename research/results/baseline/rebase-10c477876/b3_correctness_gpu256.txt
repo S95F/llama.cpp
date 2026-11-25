@@ -1,0 +1,48 @@
+avail 19778 MiB, no VIractal.exe
+-- cache-off 
+1341
+-- cache2048-lru LLAMA_MOE_CACHE_SAMPLE=0
+1341
+-- cache2048-auto 
+1341
+-- cache528-lru LLAMA_MOE_CACHE_SAMPLE=0
+1341
+-- cache528-auto 
+1341
+-- cache2048-s16 LLAMA_MOE_CACHE_SAMPLE=16
+1341
+-- cache528-dist0 LLAMA_MOE_CACHE_DIST=0
+1341
+-- cache256-auto 
+1341
+-- cache1024-pinned GGML_CUDA_REGISTER_HOST=1
+1341
+-- cache2048-pinprof GGML_CUDA_REGISTER_HOST=1
+1341
+-- cache2048-pinonline GGML_CUDA_REGISTER_HOST=1
+1341
+-- cache2048-pinonline14000 GGML_CUDA_REGISTER_HOST=1
+1341
+-- cache2048-prefetch LLAMA_MOE_PREFETCH=1
+1341
+-- cache2048-pinprof-prefetch GGML_CUDA_REGISTER_HOST=1
+1341
+-- cache2048-pinprof-prefetch2 GGML_CUDA_REGISTER_HOST=1
+1341
+
+== diff against cache-off ==
+  OK    cache1024-pinned
+  OK    cache2048-auto
+  OK    cache2048-lru
+  OK    cache2048-pinonline
+  OK    cache2048-pinonline14000
+  OK    cache2048-pinprof-prefetch
+  OK    cache2048-pinprof-prefetch2
+  OK    cache2048-pinprof
+  OK    cache2048-prefetch
+  OK    cache2048-s16
+  OK    cache256-auto
+  OK    cache528-auto
+  OK    cache528-dist0
+  OK    cache528-lru
+exit 0

@@ -1,0 +1,7 @@
+merge   : a1eeac9f3 (common : work around MSVC 19.29 ICE in common_peg_parser_builder::through)
+parents : 980791788 cddaa915a
+model   : C:/code/Codey/models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+avail   : 14391 MiB
+game    : no VIractal.exe
+started : 2026-11-25T14:33:27Z
+finished: 2026-11-25T14:55:00Z

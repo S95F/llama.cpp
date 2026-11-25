@@ -31,16 +31,22 @@ the context's backends and one total `size` in bytes.
 
 ### How a hit happens
 
-1. The graph asks for `get_slot_map(il, n_tokens, n_expert_used)`.
+1. `build_moe_ffn` calls `build_lookup` for every host-resident layer (upstream
+   #32157, which replaced `backend()` and the graph-side `get_slot_map` call). It
+   asks for `get_slot_map(il, n_tokens, n_expert_used, cpu_part)`.
 2. That returns the layer's slot map only if the layer is cached, `n_tokens` is
    nonzero and **`<= max_batch` (32)**, and the tokens' experts fit the group's
    slot count. Otherwise `nullptr`, and the graph takes the host path.
-3. The scheduler copies the slot map host-to-device. That copy is intercepted by
-   `llama_moe_cache::copy`, which is registered as the `ggml_backend_sched` copy
-   callback.
+3. The lookup is a `ggml_get_rows` of the slot map by the selected ids, placed on
+   the cache's device. The slot map is a host weight, so the scheduler copies it
+   host-to-device. That copy is intercepted by `llama_moe_cache::copy`, which is
+   registered as the `ggml_backend_sched` copy callback.
 4. Inside the callback the cache reads the selected expert ids, resolves each to a
    slot, and **uploads only the experts that are missing**, then writes the
-   resolved slot map to the device.
+   resolved slot map to the device. `build_experts` then builds the matmuls on
+   the banks with the resolved slots. With a CPU share (`cpu_share`, 0 by
+   default in the CLI) some misses are computed from the host experts instead
+   (`cpu_map`) and added in.
 
 So the upload is a side effect of the slot-map copy, and the cache's unit of work
 is one (layer, ubatch) slot-map copy. The telemetry counters and the trace are
@@ -90,8 +96,13 @@ The invariant that constrains every policy change: **an expert the current
 request needs cannot be evicted.** It is enforced through `seen` / `seen_gen`,
 a generation-stamped array over experts, checked in `victim()`.
 
-Upstream's `victim()` walks the probationary list then the protected list from
-the LRU end and takes the first evictable slot.
+The LRU `victim()` walks the probationary list then the protected list from the
+LRU end and takes the first evictable slot. This was upstream's policy through
+base `a91eab67d`. Upstream has since replaced it with ClassLRU (#31233). The
+merge `10c477876` (upstream `cddaa915a`) kept the branch's policy instead and
+ported upstream's other cache changes onto it: CPU misses, chosen by lowest CRF;
+"not cached" as a slot `>= n_slots` instead of -1; and the binary trace
+(`LLAMA_MOE_CACHE_TRACE_BIN`, read by `scripts/moe-cache-tune.py`).
 
 ## What the branch changes
 
@@ -127,7 +138,8 @@ request needs" rule and the LRU fall back are untouched.
 
 The first research contribution. Inside `moe_cache_slru`:
 
-- `n_sample` (default 16 when enabled, 0 = upstream behaviour), set at `init`
+- `n_sample` (default 16 when enabled, 0 = plain LRU, upstream's behaviour
+  before ClassLRU), set at `init`
   **only when `g.n_slots < n_expert_token`** - the same condition upstream
   already warns about, so no new tuning constant is introduced.
 - `use`, one `uint32_t` per (layer, expert), 40 KiB for this model, incremented
@@ -136,13 +148,14 @@ The first research contribution. Inside `moe_cache_slru`:
   (`rng*1664525 + 1013904223`), skipping slots holding an expert this request
   needs, returning a free slot immediately if it draws one, and otherwise the
   **least used** of the sample. It gives up after `4*n_sample` draws.
-- `victim()` tries `victim_sampled()` first and **falls back to the upstream LRU
-  walk** if it returns -1, so the eviction path can never fail.
+- `victim()` tries `victim_sampled()` first and **falls back to the LRU walk** if
+  it returns -1, so the eviction path can never fail.
 - Aging: every `age_every = 8*n_slots` fills, all counters are halved
   (`u >>= 1`). Measured as not optional - see FAILED_APPROACHES.md.
 
-Above the crossover `n_sample` is 0 and the code is byte-for-byte upstream, which
-B1 confirms on hardware to the hundredth of a MiB.
+Above the crossover `n_sample` is 0 and the code is the plain LRU, which was
+byte-for-byte upstream's until ClassLRU; B1 confirmed that on hardware to the
+hundredth of a MiB on every base through `a91eab67d`.
 
 ### Host expert page pinning (`c71dee331`)
 

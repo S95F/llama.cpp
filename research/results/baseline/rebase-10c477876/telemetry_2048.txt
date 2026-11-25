@@ -1,0 +1,4 @@
+prompt 0.34.786.091 I llama_moe_cache: ubatch <= 8: hits = 49165, misses = 32443 (0 on the CPU), hit rate = 60.25%, uploaded = 59733.91 MiB
+prompt_b 0.27.062.965 I llama_moe_cache: ubatch <= 8: hits = 50126, misses = 31482 (0 on the CPU), hit rate = 61.42%, uploaded = 57992.91 MiB
+prompt_c 0.18.720.995 I llama_moe_cache: ubatch <= 8: hits = 53260, misses = 28348 (0 on the CPU), hit rate = 65.26%, uploaded = 52294.73 MiB
+prompt_d 0.21.720.466 I llama_moe_cache: ubatch <= 8: hits = 50141, misses = 31467 (0 on the CPU), hit rate = 61.44%, uploaded = 57886.12 MiB

@@ -1,0 +1,14 @@
+mcmoe=2048 arm=default 0.47.566.404 I llama_moe_cache: ubatch <= 8: hits = 49165, misses = 32443 (0 on the CPU), hit rate = 60.25%, uploaded = 59733.91 MiB
+mcmoe=2048 arm=lru 0.50.721.809 I llama_moe_cache: ubatch <= 8: hits = 49165, misses = 32443 (0 on the CPU), hit rate = 60.25%, uploaded = 59733.91 MiB
+mcmoe=1024 arm=default 0.51.805.133 I llama_moe_cache: ubatch <= 8: hits = 33511, misses = 48097 (0 on the CPU), hit rate = 41.06%, uploaded = 88328.32 MiB
+mcmoe=1024 arm=lru 0.56.214.249 I llama_moe_cache: ubatch <= 8: hits = 33511, misses = 48097 (0 on the CPU), hit rate = 41.06%, uploaded = 88328.32 MiB
+mcmoe=645 arm=default 0.50.571.207 I llama_moe_cache: ubatch <= 8: hits = 24850, misses = 54718 (0 on the CPU), hit rate = 31.23%, uploaded = 99745.74 MiB
+mcmoe=645 arm=lru 0.49.376.471 I llama_moe_cache: ubatch <= 8: hits = 24850, misses = 54718 (0 on the CPU), hit rate = 31.23%, uploaded = 99745.74 MiB
+mcmoe=586 arm=default 0.48.112.013 I llama_moe_cache: ubatch <= 8: hits = 25497, misses = 54071 (0 on the CPU), hit rate = 32.04%, uploaded = 98591.91 MiB
+mcmoe=586 arm=lru 0.56.571.795 I llama_moe_cache: ubatch <= 8: hits = 17283, misses = 62285 (0 on the CPU), hit rate = 21.72%, uploaded = 113537.43 MiB
+mcmoe=528 arm=default 0.42.678.099 I llama_moe_cache: ubatch <= 8: hits = 23609, misses = 55959 (0 on the CPU), hit rate = 29.67%, uploaded = 102034.90 MiB
+mcmoe=528 arm=lru 0.37.548.033 I llama_moe_cache: ubatch <= 8: hits = 877, misses = 78691 (0 on the CPU), hit rate = 1.10%, uploaded = 143324.84 MiB
+mcmoe=384 arm=default 0.34.284.288 I llama_moe_cache: ubatch <= 8: hits = 18907, misses = 60661 (0 on the CPU), hit rate = 23.76%, uploaded = 110632.98 MiB
+mcmoe=384 arm=lru 0.35.839.474 I llama_moe_cache: ubatch <= 8: hits = 0, misses = 79568 (0 on the CPU), hit rate = 0.00%, uploaded = 145030.88 MiB
+mcmoe=256 arm=default 0.24.451.486 I llama_moe_cache: ubatch <= 8: hits = 13461, misses = 66107 (0 on the CPU), hit rate = 16.92%, uploaded = 120607.58 MiB
+mcmoe=256 arm=lru 0.27.472.460 I llama_moe_cache: ubatch <= 8: hits = 0, misses = 79568 (0 on the CPU), hit rate = 0.00%, uploaded = 145030.88 MiB

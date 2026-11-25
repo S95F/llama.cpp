@@ -69,7 +69,9 @@ fi
 
 # nor pinning in the middle of the generation, by the selections of its first small batches
 LLAMA_MOE_PIN_ONLINE=16 run cache2048-pinonline "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
-LLAMA_MOE_PIN_ONLINE=64 LLAMA_MOE_PIN_MIB=15000 run cache2048-pinonline15000 "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
+# 14000, not 15000: about 15 GiB is the WDDM pinned budget here, and with that little left a later kernel launch
+# fails with a CUDA out of memory error (both sides of the cddaa915a merge, at 15000 and 15200 MiB)
+LLAMA_MOE_PIN_ONLINE=64 LLAMA_MOE_PIN_MIB=14000 run cache2048-pinonline14000 "$BIN" GGML_CUDA_REGISTER_HOST=1 --moe-cache-mib 2048
 
 # nor prefetching the pages of the missed experts, all pageable or around pinned ones
 run cache2048-prefetch "$BIN" LLAMA_MOE_PREFETCH=1 --moe-cache-mib 2048

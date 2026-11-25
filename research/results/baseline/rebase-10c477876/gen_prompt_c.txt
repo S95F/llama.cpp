@@ -1,0 +1,21 @@
+Summarize the history of computer memory hierarchies, from magnetic core memory through DRAM, SRAM caches, NAND flash and modern HBM. Discuss why each level exists and how the latency and bandwidth gaps shaped software design.
+
+<think>
+
+</think>
+
+The history of computer memory is a story of an endless arms race between **speed**, **capacity**, and **cost**. This trade-off is formalized in the **Memory Hierarchy**, a pyramid where the top is fast and expensive (registers/cache), and the bottom is slow and cheap (disk/flash).
+
+Below is a summary of the evolution of key memory technologies, why each level exists, and how latency/bandwidth gaps shaped software design.
+
+---
+
+### 1. Magnetic Core Memory (1950s–1970s)
+**The First Practical RAM**
+
+*   **Technology:** Tiny magnetic rings (cores) threaded with wires. Data was stored as the direction of magnetization.
+*   **Why it existed:** Before core memory, computers used vacuum tubes (unreliable) or delay lines/mercury tanks (extremely slow). Core memory was **non-volatile** (retained data when powered off) and **random-access** (could read any bit in constant time).
+*   **Latency/Bandwidth:** 
+    *   Latency: ~1–2 microseconds (µs).
+    *   Bandwidth: Low, limited by wire switching speeds.
+

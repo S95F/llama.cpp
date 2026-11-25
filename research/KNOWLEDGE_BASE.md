@@ -855,7 +855,8 @@ generated text and therefore invalidates the traces - EXP-0001 spent a whole
 iteration establishing that after the `78a8ae1` to `d854d98b` move.
 
 There is a one-run check. **Run B1 at 2048 MiB and compare against
-`61.38% / 58033.62 MiB`.** Nothing samples at that size, so the figure is fully
+`60.25% / 59733.91 MiB`** (since `10c477876`; `61.38% / 58033.62 MiB`
+before). Nothing samples at that size, so the figure is fully
 deterministic; if it reproduces, the traces are still valid.
 
 Done after the move to `a4699400e` (33 upstream commits, EXP-0003): **exact at
@@ -882,7 +883,22 @@ about 1% at reps 2 to 4, after run 1 was dropped post hoc (3 against 4 runs;
 BENCHMARKS.md B2, "Across the merge"). The first timing attempt ran while a
 game used the GPU; it is kept but marked invalid (`NOTE_game.txt`).
 
-## Resolved: the simulated tables hold on `d854d98b`, and on every base since for the `prompt` trace (the router check; the other three traces assumed)
+**Failed after `10c477876`** (upstream `cddaa915a`, 2026-11-25,
+`research/results/baseline/rebase-10c477876/`): `60.25% / 59733.91 MiB`
+(49165 / 32443) against `61.38%`, at both arms, which agree with each other
+to the count. The B3 outputs differ from EXP-0007's from byte 535 on, cache-off
+included, so the router moved: 7530 of the 10201 lookups select a different
+set, the first at call 10, layer 8. Which upstream commit moved it was not
+looked for. The port of the policy through the merge, which rewrote the cache's
+plan step, was ruled out: the simulator reproduces the new counts exactly
+from the new trace and the old counts from the old one. As the practice says,
+the traces were re-collected (all four) and the simulator re-validated, exact
+on each. B1 was re-recorded at seven sizes; the branch's gain below the
+crossover is unchanged in size (+10.3 points at 586 MiB, +28.6 at 528).
+Earlier simulated tables were computed on the old traces; their conclusions
+were not re-checked on the new ones.
+
+## Resolved: the simulated tables hold on `d854d98b`, and on every base through `a91eab67d` for the `prompt` trace (the router check; the other three traces assumed); `cddaa915a` moved the router again (see above)
 
 **Level 1.** EXP-0001 settled this. Upstream's own commits between `78a8ae1` and
 `d854d98b` changed the router's top-8 at some positions: with

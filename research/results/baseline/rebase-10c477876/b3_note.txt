@@ -1,0 +1,31 @@
+B3 first attempt (b3_correctness_gpu256_first.txt): 14 of 15 OK, cache2048-pinonline15000 DIFF.
+
+That row did not decode differently: its process stopped with a CUDA error after the
+online profile registered its experts, so its output is truncated (525 bytes).
+
+  CUDA error: out of memory, in ggml_backend_cuda_synchronize (cudaStreamSynchronize)
+
+Reruns, all LLAMA_MOE_PIN_ONLINE=64, 2048 MiB cache, GGML_OP_OFFLOAD_MIN_BATCH=1
+(logs in C:/nsys/rebase_10c477876/dbg_*.log, pin15000_*.log, pre_pin15200.log):
+
+  build      LLAMA_MOE_PIN_MIB  registered   result
+  merged     15000              14914.82 MiB CUDA out of memory, about 2.6 s after registering
+  merged     15000 + CUDA_LAUNCH_BLOCKING=1 + GGML_CUDA_DISABLE_GRAPHS=1: fails in a kernel launch
+                                (ggml_cuda_kernel_launch, cudaGetLastError)
+  merged     15000 + GGML_CUDA_DISABLE_GRAPHS=1, GGML_CUDA_PDL=0, both, or
+                     CUDA_MODULE_LOADING=EAGER: same error
+  merged     14000              13924.39 MiB OK, output identical to cache-off
+  merged     12000              11940.52 MiB OK, output identical to cache-off
+  pre-merge  15000              14915.31 MiB OK (13600 MiB available at launch)
+  pre-merge  15200              15112.37 MiB same CUDA out of memory error
+
+VRAM is not short: both builds end with 2339 MiB free and the same buffers.
+About 15 GiB is the WDDM pinned budget on this host (ENVIRONMENT.md: 15243 to 15266
+MiB granted, 15360 refused). With the experts registered up to within a few hundred
+MiB of it, a later launch fails. Both builds fail this way; the merged build crosses
+the line between 14000 and 15000 MiB, the pre-merge build between 15000 and 15200.
+The exact allocation that fails was not identified.
+
+So the row tested the budget ceiling, not the cache. It now pins 14000 MiB
+(cache2048-pinonline14000), which still registers inside the 256 tokens.
+b3_correctness_gpu256.txt is the rerun with that row.

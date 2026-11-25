@@ -1,0 +1,23 @@
+Translate the following into French, then into German, then explain the grammatical differences: "The cache keeps the most frequently used experts in video memory, so the processor does not have to read them over the bus again."
+
+<think>
+Here's a thinking process:
+
+1.  **Analyze User Input:**
+   - **Source Text:** "The cache keeps the most frequently used experts in video memory, so the processor does not have to read them over the bus again."
+   - **Tasks:**
+     a. Translate to French
+     b. Translate to German
+     c. Explain grammatical differences between the original English and the two translations (or between French and German, but likely comparing all three or focusing on the translations vs. English)
+   - **Domain:** Computer science/technical (cache, video memory, processor, bus, experts - likely refers to Mixture of Experts (MoE) models in AI)
+
+2.  **Translate to French:**
+   - *Key terms:* 
+     - cache -> cache (same in French, often "le cache")
+     - keeps -> conserve / maintient / garde
+     - most frequently used experts -> les experts les plus fréquemment utilisés
+     - in video memory -> en mémoire vidéo / dans la mémoire vidéo
+     - so -> afin que / de sorte que / si bien que
+     - the processor -> le processeur
+     - does not have to -> n'a pas
+

@@ -96,6 +96,18 @@ PATH`. Found at the 2026-10-31 upstream merge, the first build since
 
 Running a built binary needs only the CUDA 12.6 `PATH` fix above, not vcvars.
 
+### Two build breaks from the `cddaa915a` merge (2026-11-25)
+
+- **`nvml.h` not found** in `ggml-cuda.cu` (upstream #30672 includes it and
+  loads `nvml.dll` at run time). The 12.6 toolkit here was installed without
+  the NVML headers. Fixed by copying the 13.2 `nvml.h` into
+  `C:\Users\steve\cuda126\include`; the code calls only long-stable entry
+  points (`nvmlInit_v2`, `nvmlDeviceGetHandleByPciBusId_v2`, `nvmlDeviceGetBrand`,
+  `nvmlShutdown`), so the newer header is safe. Delete that file to undo.
+- **MSVC 19.29 internal compiler error C1001** at `common/peg-parser.h`
+  (`common_peg_parser_builder::through`, upstream #29307). Worked around in
+  `a1eeac9f3` by building the vector explicitly. VS 2022 does not need it.
+
 ## Model
 
 | | |
@@ -116,7 +128,7 @@ Other models on disk, none MoE, available if a dense control is needed:
 |---|---|
 | Working dir | `C:\code\llama.cpp-fork` |
 | Branch | `moe-gpu-optimize`, tracking `origin/moe-gpu-optimize` |
-| Upstream base | `a91eab67d` through merge `2ca33f0d7`, 2026-10-31 (was `63b4b303b` via `5df437a57`, and before that `a4699400e`, `d854d98b` and `78a8ae1`) |
+| Upstream base | `cddaa915a` through merge `10c477876`, 2026-11-25 (was `a91eab67d` via `2ca33f0d7`, `63b4b303b` via `5df437a57`, and before that `a4699400e`, `d854d98b` and `78a8ae1`) |
 | `origin` | `https://github.com/S95F/llama.cpp.git` (the fork) |
 | `upstream` | `https://github.com/ggml-org/llama.cpp.git` |
 

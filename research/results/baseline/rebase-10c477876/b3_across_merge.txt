@@ -1,0 +1,16 @@
+== merged B3 outputs against the pre-merge ones (C:/nsys/exp0007/correctness256) ==
+  DIFFER  cache-off.txt at C:/nsys/exp0007/correctness256/cache-off.txt C:/nsys/rebase_10c477876/correctness256/cache-off.txt differ: char 535, line 9
+  DIFFER  cache1024-pinned.txt at C:/nsys/exp0007/correctness256/cache1024-pinned.txt C:/nsys/rebase_10c477876/correctness256/cache1024-pinned.txt differ: char 535, line 9
+  DIFFER  cache2048-auto.txt at C:/nsys/exp0007/correctness256/cache2048-auto.txt C:/nsys/rebase_10c477876/correctness256/cache2048-auto.txt differ: char 535, line 9
+  DIFFER  cache2048-lru.txt at C:/nsys/exp0007/correctness256/cache2048-lru.txt C:/nsys/rebase_10c477876/correctness256/cache2048-lru.txt differ: char 535, line 9
+  DIFFER  cache2048-pinonline.txt at C:/nsys/exp0007/correctness256/cache2048-pinonline.txt C:/nsys/rebase_10c477876/correctness256/cache2048-pinonline.txt differ: char 535, line 9
+  DIFFER  cache2048-pinonline15000.txt at 
+  DIFFER  cache2048-pinprof-prefetch.txt at C:/nsys/exp0007/correctness256/cache2048-pinprof-prefetch.txt C:/nsys/rebase_10c477876/correctness256/cache2048-pinprof-prefetch.txt differ: char 535, line 9
+  DIFFER  cache2048-pinprof-prefetch2.txt at C:/nsys/exp0007/correctness256/cache2048-pinprof-prefetch2.txt C:/nsys/rebase_10c477876/correctness256/cache2048-pinprof-prefetch2.txt differ: char 535, line 9
+  DIFFER  cache2048-pinprof.txt at C:/nsys/exp0007/correctness256/cache2048-pinprof.txt C:/nsys/rebase_10c477876/correctness256/cache2048-pinprof.txt differ: char 535, line 9
+  DIFFER  cache2048-prefetch.txt at C:/nsys/exp0007/correctness256/cache2048-prefetch.txt C:/nsys/rebase_10c477876/correctness256/cache2048-prefetch.txt differ: char 535, line 9
+  DIFFER  cache2048-s16.txt at C:/nsys/exp0007/correctness256/cache2048-s16.txt C:/nsys/rebase_10c477876/correctness256/cache2048-s16.txt differ: char 535, line 9
+  DIFFER  cache256-auto.txt at C:/nsys/exp0007/correctness256/cache256-auto.txt C:/nsys/rebase_10c477876/correctness256/cache256-auto.txt differ: char 535, line 9
+  DIFFER  cache528-auto.txt at C:/nsys/exp0007/correctness256/cache528-auto.txt C:/nsys/rebase_10c477876/correctness256/cache528-auto.txt differ: char 535, line 9
+  DIFFER  cache528-dist0.txt at C:/nsys/exp0007/correctness256/cache528-dist0.txt C:/nsys/rebase_10c477876/correctness256/cache528-dist0.txt differ: char 535, line 9
+  DIFFER  cache528-lru.txt at C:/nsys/exp0007/correctness256/cache528-lru.txt C:/nsys/rebase_10c477876/correctness256/cache528-lru.txt differ: char 535, line 9

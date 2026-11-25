@@ -10,9 +10,9 @@ Restart checkpoint. Read this first in every session.
 | Phase | idle; the next `go` starts iteration 8 |
 | Branch | `moe-gpu-optimize` |
 | Last code commit | the EXP-0007 commit (iteration 7), on `b2586549c` |
-| Upstream base | `a91eab67d`, through merge `2ca33f0d7` (2026-10-31) |
-| Build | `llama.dll` rebuilt at 2026-11-01 03:22 local time, before the timed runs, from the source as it stood then; the `LLAMA_MOE_PREFETCH` comment was reworded at 04:41, after the runs (comment only, no code change) |
-| Tree | clean after the EXP-0007 commit; nothing pushed |
+| Upstream base | `cddaa915a`, through merge `10c477876` (2026-11-25); the router moved, so B1's references and the four traces are new (BENCHMARKS.md) |
+| Build | rebuilt 2026-11-25 00:46 local time from the merge's tree, just before it was committed (its build info names the parent `980791788`); no source has changed since |
+| Tree | clean after the merge check commit; nothing pushed |
 
 ## Last completed iteration
 
@@ -59,7 +59,29 @@ about 19968 MiB available at launch, held by a balloon (19880 to 20028;
 processes' memory to the pagefile again; desktop apps may page back in slowly
 for a while.
 
-## Previous step: the upstream merge check (2026-10-31 to 11-01)
+## Previous step: the upstream merge check of `10c477876` (2026-11-25)
+
+Merge `10c477876` of upstream `cddaa915a`, keeping the branch's eviction policy
+over upstream's ClassLRU (#31233), checked in
+`research/results/baseline/rebase-10c477876/`:
+
+- **Router check failed: the router moved.** B1 at 2048 MiB is 60.25% /
+  59733.91 MiB, not 61.38%; cache-off output differs too. B1 re-recorded at
+  seven sizes in both arms (BENCHMARKS.md); the branch's gain below the
+  crossover is unchanged in size. The four traces were re-collected and the
+  simulator is exact on each, which also rules out the policy port.
+- **B3 14 of 14** after the online pinning row went from 15000 to 14000 MiB:
+  at 15000 a kernel launch failed with CUDA out of memory, at the ~15 GiB WDDM
+  pinned budget, and the pre-merge build fails the same way at 15200
+  (`b3_note.txt`).
+- test-backend-ops MUL_MAT_ID 1077 of 1077. Buffer sizes unchanged.
+- **Decode: no change detected** (2048 MiB, ABBA/BAAB, blocks -5.0% and
+  -0.2%; the -5.0% is the first run alone).
+- Two build breaks fixed (ENVIRONMENT.md): `nvml.h` copied into the 12.6
+  toolkit, and a one-line MSVC 19.29 workaround (`a1eeac9f3`).
+- Docs no longer call `LLAMA_MOE_CACHE_SAMPLE=0` the upstream arm.
+
+## Earlier: the upstream merge check of `2ca33f0d7` (2026-10-31 to 11-01)
 
 Merge `2ca33f0d7` of upstream `a91eab67d` (120 commits) checked: B1 exact, B3
 11 of 11 byte-identical across the merge, test-backend-ops MUL_MAT_ID and

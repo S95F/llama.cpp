@@ -36,11 +36,43 @@ LLAMA_MOE_CACHE_SAMPLE=$sample ./build/bin/llama-completion \
     -t 8 --no-warmup -no-cnv -v < /dev/null 2>&1 | grep -E "ubatch <= 8" | tail -1
 ```
 
-`LLAMA_MOE_CACHE_SAMPLE=0` is the upstream LRU arm; unset is the shipping branch
-arm (32 samples). `16` forces 16 samples at every size, so above the crossover,
-where the shipping policy does not sample, it differs from both (EXP-0003's
-`s16` rows at 1024 and 2048 MiB). Sweep `mib` over
-`384,528,586,645,1024,2048`. 255 tokens are generated after the first.
+`LLAMA_MOE_CACHE_SAMPLE=0` is the plain LRU arm (the sampled victim off); unset
+is the shipping branch arm (32 samples). Through base `a91eab67d` the LRU arm was
+byte-for-byte upstream's policy, which is why the older tables call it
+"upstream". Upstream has since moved to ClassLRU (#31233), which the branch does
+not build (merge `10c477876` kept the branch's policy), so from `cddaa915a` on
+the arm is labelled `lru`, not upstream. `16` forces 16 samples at every size,
+so above the crossover, where the shipping policy does not sample, it differs
+from both (EXP-0003's `s16` rows at 1024 and 2048 MiB). Sweep `mib` over
+`256,384,528,586,645,1024,2048`. 255 tokens are generated after the first.
+
+### Reference, base `cddaa915a` (merge `10c477876`, 2026-11-25)
+
+Source: `research/results/baseline/rebase-10c477876/b1.csv`. **Use this table
+from `10c477876` on; do not compare it with the older ones.** The router changed
+at this merge: the same prompt now selects different experts (7530 of 10201
+lookups differ as sets, the first at call 10, layer 8), so the generated text
+and every count below differ from `a4699400e`'s.
+
+| cache MiB | lru | shipping | shipping hits / misses |
+|---:|---:|---:|---:|
+| 256 | 0.00% / 145030.88 MiB | **16.92%** / 120607.58 MiB | 13461 / 66107 |
+| 384 | 0.00% / 145030.88 MiB | **23.76%** / 110632.98 MiB | 18907 / 60661 |
+| 528 | 1.10% / 143324.84 MiB | **29.67%** / 102034.90 MiB | 23609 / 55959 |
+| 586 | 21.72% / 113537.43 MiB | **32.04%** / 98591.91 MiB | 25497 / 54071 |
+| 645 | 31.23% / 99745.74 MiB | 31.23% / 99745.74 MiB | 24850 / 54718 |
+| 1024 | 41.06% / 88328.32 MiB | 41.06% / 88328.32 MiB | 33511 / 48097 |
+| 2048 | 60.25% / 59733.91 MiB | 60.25% / 59733.91 MiB | 49165 / 32443 |
+
+645 to 2048 MiB are the control: the two arms are identical to the integer
+counts. The shipping policy's gain below the crossover is the same size as on
+the old base (+10.3 points at 586 MiB, +28.6 at 528).
+
+**The router check is now `60.25% / 59733.91 MiB` (hits 49165, misses 32443)**
+at 2048 MiB. The simulator reproduces it exactly from this base's trace
+(`moe_sim.py slru-ramp`), and reproduces the old `61.38%` from EXP-0001's old
+trace, so the port of the policy through the merge is faithful and the change
+is in the routing.
 
 ### Reference, base `a4699400e` (exact on `2ca33f0d7` where re-run)
 
@@ -57,7 +89,8 @@ policy is the sampled distance-weighted victim with 32 samples.
 | 2048 | 61.38% | 61.38% / 58033.62 MiB | byte-identical |
 
 **The 2048 MiB row is the standard rebase check.** Nothing samples there, so it
-is fully deterministic: if it reproduces `61.38% / 58033.62 MiB` the traces are
+is fully deterministic: if it reproduces the current reference (`60.25% /
+59733.91 MiB` since `10c477876`; `61.38% / 58033.62 MiB` before) the traces are
 still valid for the new base. It has reproduced exactly across `d854d98b`,
 `a4699400e`, `5df437a57` (EXP-0004) and `2ca33f0d7`. On `2ca33f0d7` the whole
 shipping column reproduced to the integer counts, and the upstream column at
@@ -104,8 +137,8 @@ LLAMA_MOE_CACHE_SAMPLE=$sample ./build/bin/llama-bench \
     -n 64 -p 0 -r 4 -t 8 -o md
 ```
 
-**Must be order-balanced**: run the upstream arm first then the branch arm, then
-the reverse, and take the mean of the two passes. An unbalanced sweep showed the
+**Must be order-balanced**: run the LRU arm (`LLAMA_MOE_CACHE_SAMPLE=0`,
+"upstream" in the tables below) first then the branch arm, then the reverse, and take the mean of the two passes. An unbalanced sweep showed the
 branch gaining 4 to 12% at sizes where its hit rate is lower by construction.
 Single process only. Record free RAM.
 
@@ -144,6 +177,36 @@ Noise floor at 18 GiB free: **+-1.3%**. Absolute throughput is 10 to 15% higher
 than the 16.1 GiB session at every size. **The larger ratios in the 16.1 GiB
 table are not an improvement** - host memory pressure penalises whichever arm
 reads more bytes, which is the upstream arm, inflating the ratio.
+
+### Across the merge `10c477876`, 2048 MiB only, 2026-11-25
+
+The merged build against the pre-merge `980791788` (built in a worktree at
+`C:\nsys\premerge_980791788`), same protocol as `2ca33f0d7` below, ABBA then
+BAAB, `GGML_CUDA_REGISTER_HOST=1` set explicitly in both arms, 20567 to 20857
+MiB available, `VIractal.exe` not running and the GPU idle (0%, about 18 W) at
+every launch (`baseline/rebase-10c477876/bench.md`; per-rep samples in
+`bench.jsonl`, reduced by `summarize.py`). Both binaries report build commit
+`980791788`: the merged one was compiled from the merge's working tree before
+it was committed, so its build info names the parent; no source is newer than
+it.
+
+| | merged tok/s | pre-merge tok/s | change |
+|---|---:|---:|---:|
+| block 1 (ABBA) | 27.04 | 28.45 | -5.0% |
+| block 2 (BAAB) | 28.34 | 28.40 | -0.2% |
+| all eight runs | 27.69 | 28.42 | -2.6% |
+
+**No decode change detected across the merge.** The -2.6% is run 1 alone
+(25.59, the first process after the trace collection), whose reps 1 and 3
+(20.01, 25.33) are the lowest of all eight runs. Runs 2 to 8 all lie between
+28.06 and 28.64; without run 1 (a choice made after seeing the data, which
+breaks the balance) merged is 28.39 against 28.42, -0.1%. The same first-run
+effect appeared at `2ca33f0d7`, in the other direction. The rep pattern
+(rep 1 slowest, rep 4 fastest) holds again in every run.
+
+Absolute throughput is about twice the `2ca33f0d7` check's (28 against 14 to
+16 tok/s per run) at 0.4 to 2.3 GiB more available RAM, with pinning set
+explicitly here and inherited there. Not investigated; do not mix the two.
 
 ### Across the merge `2ca33f0d7`, 2048 MiB only, 2026-11-01
 
@@ -199,8 +262,9 @@ configuration and diffs against `--moe-cache-mib 0`. Configurations:
 `cache528-auto`, `cache528-dist0`, `cache256-auto`, `cache1024-pinned`;
 `cache2048-pinprof` when `PIN_PROFILE=<trace>` is set (profile pinning at the
 default cap); `cache2048-pinonline` (online pinning after 16 passes, default
-cap) and `cache2048-pinonline15000` (after 64 passes, 15000 MiB), so the
-registration lands inside the 256 tokens; `cache2048-prefetch` (pageable,
+cap) and `cache2048-pinonline14000` (after 64 passes, 14000 MiB), so the
+registration lands inside the 256 tokens (15000 MiB until `10c477876`, see
+below); `cache2048-prefetch` (pageable,
 `LLAMA_MOE_PREFETCH=1`), and with `PIN_PROFILE` also
 `cache2048-pinprof-prefetch` and `cache2048-pinprof-prefetch2` (modes 1 and 2
 around pinned experts; EXP-0007); and `upstream-off` and `upstream-2048` when a
@@ -224,7 +288,17 @@ short of that.
 **Reference: all configurations byte-identical.** This is a pass/fail gate, not
 a measurement. Any difference is a bug.
 
-Last run in EXP-0007 (working tree on `b2586549c`, prefetch modes 1 and 2):
+Last run on the merge `10c477876` (upstream `cddaa915a`): 14 of 14 OK,
+`PIN_PROFILE` set, all 15 outputs byte-identical to cache-off
+(`baseline/rebase-10c477876/b3_correctness_gpu256.txt`). They differ from
+EXP-0007's pre-merge outputs from byte 535 on, all at the same place, because
+the router changed (B1). The first attempt failed the online pinning row at
+15000 MiB: not a different decode but a CUDA out of memory error after
+registration, with about 15 GiB being the WDDM pinned budget. The pre-merge
+build fails the same way at 15200 MiB, so the row was testing the budget
+ceiling; it now pins 14000 MiB (`b3_note.txt`).
+
+Before it, EXP-0007 (working tree on `b2586549c`, prefetch modes 1 and 2):
 14 of 14 OK with the pinning variable controlled, `PIN_PROFILE` set, all 15
 outputs byte-identical to each other and to the merge check's
 (`EXP-0007/b3_correctness_gpu256.txt`; the first attempt, with the variable
@@ -239,7 +313,7 @@ against the CPU reference.
 
 A baseline build of upstream master does **not** currently exist for `d854d98b`
 or any later base, so the two `upstream-*` rows have not run on any of them,
-the current `a91eab67d` included.
+the current `cddaa915a` included.
 
 ## B4 - Prompt processing
 
@@ -286,7 +360,14 @@ python moe-bench/trace_stats.py trace.csv --layout moe-bench/layout-*.json
 Policies implemented: `lru`, `slru50`, `slru-ramp`, `lfu`, `s3fifo`, `belady`,
 `ramp-freq4/8/16`, `lru-freq8`, `ramp-rand`, `lru-rand`.
 
-**Validation status: validated on both bases.**
+**Validation status: validated on three bases.**
+
+- **`cddaa915a` (merge `10c477876`), all four traces, 2048 MiB: exact to the
+  integer hit and fill counts** and to the hundredth of a MiB: prompt 49165 /
+  32443, prompt_b 50126 / 31482, prompt_c 53260 / 28348, prompt_d 50141 /
+  31467 (`research/results/baseline/rebase-10c477876/sim_validate.txt`). The
+  router changed at this merge, so **these four traces replace EXP-0001's** for
+  any simulation on this base (`trace_*.csv` there).
 
 - `78a8ae1`, one trace, 2048 MiB: simulator 60.82% / 58867.3 MiB / 2044.1 MiB
   VRAM against llama.cpp 60.82% / 58867.26 / 2044.11.
@@ -530,6 +611,15 @@ Committed so far:
   `C:\nsys\rebase_2ca33f0d7` stay outside git. The record of the nine-agent
   review before the merge stayed in the session's local workflow log and is
   not committed.
+
+- `research/results/baseline/rebase-10c477876/` - the check of the upstream
+  merge `10c477876`: B1 at seven sizes in both arms (`b1.csv`), B3 (first
+  attempt, note, rerun) and its diff against EXP-0007's outputs,
+  test-backend-ops MUL_MAT_ID, the four re-collected selection traces with
+  their outputs, counters and simulator validation (`traces.sh`), and the
+  buffer sizes and decode timing across the merge (`bench.sh`, `bench.md`,
+  `bench.jsonl`, `summarize.py`). Logs in `C:\nsys\rebase_10c477876` stay
+  outside git.
 
 **Gap: nothing from the pre-`research/` work was preserved.**
 `moe-bench/.gitignore` excludes `out/` and `*.csv`, so the `78a8ae1` reference
